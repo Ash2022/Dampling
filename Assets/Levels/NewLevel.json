@@ -1,0 +1,3205 @@
+{
+  "LevelId": 1,
+  "LevelName": "NewLevel",
+  "ConveyorBeltMaxCapacity": 7,
+  "ResolutionQueues": [
+    [
+      {
+        "Id": "d1fc6155-e88a-481b-a008-ca30f23c30ab",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "4686953d-49f7-4f83-b6f8-7e6428d50878",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "a8be6063-ac94-4eab-af42-36d37d8bae16",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "791c748e-1274-4958-8f81-d28f2a826b15",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "208bb3e7-0ab3-450d-9b4c-b1c93535446d",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "e6da4e74-b8dc-402d-8bc1-4893afe79372",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "9e668ae1-f28e-41b7-b27b-4ffa94cc3ec5",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "93982958-c689-42fd-8f0b-a387a43e5a0a",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "a31a9143-b0d2-473d-992b-35524afcf46c",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "41f7cf0f-9ff8-47b3-8669-588dc2a09179",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "d6363af6-162b-48b3-a7bf-10df83254c73",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "b4450c84-085a-436c-87b6-d8ae7b312222",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "54021268-46c8-4538-9d62-c6080c7f8a3b",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "f42b94b7-90d6-4820-87b7-1b2c31cef726",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "d46788ff-b67f-4584-892c-befc5efdaba4",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "f279da24-21f9-40ad-8fed-aa64f931202e",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "c0201afc-48ed-4956-ad67-93b46532807e",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "1a986569-420c-43a6-a761-d82a25c3fc25",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "af6048bf-b638-4ffd-9a6c-e62fe2738025",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "c28095b0-fb12-49e8-8cf4-9b28ff53a7fc",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "4d19d56d-4fac-4950-b824-9ef0cef46022",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "7298c31b-6f28-462b-96c7-5973a37147da",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "c6fdc62d-71ee-4f77-84fc-b2676064d33a",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "294b63c3-8c15-4772-a006-494377e0eba0",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "2439f232-3263-4ce8-b2ab-e34e1325e8ec",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "7852641e-b5d4-40c6-91d4-b4d4324b4e26",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "eab8b51a-bd2e-4dfa-87ed-2f94445acc95",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "322c97a3-3a01-49c0-87b7-76a55df4c1e8",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "efe45b8b-406d-4fda-a06d-71de9fa98dd8",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "52dfac80-9e7a-4d2a-918d-e2cfabdb76de",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "355d8373-349d-4bac-aa95-31f430ce841c",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "38d3fa3f-a6ce-4045-82f6-8aef514535c9",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "2ad99c68-5efd-4a02-a1d9-cee0f1182c6c",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "447aed2e-c086-4424-8ee3-677b2be38100",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "e9303de2-e451-40a3-9c8b-fcfdf56fb2ac",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "66620568-1980-4a7d-9cab-16e599eefa7f",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "c1fb41b2-6626-4410-9317-bf0b75e1a826",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "f3a83e2a-9d19-4f22-9a06-8aa9e31b7fc5",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "9a0d1d9a-ae39-4139-a776-a6a08a76222d",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      }
+    ],
+    [
+      {
+        "Id": "c6869ca0-cf9e-4f42-847b-b42ca547cbc1",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "ec344040-26bd-469c-a80b-27ec5629bd76",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "39b54565-4716-4cb6-b7e9-c004aebbfefa",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "91eaef69-d93f-42ea-8213-9f2a65cf7c6d",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "70b235b6-acf4-4963-8fae-66ba2f8a73ca",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "f5ac12e3-822a-4b01-a5f0-bcbf115b179d",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "f31fffe8-a053-4c39-b35d-f83496b5edb4",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "e1b2922d-378f-4f4d-bc90-b6c5d4b244a2",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "45340209-e88f-4c01-8c94-0ad7823d60a0",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "cb94c150-afb3-4a06-8422-11cadd870641",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "c9d5a71a-089a-448f-88a1-25dc0ac8090f",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "bed61d5b-0c74-4397-bbca-f67f2a091235",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "9a7b0767-14e4-4a00-9c61-2e25458bb341",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "7ffc83cf-00e8-47d6-97c4-70d0ec40d6fc",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "1f3da04c-6a4e-4f2b-9b87-9cfd8a1904c7",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "293ea310-5463-4ff8-965b-05a6f136fbd1",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "99889de1-d54c-497b-be7b-bee4375ab674",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "57bd63f5-5d8b-4eba-a9b0-2464afa33ba9",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "3131dc42-916c-4809-af4b-4d74db955683",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "97ceb9e4-4342-455a-9d52-b3ca942e7531",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "94835df9-313f-46cb-982f-d0aca45e9600",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "ae814b3f-4f42-41c5-861b-d28bf4bbac48",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "442e0a5a-d588-4964-80c6-3a631face0f4",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "f665dbfa-31bf-4d32-807a-53496e8c5e66",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "7b23edc0-558b-4f96-8fb6-f4ef197140e9",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "8044168f-a13e-4701-a527-26ccccaa2e07",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "3920e831-b8f3-4678-b90d-fb253f993cfb",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "8129bbd1-b57e-4497-87b4-fc2166ff3285",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "e2980ade-93cf-41a5-a95a-e25ccce7f3ae",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "1ca0a4ea-8ac0-4e2d-b6ac-933d2c572a92",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "eff40c6c-b59a-4b39-a50d-9806e59a7ad6",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "3d9add19-20af-4393-8f4b-3e05d3060df5",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "acc8fa0f-661e-48f1-9f57-ff9bc8d1ee5c",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "817571d4-4171-4db9-a0f1-bbc4316b203f",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "068bf618-f2d4-460e-9128-8709105cfa51",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "1d5965c0-f6c1-4437-8fbf-d3d63b49d72c",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "26c56b73-aa4f-4195-b937-fa4ddf963283",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "471c82ad-f072-4165-98f3-84f0a291213c",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "b5034093-6a43-49f4-a476-5a759557b915",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      }
+    ],
+    [
+      {
+        "Id": "4056ddc2-5476-4369-83bd-102fc5837aed",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "6659e80d-f06f-448a-a5c7-9dadbca2a4f3",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "a7b1ef35-e6ec-4653-bdb5-78d479f239de",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "30225ba8-41d0-45de-b11b-19c618332fff",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "37bd4c7e-1cba-45ab-a6c3-332c2d7a6870",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "4db86b01-4fd9-4e80-a23c-9f03cbf78117",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "ea8bec75-fd0e-4ee2-bb5b-ef6910d9ee3f",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "d48e0689-699b-40a6-af9a-05ccde9c1e91",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "a1558a99-80af-4273-b19f-0459d151d84c",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "5c65cec8-5e1b-4375-bffc-4bd03a521400",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "d983c766-1196-4c18-8dfe-9779a4f41bee",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "a685552e-1902-4744-8d99-7ae0e6a3640c",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "f14f5843-eeb7-4f49-bfce-0053b3e8a8b7",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "d1e35731-fdf1-4aad-ad6f-80625fbdd7e5",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "1de96583-d5a3-42f5-8102-41474d3afe9a",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "055dfa0e-acfa-4fca-87a2-22897bf9205e",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "8adca258-b7d3-4b96-afcc-a732d8b7437c",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "8eb1e58f-e7c2-41c0-9a50-b26a439a8ffd",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "e4bf7fca-318f-4856-841e-87cb02825f0b",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "eac5b57d-fb99-4cd1-959d-0d759027fa03",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "d2859088-dbe0-48f0-b225-2251e196eaae",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "83e57055-54c8-4f1e-b297-ff373ce16d09",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "964c0abb-4ebf-42fe-93d0-cafaf9d24a1f",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "28f88111-82a8-4ce6-a18e-101e2119e983",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "d04a2098-77be-48f8-91b5-bce6685c1632",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "ace17d9d-0424-4e21-88f3-246125c3400c",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "d5e0effb-168b-474d-8772-efc089b05764",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "0c44bb58-a489-4310-ba91-6d72219e72b2",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "560271f9-e03c-4cb8-a15c-716f025a38ac",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "44f6e06e-968d-4667-913e-88d1ca2954a3",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "3f78f225-1559-412e-8ebb-4d21eb342002",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "5f2c30d0-b141-4676-a204-8740522c8f91",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "7e0b622c-1e34-43bc-a07d-8606172bbd96",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "faac8b0e-9441-4b83-8d42-b64916a3c57c",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "ad6129fd-9551-43e4-af68-cd590089e527",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "7fd534a8-b65f-4c5c-85c6-f1ca2e971e38",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "bc1a8ba7-6c2e-492e-9e33-09dccd398870",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "81fe3ccd-77d3-458a-a732-ec5180b8f7af",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "4677063a-fc98-42a5-8ca7-72f51d1856f5",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      }
+    ],
+    [
+      {
+        "Id": "fd353fa0-98b8-4126-aaa6-b313ddc7cd5b",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "94d14e39-3b6d-4afb-b523-ca342d03c963",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "8fbdf184-ab27-42b6-80ab-d2bf2d379149",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "917836ed-e251-481c-b928-a7332b85d82e",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "543d8711-1e7c-495f-bc30-e57638e84592",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "71a79dc6-9333-47c8-8048-9c9b0bb636af",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "ead3b44e-43fa-4034-9879-232e2f97a66f",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "e69ef86f-ebaf-4919-bb75-a344c78d7da1",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "4f0d6e8c-bfc6-4309-92f1-bd78a210a9f8",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "15685b5a-165e-472b-b83e-31be5a562c8f",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "6596c9be-3f32-4b10-91e5-4ed108c14551",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "1dc94ca8-304c-4ac3-93c2-cca02ade8533",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "3ae12361-f8c3-4d66-9055-f5b1199f1f75",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "0ff7b799-8c09-4f48-9fee-6a38cc74918a",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "7fc82f5b-0703-4fe3-82a8-70332e7f419b",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "46f50ba8-a408-4f4c-b753-4ca9451d4bd7",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "4a50887d-4163-43d1-b3d9-da49a8ffccde",
+        "ColorId": "Color_5",
+        "Capacity": 3
+      },
+      {
+        "Id": "af4c8b61-afdf-484b-9006-ba10567d87b0",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "d194a209-998d-4f6c-8481-e8ab6e5396b8",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "560129d7-bc31-44f1-b7e9-29697b8edd29",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "add1374c-81e3-43cb-87fa-67add0d82745",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "8118b2e6-23bb-4f4a-bb15-0c241bad694f",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "ad5995ab-0ebb-49f2-afe9-c022b3e41aa9",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "f23ac76a-8a19-4464-ae47-7e8751bd1151",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "8d82e06b-c501-4231-aba6-09ca8b4c2e44",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "91cef71e-4386-4a42-92fa-e75b63b13556",
+        "ColorId": "Color_4",
+        "Capacity": 3
+      },
+      {
+        "Id": "4d6c9fbd-f59d-4c2c-a86e-677c1c596089",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "b45897d5-ee6f-4460-99c3-e140b1bee0c7",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "ad71f3cf-d591-4051-89e8-819d984d1da4",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "1a1a7444-0dd9-4364-82f0-38ddb1b5b491",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "4f76a2db-1ef6-4209-a329-5c19d65151c4",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      },
+      {
+        "Id": "96f96b90-7581-4e50-b267-fbca815d72b8",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "6ef1a06f-7253-47a2-8403-852bb60b1639",
+        "ColorId": "Color_6",
+        "Capacity": 3
+      },
+      {
+        "Id": "07ea193f-0cf1-4e2c-b434-1c2ba72d7a2f",
+        "ColorId": "Color_0",
+        "Capacity": 3
+      },
+      {
+        "Id": "68eab948-591c-41ac-abb7-d575022ea733",
+        "ColorId": "Color_2",
+        "Capacity": 3
+      },
+      {
+        "Id": "9f74db36-0b36-4750-8805-2e2f09cd43b1",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "0a82740e-53b1-49c9-8360-90fb87125ddd",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "2d0051d5-9c30-4a16-b1f9-9adf47287dd7",
+        "ColorId": "Color_3",
+        "Capacity": 3
+      },
+      {
+        "Id": "ed69c40b-79bd-48aa-9d82-221d5f4216ab",
+        "ColorId": "Color_1",
+        "Capacity": 3
+      }
+    ]
+  ],
+  "Grid": {
+    "Columns": 6,
+    "Rows": 8,
+    "MatrixList": [
+      {
+        "X": 0,
+        "Y": 0,
+        "Node": {
+          "Position": {
+            "X": 0,
+            "Y": 0
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "9d17566a-1038-4529-b618-d09f55d3d89d",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 1,
+        "Y": 0,
+        "Node": {
+          "Position": {
+            "X": 1,
+            "Y": 0
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "a8bfacfe-0225-49e2-8e62-b86656d917a8",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 2,
+        "Y": 0,
+        "Node": {
+          "Position": {
+            "X": 2,
+            "Y": 0
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "baad4552-37f3-48d7-b1cd-24c8596ae928",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 3,
+        "Y": 0,
+        "Node": {
+          "Position": {
+            "X": 3,
+            "Y": 0
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "1c0e7ccc-877d-41a4-b617-1f8dda60d9c4",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 4,
+        "Y": 0,
+        "Node": {
+          "Position": {
+            "X": 4,
+            "Y": 0
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "8e21591e-08f7-4b7d-b1b7-8e94aed4cf26",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 5,
+        "Y": 0,
+        "Node": {
+          "Position": {
+            "X": 5,
+            "Y": 0
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "36c4a06f-6fd4-4cf3-a049-a57822962d43",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 0,
+        "Y": 1,
+        "Node": {
+          "Position": {
+            "X": 0,
+            "Y": 1
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "a599ae53-fe05-4394-89ad-5fee0c7751ee",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 1,
+        "Y": 1,
+        "Node": {
+          "Position": {
+            "X": 1,
+            "Y": 1
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "ac8d342f-d628-426e-99f6-4cc5e23c201f",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 2,
+        "Y": 1,
+        "Node": {
+          "Position": {
+            "X": 2,
+            "Y": 1
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "c9377595-e853-4187-a33b-683997de46b4",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 3,
+        "Y": 1,
+        "Node": {
+          "Position": {
+            "X": 3,
+            "Y": 1
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "1b677eac-903f-4f34-b47a-fc5c7d43247f",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 4,
+        "Y": 1,
+        "Node": {
+          "Position": {
+            "X": 4,
+            "Y": 1
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "bfd63369-4877-454c-b774-cf393f8c6832",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 5,
+        "Y": 1,
+        "Node": {
+          "Position": {
+            "X": 5,
+            "Y": 1
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "dd9dfb6b-5e8b-44e1-8f9e-668ed69c752a",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 0,
+        "Y": 2,
+        "Node": {
+          "Position": {
+            "X": 0,
+            "Y": 2
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "01e0a285-3239-4f27-a470-106218db01b0",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 1,
+        "Y": 2,
+        "Node": {
+          "Position": {
+            "X": 1,
+            "Y": 2
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "5b736b31-8cb9-475e-95b1-8722ab703233",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 2,
+        "Y": 2,
+        "Node": {
+          "Position": {
+            "X": 2,
+            "Y": 2
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "ad8d596d-3c96-422b-bf46-d243e82e5bbf",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 3,
+        "Y": 2,
+        "Node": {
+          "Position": {
+            "X": 3,
+            "Y": 2
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "ec4165ed-ae42-4427-b3e4-6e1fb40261f2",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 4,
+        "Y": 2,
+        "Node": {
+          "Position": {
+            "X": 4,
+            "Y": 2
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "deb1f3bb-cc85-4fa6-9897-ecdd22d93530",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 5,
+        "Y": 2,
+        "Node": {
+          "Position": {
+            "X": 5,
+            "Y": 2
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "ea29077d-fb90-4576-9d50-6f5a484fc6d0",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 0,
+        "Y": 3,
+        "Node": {
+          "Position": {
+            "X": 0,
+            "Y": 3
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "6ab0f7bc-2740-49b0-8cdd-37ed88d9cfab",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 1,
+        "Y": 3,
+        "Node": {
+          "Position": {
+            "X": 1,
+            "Y": 3
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "c8dec29e-635c-4289-bf69-e63f97615651",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 2,
+        "Y": 3,
+        "Node": {
+          "Position": {
+            "X": 2,
+            "Y": 3
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "edbc9c70-5eea-46d7-b412-2a6d781c719a",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [
+              "00000002-0004-0000-0000-000000000000"
+            ],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 3,
+        "Y": 3,
+        "Node": {
+          "Position": {
+            "X": 3,
+            "Y": 3
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "5a0b0b8b-9ca4-4c04-92f0-bd09ac8445af",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 4,
+        "Y": 3,
+        "Node": {
+          "Position": {
+            "X": 4,
+            "Y": 3
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "8dd6a779-3f70-4b8f-a1a5-a394456c3f18",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 5,
+        "Y": 3,
+        "Node": {
+          "Position": {
+            "X": 5,
+            "Y": 3
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "6a659418-6090-4881-89cf-9a6eb1b841e4",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 0,
+        "Y": 4,
+        "Node": {
+          "Position": {
+            "X": 0,
+            "Y": 4
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "1920a731-cc55-4564-a769-f864caa6f024",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 1,
+        "Y": 4,
+        "Node": {
+          "Position": {
+            "X": 1,
+            "Y": 4
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "84a87555-3497-4d20-93f0-15347991d1dd",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 2,
+        "Y": 4,
+        "Node": {
+          "Position": {
+            "X": 2,
+            "Y": 4
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": null,
+          "ContinuousPipe": {
+            "Id": "6c867aea-6533-4205-a07e-aced2dbc4ad6",
+            "ReservoirQueue": [
+              {
+                "Id": "5d157834-c93d-4292-844e-5d7889b92559",
+                "IsHiddenUntilUnblocked": false,
+                "InteriorContents": [
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  }
+                ],
+                "ExplicitlyBlockedByUnitIds": [],
+                "LinkedUnitIds": []
+              },
+              {
+                "Id": "100fff0e-b544-4cad-b3f9-3a42b1540c07",
+                "IsHiddenUntilUnblocked": false,
+                "InteriorContents": [
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  }
+                ],
+                "ExplicitlyBlockedByUnitIds": [],
+                "LinkedUnitIds": []
+              },
+              {
+                "Id": "f5080b60-7d5b-4bb9-96fb-bcc41ded70eb",
+                "IsHiddenUntilUnblocked": false,
+                "InteriorContents": [
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  }
+                ],
+                "ExplicitlyBlockedByUnitIds": [],
+                "LinkedUnitIds": []
+              },
+              {
+                "Id": "1e63b445-0b2b-496e-8206-bba49da5b6d8",
+                "IsHiddenUntilUnblocked": false,
+                "InteriorContents": [
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  }
+                ],
+                "ExplicitlyBlockedByUnitIds": [],
+                "LinkedUnitIds": []
+              },
+              {
+                "Id": "eac26479-9dcc-476c-bff7-0286a0eeab8f",
+                "IsHiddenUntilUnblocked": false,
+                "InteriorContents": [
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  },
+                  {
+                    "ColorId": "Color_0"
+                  }
+                ],
+                "ExplicitlyBlockedByUnitIds": [],
+                "LinkedUnitIds": []
+              }
+            ],
+            "MaxTotalEmissions": 5
+          }
+        }
+      },
+      {
+        "X": 3,
+        "Y": 4,
+        "Node": {
+          "Position": {
+            "X": 3,
+            "Y": 4
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "ed0c6cb3-44c9-4374-8300-796d50ce4b50",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 4,
+        "Y": 4,
+        "Node": {
+          "Position": {
+            "X": 4,
+            "Y": 4
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "f878173f-ffeb-49db-94aa-1e92bf37ace6",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 5,
+        "Y": 4,
+        "Node": {
+          "Position": {
+            "X": 5,
+            "Y": 4
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "ba05d0d0-e000-4581-8721-383f0d44c6c4",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 0,
+        "Y": 5,
+        "Node": {
+          "Position": {
+            "X": 0,
+            "Y": 5
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "c2a3fc6d-7a35-4c78-8dd5-91d8e1deddd0",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 1,
+        "Y": 5,
+        "Node": {
+          "Position": {
+            "X": 1,
+            "Y": 5
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "663e41f4-5133-4eef-a892-ff41a268669b",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 2,
+        "Y": 5,
+        "Node": {
+          "Position": {
+            "X": 2,
+            "Y": 5
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "a659d09b-f97d-49df-b2a4-70436be062b3",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 3,
+        "Y": 5,
+        "Node": {
+          "Position": {
+            "X": 3,
+            "Y": 5
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "48db0b75-9e90-4706-9941-bde15b1b89d4",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 4,
+        "Y": 5,
+        "Node": {
+          "Position": {
+            "X": 4,
+            "Y": 5
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "db4e0846-2442-4a1c-a5ad-23fba3707eb3",
+            "IsHiddenUntilUnblocked": true,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              },
+              {
+                "ColorId": "Color_5"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 5,
+        "Y": 5,
+        "Node": {
+          "Position": {
+            "X": 5,
+            "Y": 5
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "27393a3e-0009-4445-9065-b34f564c13e7",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 0,
+        "Y": 6,
+        "Node": {
+          "Position": {
+            "X": 0,
+            "Y": 6
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "7af5afd2-eb0e-45df-bec8-c72d3332303f",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 1,
+        "Y": 6,
+        "Node": {
+          "Position": {
+            "X": 1,
+            "Y": 6
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "5751690a-bd0c-4f2c-a2f2-c2ca8c2c64f6",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 2,
+        "Y": 6,
+        "Node": {
+          "Position": {
+            "X": 2,
+            "Y": 6
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "3302bed8-2cac-444f-9e6c-a70e4f69050e",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 3,
+        "Y": 6,
+        "Node": {
+          "Position": {
+            "X": 3,
+            "Y": 6
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "bcf4b176-be18-457a-ba03-3a42bfcf873b",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 4,
+        "Y": 6,
+        "Node": {
+          "Position": {
+            "X": 4,
+            "Y": 6
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "d3c1d06b-2cfc-4be5-82f6-e934e5af426a",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 5,
+        "Y": 6,
+        "Node": {
+          "Position": {
+            "X": 5,
+            "Y": 6
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "8fa56e64-66ca-4d15-a2f6-09bf34934037",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              },
+              {
+                "ColorId": "Color_6"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 0,
+        "Y": 7,
+        "Node": {
+          "Position": {
+            "X": 0,
+            "Y": 7
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "8b6340e1-1d1b-45d4-bb2d-f8ff8a309dc0",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 1,
+        "Y": 7,
+        "Node": {
+          "Position": {
+            "X": 1,
+            "Y": 7
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "4b7f7dd5-a277-4f33-b0a0-7e9d4fde57c5",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              },
+              {
+                "ColorId": "Color_2"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 2,
+        "Y": 7,
+        "Node": {
+          "Position": {
+            "X": 2,
+            "Y": 7
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "e087b400-fd5f-4289-bf42-3a0ad35a0e53",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              },
+              {
+                "ColorId": "Color_3"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 3,
+        "Y": 7,
+        "Node": {
+          "Position": {
+            "X": 3,
+            "Y": 7
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "6358f47c-cd27-44f0-b59a-b244592c1e3b",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              },
+              {
+                "ColorId": "Color_1"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 4,
+        "Y": 7,
+        "Node": {
+          "Position": {
+            "X": 4,
+            "Y": 7
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "8b6b7c72-2acf-48e8-8938-07e2ae1b3c1d",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              },
+              {
+                "ColorId": "Color_0"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      },
+      {
+        "X": 5,
+        "Y": 7,
+        "Node": {
+          "Position": {
+            "X": 5,
+            "Y": 7
+          },
+          "IsPlayablePath": true,
+          "OccupyingUnit": {
+            "Id": "b9f7b7bf-9d7b-4b14-8c2e-807ab39c1423",
+            "IsHiddenUntilUnblocked": false,
+            "InteriorContents": [
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              },
+              {
+                "ColorId": "Color_4"
+              }
+            ],
+            "ExplicitlyBlockedByUnitIds": [],
+            "LinkedUnitIds": []
+          },
+          "ContinuousPipe": null
+        }
+      }
+    ]
+  }
+}
