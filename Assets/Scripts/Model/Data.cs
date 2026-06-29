@@ -35,7 +35,7 @@ public class GameLevelSchema
         public int Rows { get; set; }
         
         // Maps physical coordinates to specific cell behaviors
-        public Dictionary<Coordinate, CellNode> Matrix { get; set; } = new Dictionary<Coordinate, CellNode>();
+        public List<CellNode> Matrix { get; set; } = new List<CellNode>();
     }
 
     public struct Coordinate

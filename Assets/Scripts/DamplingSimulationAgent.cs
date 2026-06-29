@@ -130,15 +130,14 @@ public class DamplingSimulationAgent
     private List<GameLevelSchema.Coordinate> GetPlayableMoves(DamplingGameCore engine)
     {
         List<GameLevelSchema.Coordinate> activeOptionsPool = new List<GameLevelSchema.Coordinate>();
-        foreach (var kvp in engine.ActiveLevelData.Grid.Matrix)
+        foreach (var cellNode in engine.ActiveLevelData.Grid.Matrix)
         {
-            var cellNode = kvp.Value;
             if (cellNode.OccupyingUnit == null || engine.PlayedUnitIds.Contains(cellNode.OccupyingUnit.Id)) 
                 continue;
 
-            if (!engine.IsUnitBlocked(kvp.Key, cellNode.OccupyingUnit))
+            if (!engine.IsUnitBlocked(cellNode.Position, cellNode.OccupyingUnit))
             {
-                activeOptionsPool.Add(kvp.Key);
+                activeOptionsPool.Add(cellNode.Position);
             }
         }
         return activeOptionsPool;

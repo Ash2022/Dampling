@@ -400,14 +400,6 @@ public class LevelEditorWindow : EditorWindow
     // ROBUST SERIALIZATION LAYER (USING NEWTONSOFT JSON WITH KEY FIX)
     // =========================================================================
 
-    // DTO class designed solely to flatten the dictionary for JSON compatibility
-    private class CellNodeSaveData
-    {
-        public int X;
-        public int Y;
-        public GameLevelSchema.CellNode Node;
-    }
-
     private void SaveLevelJson()
     {
         string path = EditorUtility.SaveFilePanel("Save Dampling Level", "", "NewLevel.json", "json");
@@ -424,8 +416,7 @@ public class LevelEditorWindow : EditorWindow
         level.Grid.Columns = gridColumns;
         level.Grid.Rows = gridRows;
 
-        // Flatten the dictionary into a temporary list for safe serialization
-        List<CellNodeSaveData> flattenedMatrix = new List<CellNodeSaveData>();
+        level.Grid.Matrix = new List<GameLevelSchema.CellNode>();
 
         foreach (var kvp in editorMatrix)
         {
@@ -470,26 +461,15 @@ public class LevelEditorWindow : EditorWindow
                 }
             }
 
-            flattenedMatrix.Add(new CellNodeSaveData { X = kvp.Key.x, Y = kvp.Key.y, Node = node });
+            level.Grid.Matrix.Add(node);
         }
-
-        // We use an anonymous object layout to write out everything, injecting the clean list instead of the broken dict
-        var outputPayload = new
-        {
-            level.LevelId,
-            level.LevelName,
-            level.ConveyorBeltMaxCapacity,
-            level.ResolutionQueues,
-            Grid = new { level.Grid.Columns, level.Grid.Rows, MatrixList = flattenedMatrix }
-        };
-
-        Newtonsoft.Json.JsonSerializerSettings settings = new Newtonsoft.Json.JsonSerializerSettings
+        var settings = new Newtonsoft.Json.JsonSerializerSettings
         {
             Formatting = Newtonsoft.Json.Formatting.Indented,
             ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
         };
 
-        string json = Newtonsoft.Json.JsonConvert.SerializeObject(outputPayload, settings);
+        string json = Newtonsoft.Json.JsonConvert.SerializeObject(level, settings);
         File.WriteAllText(path, json);
         AssetDatabase.Refresh();
     }
@@ -501,26 +481,22 @@ public class LevelEditorWindow : EditorWindow
 
         string json = File.ReadAllText(path);
 
-        // Helper structure designed to match our custom flat array payload precisely
-        var containerData = new { LevelId = 0, LevelName = "", ConveyorBeltMaxCapacity = BELT_MAX, ResolutionQueues = new List<List<GameLevelSchema.ContainerData>>(), Grid = new { Columns = 0, Rows = 0, MatrixList = new List<CellNodeSaveData>() } };
+        var levelData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameLevelSchema>(json);
+        if (levelData == null) return;
 
-        var payload = Newtonsoft.Json.JsonConvert.DeserializeAnonymousType(json, containerData);
-        if (payload == null) return;
-
-        gridColumns = payload.Grid.Columns;
-        gridRows = payload.Grid.Rows;
-        queueCount = payload.ResolutionQueues.Count;
+        gridColumns = levelData.Grid.Columns;
+        gridRows = levelData.Grid.Rows;
+        queueCount = levelData.ResolutionQueues.Count;
 
         BuildCanvas();
-        generatedQueues = payload.ResolutionQueues;
+        generatedQueues = levelData.ResolutionQueues;
 
-        foreach (var item in payload.Grid.MatrixList)
+        foreach (var cellNode in levelData.Grid.Matrix)
         {
-            Vector2Int key = new Vector2Int(item.X, item.Y);
+            Vector2Int key = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
             if (!editorMatrix.ContainsKey(key)) continue;
 
             EditorCell cell = editorMatrix[key];
-            var cellNode = item.Node;
 
             if (!cellNode.IsPlayablePath)
             {
@@ -559,7 +535,7 @@ public class LevelEditorWindow : EditorWindow
         level.Grid.Columns = gridColumns;
         level.Grid.Rows = gridRows;
 
-        foreach (var kvp in editorMatrix)
+        foreach (var kvp in editorMatrix.OrderBy(p => p.Key.y).ThenBy(p => p.Key.x))
         {
             var coord = new GameLevelSchema.Coordinate(kvp.Key.x, kvp.Key.y);
             var node = new GameLevelSchema.CellNode { Position = coord };
@@ -596,7 +572,7 @@ public class LevelEditorWindow : EditorWindow
                     }
                 }
             }
-            level.Grid.Matrix.Add(coord, node);
+            level.Grid.Matrix.Add(node);
         }
         return level;
     }

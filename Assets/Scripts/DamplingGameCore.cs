@@ -68,10 +68,10 @@ public class DamplingGameCore
         if (IsGameOver) return outputTransactionHistory;
 
         // 1. Position Verification & Key Lookup
-        var coordinateKey = new GameLevelSchema.Coordinate(x, y);
-        if (!ActiveLevelData.Grid.Matrix.TryGetValue(coordinateKey, out var primaryCellNode))
+        var primaryCellNode = ActiveLevelData.Grid.Matrix.FirstOrDefault(c => c.Position.X == x && c.Position.Y == y);
+        if (primaryCellNode == null)
         {
-            return outputTransactionHistory; // Invalid location targeted
+            return outputTransactionHistory; // Invalid location targeted or cell doesn't exist
         }
 
         var activeUnit = primaryCellNode.OccupyingUnit;
@@ -81,7 +81,7 @@ public class DamplingGameCore
         }
 
         // 2. Dynamic Topological Path Blockage Graph Calculations
-        if (IsUnitBlocked(coordinateKey, activeUnit))
+        if (IsUnitBlocked(primaryCellNode.Position, activeUnit))
         {
             return outputTransactionHistory; // Blocked node interaction rejected
         }
@@ -189,19 +189,18 @@ public class DamplingGameCore
 
     private void EvaluateNewlyUnblockedUnits(List<EngineEvent> transactions)
     {
-        foreach (var kvp in ActiveLevelData.Grid.Matrix)
+        foreach (var cellNode in ActiveLevelData.Grid.Matrix)
         {
-            var cellNode = kvp.Value;
             if (cellNode.OccupyingUnit == null || PlayedUnitIds.Contains(cellNode.OccupyingUnit.Id)) continue;
 
             // Check if this unplayed unit is now unblocked
-            if (!IsUnitBlocked(kvp.Key, cellNode.OccupyingUnit))
+            if (!IsUnitBlocked(cellNode.Position, cellNode.OccupyingUnit))
             {
                 transactions.Add(new EngineEvent
                 {
                     EventType = EngineEventType.UnitUnblocked,
                     TargetId = cellNode.OccupyingUnit.Id,
-                    Payload = new Vector2Int(kvp.Key.X, kvp.Key.Y)
+                    Payload = new Vector2Int(cellNode.Position.X, cellNode.Position.Y)
                 });
             }
         }
@@ -255,8 +254,8 @@ public class DamplingGameCore
         {
             // Check if there is an active unit blocking path directly above it at Y - 1
             var cellAboveKey = new GameLevelSchema.Coordinate(coord.X, coord.Y - 1);
-            if (ActiveLevelData.Grid.Matrix.TryGetValue(cellAboveKey, out var cellAbove))
-            {
+            var cellAbove = ActiveLevelData.Grid.Matrix.FirstOrDefault(c => c.Position.X == cellAboveKey.X && c.Position.Y == cellAboveKey.Y);
+            if (cellAbove != null) {
                 if (cellAbove.OccupyingUnit != null && !PlayedUnitIds.Contains(cellAbove.OccupyingUnit.Id))
                 {
                     return true; // Simple positional line track is blocked
@@ -279,7 +278,7 @@ public class DamplingGameCore
 
     private GameLevelSchema.GridUnit FindUnitById(Guid id)
     {
-        return ActiveLevelData.Grid.Matrix.Values
+        return ActiveLevelData.Grid.Matrix
             .Select(node => node.OccupyingUnit)
             .FirstOrDefault(unit => unit != null && unit.Id == id);
     }

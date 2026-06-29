@@ -40,16 +40,13 @@ public class LevelVisualization : MonoBehaviour
             return;
         }
 
-        // 1. Read the raw text file safely using standard JSON conversion
-        GameLevelSchema rawData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameLevelSchema>(LevelJsonFile.text);
-        if (rawData == null)
+        // 1. Read and deserialize the level data directly into our schema.
+        GameLevelSchema levelData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameLevelSchema>(LevelJsonFile.text);
+        if (levelData == null)
         {
-            Debug.LogError("Failed to deserialize GameLevelSchema from text asset.");
+            Debug.LogError("Failed to deserialize GameLevelSchema from the provided JSON file.");
             return;
         }
-
-        // 2. NEW: Pass it straight through our custom utility class to reconstitute the missing matrix dictionary perfectly!
-        GameLevelSchema levelData = DamplingGameUtils.CloneLevelSchema(rawData);
 
         Vector2 unitSize = GetPrefabSize(UnitPrefab);
         Vector2 containerSize = GetPrefabSize(ContainerPrefab);
@@ -82,14 +79,12 @@ public class LevelVisualization : MonoBehaviour
         float totalGridWidth = columns * unitSize.x;
         float gridStartX = -(totalGridWidth / 2f) + (unitSize.x / 2f);
 
-        // This loop will now execute perfectly because levelData.Grid.Matrix is fully populated!
-        foreach (var kvp in levelData.Grid.Matrix)
+        // This loop now iterates directly over the list of cell nodes.
+        foreach (var cellNode in levelData.Grid.Matrix)
         {
-            int gridX = kvp.Key.X;
-            int gridY = kvp.Key.Y;
-            var cellNode = kvp.Value;
-
             if (!cellNode.IsPlayablePath) continue;
+            int gridX = cellNode.Position.X;
+            int gridY = cellNode.Position.Y;
 
             float worldX = gridStartX + (gridX * unitSize.x);
             float worldY = GridTopY - (gridY * unitSize.y);

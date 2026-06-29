@@ -28,9 +28,8 @@ public static class DamplingGameUtils
         copy.Grid.Columns = source.Grid.Columns;
         copy.Grid.Rows = source.Grid.Rows;
 
-        foreach (var kvp in source.Grid.Matrix)
+        foreach (var sourceNode in source.Grid.Matrix)
         {
-            var sourceNode = kvp.Value;
             var copyNode = new GameLevelSchema.CellNode
             {
                 Position = new GameLevelSchema.Coordinate(sourceNode.Position.X, sourceNode.Position.Y),
@@ -66,8 +65,8 @@ public static class DamplingGameUtils
                 };
             }
 
-            // Map back to the new matrix structure safely using clean copy coordinates
-            copy.Grid.Matrix.Add(new GameLevelSchema.Coordinate(kvp.Key.X, kvp.Key.Y), copyNode);
+            // Add the fully cloned node to the new matrix list
+            copy.Grid.Matrix.Add(copyNode);
         }
 
         return copy;
