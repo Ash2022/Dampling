@@ -224,7 +224,7 @@ public class LevelEditorWindow : EditorWindow
             generatedQueues[i % queueCount].Add(globalContainerPool[i]);
         }
 
-        EditorUtility.DisplayDialog("Success", $"Populated Successfully!\nTotal Units: {totalUnits} ({totalUnits * 9} Damplings)\nTotal Demand Containers: {totalContainersNeeded}", "OK");
+        //EditorUtility.DisplayDialog("Success", $"Populated Successfully!\nTotal Units: {totalUnits} ({totalUnits * 9} Damplings)\nTotal Demand Containers: {totalContainersNeeded}", "OK");
     }
 
     private void DrawEditorWorkspaceSideBySide()
@@ -235,7 +235,12 @@ public class LevelEditorWindow : EditorWindow
 
         // --- LEFT PANEL: MAIN SUPPLY GRID ---
         GUILayout.BeginVertical();
-        GUILayout.Label("Supply Grid Layout (Right-Click Cells to Toggle)", EditorStyles.boldLabel);
+        // Calculate dynamic active units on the fly
+        int activeUnitsCount = editorMatrix.Values.Sum(cell => 
+            cell.Behavior == CellBehavior.Standard ? 1 : 
+            cell.Behavior == CellBehavior.Pipe ? cell.PipeEmissions : 0
+        );
+        GUILayout.Label($"Supply Grid Layout (Active Units: {activeUnitsCount})", EditorStyles.boldLabel);
 
         float gridTotalWidth = gridColumns * (CellSize + Padding);
         float gridTotalHeight = gridRows * (CellSize + Padding);
@@ -332,7 +337,8 @@ public class LevelEditorWindow : EditorWindow
 
         // --- RIGHT PANEL: RESOLUTION QUEUES ---
         GUILayout.BeginVertical();
-        GUILayout.Label("Resolution Demand Queues", EditorStyles.boldLabel);
+        int totalContainersCount = generatedQueues.Sum(q => q.Count);
+        GUILayout.Label($"Resolution Demand Queues (Total Containers: {totalContainersCount})", EditorStyles.boldLabel);
 
         float queuesTotalHeight = Mathf.Max(gridTotalHeight, 300f);
         Rect queueArea = EditorGUILayout.GetControlRect(false, queuesTotalHeight, GUILayout.Width(queueCount * (QueueWidth + Padding)));
