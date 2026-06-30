@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 // =========================================================================
 // UNIFIED LEVEL CONFIGURATION MODEL
@@ -33,7 +34,7 @@ public class GameLevelSchema
     {
         public int Columns { get; set; }
         public int Rows { get; set; }
-        
+
         // Maps physical coordinates to specific cell behaviors
         public List<CellNode> Matrix { get; set; } = new List<CellNode>();
     }
@@ -42,7 +43,7 @@ public class GameLevelSchema
     {
         public int X { get; set; }
         public int Y { get; set; } // Y=0 typically represents the playable exit row
-        
+
         public Coordinate(int x, int y) { X = x; Y = y; }
     }
 
@@ -50,10 +51,10 @@ public class GameLevelSchema
     {
         public Coordinate Position { get; set; }
         public bool IsPlayablePath { get; set; } = true; // False creates un-passable gaps/holes in the map
-        
+
         // The interactive content occupying this cell space
         public GridUnit OccupyingUnit { get; set; }
-        
+
         // Pipe/Dispenser Behavior: If assigned, this cell behaves as an infinite or finite generator
         public PipeGenerator ContinuousPipe { get; set; }
     }
@@ -68,7 +69,7 @@ public class GameLevelSchema
 
         // Explicit Dependency Graph overrides (For non-trivial structural locks)
         public List<Guid> ExplicitlyBlockedByUnitIds { get; set; } = new List<Guid>();
-        
+
         // Linkage Feature: Triggering this unit forces the simultaneous play of these targeted units
         public List<Guid> LinkedUnitIds { get; set; } = new List<Guid>();
     }
@@ -81,11 +82,17 @@ public class GameLevelSchema
     public class PipeGenerator
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        
+
         // The sequence of units queued inside the pipe to emit into the grid when space clears
         public List<GridUnit> ReservoirQueue { get; set; } = new List<GridUnit>();
-        
+
         // Limits how many units this generator can emit over its lifetime (infinite if null)
-        public int? MaxTotalEmissions { get; set; } 
+        public int? MaxTotalEmissions { get; set; }
+    }
+
+    public class BoardVisualReferences
+    {
+        public Dictionary<Vector2Int, UnitView> UnitViews { get; set; } = new Dictionary<Vector2Int, UnitView>();
+        public Dictionary<Guid, ContainerView> ContainerViews { get; set; } = new Dictionary<Guid, ContainerView>();
     }
 }

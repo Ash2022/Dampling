@@ -1,57 +1,31 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
+using static GameLevelSchema;
 
 public class LevelVisualization : MonoBehaviour
 {
-    [Header("Data Configurations")]
-    public TextAsset LevelJsonFile;
-
     [Header("Visual Prefabs")]
     public GameObject UnitPrefab;
     public GameObject ContainerPrefab;
 
     [Header("Manual Y-Axis Baselines")]
-    [Tooltip("The vertical position of the first container (head of the queue). Subsequent containers stack upwards (+Y).")]
     public float QueueBottomY = 3.0f;
-    [Tooltip("The vertical position of the top grid row (Y=0). Subsequent rows stack downwards (-Y).")]
     public float GridTopY = -1.0f;
 
-    // --- Internal Runtime Object Tracking ---
     private List<GameObject> spawnedVisualElements = new List<GameObject>();
 
-    void Start()
-    {
-        BuildLevel();
-    }
-
-    /// <summary>
-    /// Parses the configured JSON file data and instantiates the 2D visual layout in the scene.
-    /// </summary>
-    
-    public void BuildLevel()
+    public BoardVisualReferences RenderInitialBoard(GameLevelSchema levelData)
     {
         ClearCurrentVisualization();
-
-        if (LevelJsonFile == null)
-        {
-            Debug.LogError("Cannot build level visualization! Level JSON TextAsset is missing.");
-            return;
-        }
-
-        // 1. Read and deserialize the level data directly into our schema.
-        GameLevelSchema levelData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameLevelSchema>(LevelJsonFile.text);
-        if (levelData == null)
-        {
-            Debug.LogError("Failed to deserialize GameLevelSchema from the provided JSON file.");
-            return;
-        }
+        
+        // Instantiate the packet to return tracking data straight to GameManager
+        BoardVisualReferences references = new BoardVisualReferences();
 
         Vector2 unitSize = GetPrefabSize(UnitPrefab);
         Vector2 containerSize = GetPrefabSize(ContainerPrefab);
 
-        // 3. GENERATE AND CENTER DEMAND QUEUES
+        // 1. GENERATE AND CENTER DEMAND QUEUES
         int totalQueues = levelData.ResolutionQueues.Count;
         float totalQueuesWidth = totalQueues * containerSize.x;
         float queueStartX = -(totalQueuesWidth / 2f) + (containerSize.x / 2f);
@@ -69,22 +43,27 @@ public class LevelVisualization : MonoBehaviour
                 GameObject containerInstance = Instantiate(ContainerPrefab, spawnPosition, Quaternion.identity, transform);
                 spawnedVisualElements.Add(containerInstance);
 
+                ContainerView containerView = containerInstance.GetComponent<ContainerView>();
+                containerView.Initialize(activeQueueList[c]);
+
                 containerInstance.name = $"Container_Q{q}_Idx{c}_{activeQueueList[c].ColorId}";
-                ApplyColorTint(containerInstance, activeQueueList[c].ColorId);
+
+                // Map reference by unique ID for instant event resolution
+                references.ContainerViews.Add(activeQueueList[c].Id, containerView);
             }
         }
 
-        // 4. GENERATE AND CENTER SUPPLY GRID MAP
+        // 2. GENERATE AND CENTER SUPPLY GRID MAP
         int columns = levelData.Grid.Columns;
         float totalGridWidth = columns * unitSize.x;
         float gridStartX = -(totalGridWidth / 2f) + (unitSize.x / 2f);
 
-        // This loop now iterates directly over the list of cell nodes.
         foreach (var cellNode in levelData.Grid.Matrix)
         {
             if (!cellNode.IsPlayablePath) continue;
             int gridX = cellNode.Position.X;
             int gridY = cellNode.Position.Y;
+            Vector2Int coord = new Vector2Int(gridX, gridY);
 
             float worldX = gridStartX + (gridX * unitSize.x);
             float worldY = GridTopY - (gridY * unitSize.y);
@@ -93,35 +72,20 @@ public class LevelVisualization : MonoBehaviour
             GameObject unitInstance = Instantiate(UnitPrefab, spawnPosition, Quaternion.identity, transform);
             spawnedVisualElements.Add(unitInstance);
 
-            if (cellNode.ContinuousPipe != null)
-            {
-                unitInstance.name = $"PipeUnit_({gridX},{gridY})";
-                var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
-                string pipeColorId = firstUnit?.InteriorContents.FirstOrDefault()?.ColorId ?? "";
-                ApplyColorTint(unitInstance, pipeColorId);
-            }
-            else if (cellNode.OccupyingUnit != null)
-            {
-                unitInstance.name = $"StandardUnit_({gridX},{gridY})";
-                string unitColorId = cellNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorId ?? "";
-                ApplyColorTint(unitInstance, unitColorId);
-                
-                if (cellNode.OccupyingUnit.IsHiddenUntilUnblocked)
-                {
-                    ApplyHiddenStateOverlay(unitInstance);
-                }
-            }
-            else
-            {
-                unitInstance.name = $"EmptyCell_({gridX},{gridY})";
-                ApplyColorTint(unitInstance, "");
-            }
+            UnitView unitView = unitInstance.GetComponent<UnitView>();
+            unitView.Initialize(cellNode);
+
+            unitInstance.name = cellNode.ContinuousPipe != null ? $"PipeUnit_({gridX},{gridY})" :
+                                cellNode.OccupyingUnit != null ? $"StandardUnit_({gridX},{gridY})" : 
+                                $"EmptyCell_({gridX},{gridY})";
+
+            // Map reference by space tracking coordinate
+            references.UnitViews.Add(coord, unitView);
         }
+
+        return references;
     }
 
-    /// <summary>
-    /// Destroys all currently spawned objects to clear the workspace canvas before rebuilding.
-    /// </summary>
     public void ClearCurrentVisualization()
     {
         foreach (var element in spawnedVisualElements)
@@ -135,8 +99,6 @@ public class LevelVisualization : MonoBehaviour
         spawnedVisualElements.Clear();
     }
 
-    // --- Helper Utility Methods ---
-
     private Vector2 GetPrefabSize(GameObject prefab)
     {
         if (prefab == null) return Vector2.one;
@@ -145,50 +107,6 @@ public class LevelVisualization : MonoBehaviour
         {
             return spriteRenderer.bounds.size;
         }
-        return Vector2.one; // Fallback bounds size if sprite cannot be parsed safely
-    }
-
-    private void ApplyColorTint(GameObject targetObject, string colorId)
-    {
-        var spriteRenderer = targetObject.GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null) return;
-
-        if (string.IsNullOrEmpty(colorId))
-        {
-            spriteRenderer.color = new Color(0.85f, 0.85f, 0.85f, 1f); // Empty fallback gray
-            return;
-        }
-
-        string[] parts = colorId.Split('_');
-        if (parts.Length < 2 || !int.TryParse(parts[1], out int index))
-        {
-            spriteRenderer.color = Color.gray;
-            return;
-        }
-
-        // Match color array metrics straight out of your editor script profile setup
-        spriteRenderer.color = index switch
-        {
-            0 => new Color(0.85f, 0.23f, 0.23f), // Vivid Red
-            1 => new Color(0.18f, 0.67f, 0.18f), // Vivid Green
-            2 => new Color(0.14f, 0.38f, 0.78f), // Deep Blue
-            3 => new Color(0.88f, 0.72f, 0.12f), // Clear Yellow
-            4 => new Color(0.53f, 0.18f, 0.68f), // Purple
-            5 => new Color(0.12f, 0.72f, 0.72f), // Teal
-            6 => new Color(0.88f, 0.45f, 0.12f), // Orange
-            7 => new Color(0.44f, 0.26f, 0.12f), // Brown
-            8 => new Color(0.88f, 0.12f, 0.56f), // Pink
-            _ => new Color(0.58f, 0.63f, 0.67f)  // Slate
-        };
-    }
-
-    private void ApplyHiddenStateOverlay(GameObject targetObject)
-    {
-        var spriteRenderer = targetObject.GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null) return;
-
-        // Multiply down current sprite alpha/colors to create a distinct dimmed visual profile
-        Color baseColor = spriteRenderer.color;
-        spriteRenderer.color = new Color(baseColor.r * 0.3f, baseColor.g * 0.3f, baseColor.b * 0.3f, 1.0f);
+        return Vector2.one;
     }
 }

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 public static class DamplingGameUtils
 {
@@ -70,5 +71,33 @@ public static class DamplingGameUtils
         }
 
         return copy;
+    }
+
+    public static Color GetColorById(string colorId)
+    {
+        if (string.IsNullOrEmpty(colorId))
+        {
+            return new Color(0.85f, 0.85f, 0.85f, 1f); // Empty fallback gray
+        }
+
+        string[] parts = colorId.Split('_');
+        if (parts.Length < 2 || !int.TryParse(parts[1], out int index))
+        {
+            return Color.gray;
+        }
+
+        return index switch
+        {
+            0 => new Color(0.85f, 0.23f, 0.23f), // Vivid Red
+            1 => new Color(0.18f, 0.67f, 0.18f), // Vivid Green
+            2 => new Color(0.14f, 0.38f, 0.78f), // Deep Blue
+            3 => new Color(0.88f, 0.72f, 0.12f), // Clear Yellow
+            4 => new Color(0.53f, 0.18f, 0.68f), // Purple
+            5 => new Color(0.12f, 0.72f, 0.72f), // Teal
+            6 => new Color(0.88f, 0.45f, 0.12f), // Orange
+            7 => new Color(0.44f, 0.26f, 0.12f), // Brown
+            8 => new Color(0.88f, 0.12f, 0.56f), // Pink
+            _ => new Color(0.58f, 0.63f, 0.67f)  // Slate
+        };
     }
 }

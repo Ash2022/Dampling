@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 8159480178037923324}
   - component: {fileID: 8433305387038439025}
+  - component: {fileID: 633065613089215516}
   m_Layer: 0
   m_Name: Container
   m_TagString: Untagged
@@ -91,3 +92,16 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &633065613089215516
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7279348674696300159}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 061a2962f2abedb41a0e310375f1839a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ContainerView
+  spriteRenderer: {fileID: 8433305387038439025}
