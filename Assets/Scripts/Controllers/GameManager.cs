@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using static GameLevelSchema;
+using System.Threading.Tasks;
 
 public class GameManager : MonoBehaviour
 {
@@ -16,13 +17,13 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private LevelVisualization levelVisualization;
 
-    private DamplingGameCore gameCore; 
+    private DamplingGameCore gameCore;
     private GameLevelSchema currentLevelData;
     private GameState currentState;
-    
+
     // Persistent progression tracker
     public int CurrentLevelIndex { get; private set; } = 0;
-    
+
     private BoardVisualReferences activeBoardReferences;
 
     private void Awake()
@@ -31,23 +32,26 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    private void Start()
+    private async Task Start()
     {
-        InitializeGame();
+        await InitializeGame();
+
+        StartLevel(CurrentLevelIndex);
     }
 
     /// <summary>
     /// Natively executes EXACTLY ONCE at boot-up to set up persistent static subsystems.
     /// </summary>
-    public void InitializeGame()
+    public async Task InitializeGame()
     {
         currentState = GameState.Initializing;
 
-        // Initialize persistent asset databases once
+        // Step 1: Await the multi-frame async memory instantiation allocation loop
+        await DamplingObjectPool.Instance.InitializePoolsAsync();
+
+        // Step 2: Proceed with standard model loading and data processing now that objects are ready
         ModelManager.Instance.Initialize();
 
-        // Boot-up pipeline complete, route automatically into the first level loop sequence
-        StartLevel(CurrentLevelIndex);
     }
 
     /// <summary>
@@ -106,7 +110,7 @@ public class GameManager : MonoBehaviour
                         // Animate belt transfers here
                     }
                     break;
-                    
+
                 case DamplingGameCore.EngineEventType.LevelWon:
                     // Advance progression tracking systematically
                     CurrentLevelIndex++;
@@ -115,7 +119,7 @@ public class GameManager : MonoBehaviour
                     return;
             }
         }
-        
+
         if (gameCore.IsGameOver)
         {
             currentState = GameState.GameEnded;
@@ -124,4 +128,24 @@ public class GameManager : MonoBehaviour
 
         currentState = GameState.ReadyToPlay;
     }
+/*
+    void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector2 mousePos2D = new Vector2(mouseWorldPos.x, mouseWorldPos.y);
+
+            RaycastHit2D hit = Physics2D.Raycast(mousePos2D, Vector2.zero);
+
+            if (hit.collider != null)
+            {
+                Debug.Log($"SUCCESS: Manually hit collider named: {hit.collider.name}");
+            }
+            else
+            {
+                Debug.Log("FAIL: Mouse clicked empty space. No 2D colliders detected under the pointer.");
+            }
+        }
+    }*/
 }

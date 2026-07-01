@@ -12,9 +12,9 @@ GameObject:
   - component: {fileID: 4129154265375366259}
   - component: {fileID: -1970000133176562565}
   - component: {fileID: -4760122729199134375}
-  - component: {fileID: 4142804663464926702}
+  - component: {fileID: 3733175969623812036}
   m_Layer: 0
-  m_Name: Ball
+  m_Name: BallPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -157,7 +157,7 @@ CircleCollider2D:
   m_CompositeOrder: 0
   m_Offset: {x: 0, y: 0}
   m_Radius: 0.15
---- !u!114 &4142804663464926702
+--- !u!114 &3733175969623812036
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -166,6 +166,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 5515439124192318093}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 52e4f730f33c4ba49bc423013b80c514, type: 3}
+  m_Script: {fileID: 11500000, guid: 66accb33b8dae684a8412afcb4b7692d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BallView
+  spriteRenderer: {fileID: 4129154265375366259}

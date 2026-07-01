@@ -20,7 +20,8 @@ public class ModelManager : MonoBehaviour
         
         foreach (var asset in levelTextAssets)
         {
-            GameLevelSchema levelData = JsonUtility.FromJson<GameLevelSchema>(asset.text);
+            // Use Newtonsoft Json.NET to accurately parse complex, nested multi-dimensional data schemas
+            GameLevelSchema levelData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameLevelSchema>(asset.text);
             loadedLevels.Add(levelData);
         }
     }

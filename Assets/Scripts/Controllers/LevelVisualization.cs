@@ -40,7 +40,7 @@ public class LevelVisualization : MonoBehaviour
                 float targetY = QueueBottomY + (c * containerSize.y);
                 Vector3 spawnPosition = new Vector3(targetX, targetY, 0f);
 
-                GameObject containerInstance = Instantiate(ContainerPrefab, spawnPosition, Quaternion.identity, transform);
+                GameObject containerInstance = DamplingObjectPool.Instance.GetContainer(spawnPosition, Quaternion.identity, transform);
                 spawnedVisualElements.Add(containerInstance);
 
                 ContainerView containerView = containerInstance.GetComponent<ContainerView>();
@@ -69,7 +69,7 @@ public class LevelVisualization : MonoBehaviour
             float worldY = GridTopY - (gridY * unitSize.y);
             Vector3 spawnPosition = new Vector3(worldX, worldY, 0f);
 
-            GameObject unitInstance = Instantiate(UnitPrefab, spawnPosition, Quaternion.identity, transform);
+            GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
             spawnedVisualElements.Add(unitInstance);
 
             UnitView unitView = unitInstance.GetComponent<UnitView>();
@@ -92,8 +92,20 @@ public class LevelVisualization : MonoBehaviour
         {
             if (element != null)
             {
-                if (Application.isPlaying) Destroy(element);
-                else DestroyImmediate(element);
+                // SWAPPED: Destroy/DestroyImmediate calls replaced with pool recycling
+                if (element.GetComponent<UnitView>() != null)
+                {
+                    DamplingObjectPool.Instance.ReturnUnit(element);
+                }
+                else if (element.GetComponent<ContainerView>() != null)
+                {
+                    DamplingObjectPool.Instance.ReturnContainer(element);
+                }
+                else
+                {
+                    if (Application.isPlaying) Destroy(element);
+                    else DestroyImmediate(element);
+                }
             }
         }
         spawnedVisualElements.Clear();
