@@ -44,7 +44,7 @@ public class LevelVisualization : MonoBehaviour
                 spawnedVisualElements.Add(containerInstance);
 
                 ContainerView containerView = containerInstance.GetComponent<ContainerView>();
-                containerView.Initialize(activeQueueList[c]);
+                containerView.Initialize(activeQueueList[c],q);
 
                 containerInstance.name = $"Container_Q{q}_Idx{c}_{activeQueueList[c].ColorId}";
 

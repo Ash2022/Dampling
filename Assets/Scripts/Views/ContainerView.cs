@@ -1,14 +1,111 @@
 using UnityEngine;
-using System.Linq;
+using System.Collections.Generic;
+using DG.Tweening;
 using static GameLevelSchema;
 
 public class ContainerView : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
+    [SerializeField] private Transform[] localBallTargetSlots; // Assign 3 local attachment transforms in inspector
 
-    public void Initialize(ContainerData containerData)
+    public int QueueIndex { get; set; }
+
+    private List<BallView> absorbedBallViews = new List<BallView>();
+    private ContainerData dataModel;
+    private int reservedSlotsCount = 0; // Guard variable to prevent double-claiming on the same frame
+
+    public string CurrentRequiredColorId => dataModel != null ? dataModel.ColorId : string.Empty;
+    public ContainerData Model => dataModel;
+
+    public void Initialize(ContainerData containerData,int orgQueueIndex)
     {
+        dataModel = containerData;
+        reservedSlotsCount = dataModel.FilledSlotsCount; // Synchronize with data layer state
+        QueueIndex = orgQueueIndex;
+
         string colorId = containerData.ColorId;
         spriteRenderer.color = DamplingGameUtils.GetColorById(colorId);
+
+        // Reset visual alphas/scales back to normal defaults when pulled from pool
+        spriteRenderer.DOComplete();
+        spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 1f);
+        transform.localScale = Vector3.one;
+    }
+
+    /// <summary>
+    /// Checks if the container can accept a ball and reserves a visual slot atomically.
+    /// </summary>
+    public bool TryReserveTargetSlot(out Vector3 targetWorldPosition)
+    {
+        targetWorldPosition = Vector3.zero;
+
+        if (dataModel == null || reservedSlotsCount >= dataModel.Capacity)
+            return false;
+
+        // Use local attachment references, fallback to math offsets if slots aren't manually assigned
+        if (localBallTargetSlots != null && reservedSlotsCount < localBallTargetSlots.Length)
+        {
+            targetWorldPosition = localBallTargetSlots[reservedSlotsCount].position;
+        }
+        else
+        {
+            // Vertical stacking fallback calculation (+0.6f units per ball upwards)
+            targetWorldPosition = transform.position + new Vector3(0f, reservedSlotsCount * 0.6f, 0f);
+        }
+
+        reservedSlotsCount++;
+        return true;
+    }
+
+    /// <summary>
+    /// Atomically updates the raw backend data model layer state once the ball physically lands.
+    /// </summary>
+    public void OnBallAbsorbed(BallView ballView)
+    {
+        if (dataModel == null || ballView == null) return;
+
+        // Track the component directly—no runtime lookups needed
+        absorbedBallViews.Add(ballView);
+        dataModel.FilledSlotsCount++;
+
+        transform.DOPunchScale(new Vector3(0.15f, 0.15f, 0f), 0.15f, 10, 1f);
+
+        if (dataModel.FilledSlotsCount >= dataModel.Capacity)
+        {
+            ExecuteFulfillmentSequence();
+        }
+    }
+
+    private void ExecuteFulfillmentSequence()
+    {
+        Sequence clearSeq = DOTween.Sequence();
+        clearSeq.Append(transform.DOScale(Vector3.zero, 0.25f).SetEase(Ease.InBack));
+        clearSeq.Join(spriteRenderer.DOFade(0f, 0.25f));
+
+        // Smoothly fade out the nested balls using the pre-cached view component
+        foreach (var ballView in absorbedBallViews)
+        {
+            if (ballView != null)
+            {
+                // Direct access bypasses GetComponent completely
+                clearSeq.Join(ballView.SR.DOFade(0f, 0.25f));
+            }
+        }
+
+        clearSeq.OnComplete(() =>
+        {
+            // Bulk recycle directly via the GameObject accessor on the component
+            foreach (var ballView in absorbedBallViews)
+            {
+                if (ballView != null) DamplingObjectPool.Instance.ReturnBall(ballView.gameObject);
+            }
+            absorbedBallViews.Clear();
+
+            // NOTIFY MANAGER: Tell GameManager exactly which column index needs to advance
+            GameManager.Instance.AdvanceContainerQueue(QueueIndex, this);
+
+            DamplingObjectPool.Instance.ReturnContainer(gameObject);
+        });
+        clearSeq.Play();
     }
 }

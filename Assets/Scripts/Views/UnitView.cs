@@ -84,9 +84,6 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     public void OnPointerClick(PointerEventData eventData)
     {
-
-        Debug.Log("Mouse Down");
-
         OnViewClicked();
     }
 

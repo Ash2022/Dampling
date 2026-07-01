@@ -28,6 +28,7 @@ public class GameLevelSchema
         public Guid Id { get; set; } = Guid.NewGuid();
         public string ColorId { get; set; }
         public int Capacity { get; set; } = 3;
+        public int FilledSlotsCount { get; set; } = 0;
     }
 
     public class GridTopology

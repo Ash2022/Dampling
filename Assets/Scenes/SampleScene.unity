@@ -1023,7 +1023,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LevelVisualization
   UnitPrefab: {fileID: 4821244711540172710, guid: 5c28b3c190ae4e144af256b1ed1c7582, type: 3}
   ContainerPrefab: {fileID: 7279348674696300159, guid: cdf339978a2dd0546bf06cbd19877966, type: 3}
-  QueueBottomY: 3
+  QueueBottomY: 2.15
   GridTopY: -2
 --- !u!1 &1778849751
 GameObject:
@@ -1171,6 +1171,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   levelVisualization: {fileID: 1764001290}
+  beltGenerator: {fileID: 1502354385}
 --- !u!4 &2070676745
 Transform:
   m_ObjectHideFlags: 0

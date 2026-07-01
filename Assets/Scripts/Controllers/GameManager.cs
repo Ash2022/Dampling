@@ -2,9 +2,14 @@ using UnityEngine;
 using System.Collections.Generic;
 using static GameLevelSchema;
 using System.Threading.Tasks;
+using System;
+using System.Linq;
+using DG.Tweening;
 
 public class GameManager : MonoBehaviour
 {
+    const int BELT_CAPACITY = 28;
+
     public enum GameState
     {
         Initializing,
@@ -16,6 +21,7 @@ public class GameManager : MonoBehaviour
     public static GameManager Instance { get; private set; }
 
     [SerializeField] private LevelVisualization levelVisualization;
+    [SerializeField] private BeltGenerator beltGenerator;
 
     private DamplingGameCore gameCore;
     private GameLevelSchema currentLevelData;
@@ -46,6 +52,8 @@ public class GameManager : MonoBehaviour
     {
         currentState = GameState.Initializing;
 
+        beltGenerator.InitializeBelt(BELT_CAPACITY);
+
         // Step 1: Await the multi-frame async memory instantiation allocation loop
         await DamplingObjectPool.Instance.InitializePoolsAsync();
 
@@ -71,6 +79,8 @@ public class GameManager : MonoBehaviour
 
         // Step 3: Wipe past scene instances and render the fresh board layout array mapping setup
         activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData);
+
+        beltGenerator.StartBeltMovement();
 
         currentState = GameState.ReadyToPlay;
     }
@@ -115,7 +125,7 @@ public class GameManager : MonoBehaviour
                     // Advance progression tracking systematically
                     CurrentLevelIndex++;
                     // In the future, trigger UI panel here before starting next level route
-                    StartLevel(CurrentLevelIndex);
+                    //StartLevel(CurrentLevelIndex);
                     return;
             }
         }
@@ -128,24 +138,24 @@ public class GameManager : MonoBehaviour
 
         currentState = GameState.ReadyToPlay;
     }
-/*
-    void Update()
+
+    public void AdvanceContainerQueue(int queueIndex, ContainerView resolvedView)
+{
+    // 1. Fixed spacing delta based directly on your layout rules
+    float containerSpacingY = 0.3f; 
+
+    // 2. Loop directly over your active references tracking dictionary values
+    var remainingViewsInColumn = activeBoardReferences.ContainerViews.Values
+        .Where(v => v != null && v.QueueIndex == queueIndex && v != resolvedView)
+        .ToList();
+
+    // 3. Shift the verified active presentation views down cleanly
+    foreach (var container in remainingViewsInColumn)
     {
-        if (Input.GetMouseButtonDown(0))
-        {
-            Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Vector2 mousePos2D = new Vector2(mouseWorldPos.x, mouseWorldPos.y);
-
-            RaycastHit2D hit = Physics2D.Raycast(mousePos2D, Vector2.zero);
-
-            if (hit.collider != null)
-            {
-                Debug.Log($"SUCCESS: Manually hit collider named: {hit.collider.name}");
-            }
-            else
-            {
-                Debug.Log("FAIL: Mouse clicked empty space. No 2D colliders detected under the pointer.");
-            }
-        }
-    }*/
+        Vector3 targetPosition = container.transform.position - new Vector3(0f, containerSpacingY, 0f);
+        
+        container.transform.DOComplete(); 
+        container.transform.DOMove(targetPosition, 0.3f).SetEase(Ease.OutBack);
+    }
+}
 }

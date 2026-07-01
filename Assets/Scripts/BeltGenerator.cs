@@ -21,14 +21,23 @@ public class BeltGenerator : MonoBehaviour
     private Vector3 upDir;
     private float currentOffset;
 
-    void Awake()
-    {
-        GenerateBelt();
-    }
+    bool beltActive = false;
 
     void Update()
     {
-        MoveBelt();
+        if(beltActive)
+            MoveBelt();
+    }
+
+    public void InitializeBelt(int levelSlotCount)
+    {
+        slotCount = levelSlotCount;
+        GenerateBelt();        
+    }
+
+    public void StartBeltMovement()
+    {
+        beltActive = true;
     }
 
     void GenerateBelt()
