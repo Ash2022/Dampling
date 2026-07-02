@@ -19,6 +19,9 @@ public class BeltGenerator : MonoBehaviour
     private float curveLength;
     private Vector3 right;
     private Vector3 upDir;
+
+    private const int PATH_RESOLUTION = 200;
+    private Vector3[] pathPoints;
     private float currentOffset;
 
     bool beltActive = false;
@@ -52,6 +55,14 @@ public class BeltGenerator : MonoBehaviour
         curveLength = Mathf.PI * radius;
         perimeter = (straightLength * 2f) + (curveLength * 2f);
 
+        // Pre-calculate the path points for O(1) lookup
+        pathPoints = new Vector3[PATH_RESOLUTION];
+        for (int i = 0; i < PATH_RESOLUTION; i++)
+        {
+            float d = (perimeter / PATH_RESOLUTION) * i;
+            pathPoints[i] = CalculatePositionAtDistance(d);
+        }
+
         for (int i = 0; i < slotCount; i++)
         {
             GameObject newSlot = Instantiate(slotPrefab, Vector3.zero, Quaternion.identity, transform);
@@ -78,42 +89,28 @@ public class BeltGenerator : MonoBehaviour
 
         for (int i = 0; i < slotCount; i++)
         {
-            float d = (currentOffset + (i * stepDistance)) % perimeter;
-            if (d < 0) d += perimeter;
+            float distance = (currentOffset + (i * stepDistance)) % perimeter;
+            if (distance < 0) distance += perimeter;
 
-            Vector3 pos = Vector3.zero;
+            // Find position in the pre-calculated path array
+            float pathT = distance / perimeter;
+            float floatIndex = pathT * (PATH_RESOLUTION - 1);
+            int index1 = (int)floatIndex;
+            int index2 = (index1 + 1) % PATH_RESOLUTION;
+            float lerpT = floatIndex - index1;
 
-            if (d < straightLength)
-            {
-                float t = d / straightLength;
-                Vector3 start = leftCenter.position + upDir * radius;
-                Vector3 end = rightCenter.position + upDir * radius;
-                pos = Vector3.Lerp(start, end, t);
-            }
-            else if (d < straightLength + curveLength)
-            {
-                float distInCurve = d - straightLength;
-                float angle = distInCurve / radius; 
-                Vector3 dir = (upDir * Mathf.Cos(angle)) + (right * Mathf.Sin(angle));
-                pos = rightCenter.position + dir * radius;
-            }
-            else if (d < (straightLength * 2f) + curveLength)
-            {
-                float distInStraight = d - (straightLength + curveLength);
-                float t = distInStraight / straightLength;
-                Vector3 start = rightCenter.position - upDir * radius;
-                Vector3 end = leftCenter.position - upDir * radius;
-                pos = Vector3.Lerp(start, end, t);
-            }
-            else
-            {
-                float distInCurve = d - ((straightLength * 2f) + curveLength);
-                float angle = distInCurve / radius;
-                Vector3 dir = (-upDir * Mathf.Cos(angle)) - (right * Mathf.Sin(angle));
-                pos = leftCenter.position + dir * radius;
-            }
-
-            slots[i].position = pos;
+            slots[i].position = Vector3.Lerp(pathPoints[index1], pathPoints[index2], lerpT);
         }
+    }
+
+    private Vector3 CalculatePositionAtDistance(float d)
+    {
+        if (d < straightLength)
+            return Vector3.Lerp(leftCenter.position + upDir * radius, rightCenter.position + upDir * radius, d / straightLength);
+        if (d < straightLength + curveLength)
+            return rightCenter.position + ((upDir * Mathf.Cos((d - straightLength) / radius)) + (right * Mathf.Sin((d - straightLength) / radius))) * radius;
+        if (d < (straightLength * 2f) + curveLength)
+            return Vector3.Lerp(rightCenter.position - upDir * radius, leftCenter.position - upDir * radius, (d - (straightLength + curveLength)) / straightLength);
+        return leftCenter.position + ((-upDir * Mathf.Cos((d - ((straightLength * 2f) + curveLength)) / radius)) - (right * Mathf.Sin((d - ((straightLength * 2f) + curveLength)) / radius))) * radius;
     }
 }

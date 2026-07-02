@@ -6,7 +6,8 @@ using UnityEngine;
 public class DamplingGameCore
 {
     // --- Runtime Core States ---
-    public GameLevelSchema ActiveLevelData { get; private set; }
+    public GameLevelSchema ActiveLevelData { get; set; }
+    private Dictionary<GameLevelSchema.Coordinate, GameLevelSchema.CellNode> gridMatrix;
     public List<GameLevelSchema.DumplingItem> VirtualBelt { get; private set; }
     public List<List<GameLevelSchema.ContainerData>> DynamicQueues { get; private set; }
     public HashSet<Guid> PlayedUnitIds { get; private set; }
@@ -42,6 +43,12 @@ public class DamplingGameCore
         IsGameOver = false;
         IsGameWon = false;
 
+        // Convert the grid list to a dictionary for O(1) lookups.
+        gridMatrix = new Dictionary<GameLevelSchema.Coordinate, GameLevelSchema.CellNode>();
+        foreach (var node in ActiveLevelData.Grid.Matrix) {
+            gridMatrix[node.Position] = node;
+        }
+
         // Instantiate dynamic deep-cloned tracking copies of the demand resolution layout structures
         DynamicQueues = new List<List<GameLevelSchema.ContainerData>>();
         foreach (var originalQueue in levelData.ResolutionQueues)
@@ -68,12 +75,9 @@ public class DamplingGameCore
         if (IsGameOver) return outputTransactionHistory;
 
         // 1. Position Verification & Key Lookup
-        var primaryCellNode = ActiveLevelData.Grid.Matrix.FirstOrDefault(c => c.Position.X == x && c.Position.Y == y);
-        if (primaryCellNode == null)
-        {
-            return outputTransactionHistory; // Invalid location targeted or cell doesn't exist
-        }
-
+        var coord = new GameLevelSchema.Coordinate(x, y);
+        if (!gridMatrix.TryGetValue(coord, out var primaryCellNode)) return outputTransactionHistory;
+        
         var activeUnit = primaryCellNode.OccupyingUnit;
         if (activeUnit == null || PlayedUnitIds.Contains(activeUnit.Id))
         {
@@ -286,10 +290,9 @@ public class DamplingGameCore
             {
                 if (visited.Contains(neighborCoord)) continue;
 
-                var neighborCell = ActiveLevelData.Grid.Matrix.FirstOrDefault(c => c.Position.X == neighborCoord.X && c.Position.Y == neighborCoord.Y);
-
                 // A cell is a valid path node if it exists, is playable, and is empty (or its unit is already played).
-                if (neighborCell != null && neighborCell.IsPlayablePath && (neighborCell.OccupyingUnit == null || PlayedUnitIds.Contains(neighborCell.OccupyingUnit.Id)))
+                if (gridMatrix.TryGetValue(neighborCoord, out var neighborCell) && 
+                    neighborCell.IsPlayablePath && (neighborCell.OccupyingUnit == null || PlayedUnitIds.Contains(neighborCell.OccupyingUnit.Id)))
                 {
                     if (neighborCoord.Y == 0) return false; // Path found, so the unit is NOT blocked.
 
@@ -305,8 +308,10 @@ public class DamplingGameCore
 
     private GameLevelSchema.GridUnit FindUnitById(Guid id)
     {
-        return ActiveLevelData.Grid.Matrix
-            .Select(node => node.OccupyingUnit)
-            .FirstOrDefault(unit => unit != null && unit.Id == id);
+        foreach (var node in gridMatrix.Values)
+        {
+            if (node.OccupyingUnit != null && node.OccupyingUnit.Id == id) return node.OccupyingUnit;
+        }
+        return null;
     }
 }

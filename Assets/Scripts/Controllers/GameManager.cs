@@ -154,7 +154,7 @@ public class GameManager : MonoBehaviour
     {
         Vector3 targetPosition = container.transform.position - new Vector3(0f, containerSpacingY, 0f);
         
-        container.transform.DOComplete(); 
+        container.transform.DOKill(); 
         container.transform.DOMove(targetPosition, 0.3f).SetEase(Ease.OutBack);
     }
 }
