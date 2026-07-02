@@ -6,16 +6,20 @@ public class BallView : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
 
     private Rigidbody2D rb;
+    private Collider2D col;
     private bool isCaptured;
     private Transform currentBeltSlot;
+    private SlotView currentSlotView;
 
     public string ColorId { get; private set; }
     public SpriteRenderer SR => spriteRenderer;
+    public Collider2D Collider => col;
 
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
+        col = GetComponent<Collider2D>();
     }
 
     public void Initialize(string colorId)
@@ -23,6 +27,12 @@ public class BallView : MonoBehaviour
         ColorId = colorId;
         isCaptured = false;
         currentBeltSlot = null;
+        // If this ball is being recycled while holding a slot, release it.
+        if (currentSlotView != null)
+        {
+            currentSlotView.Release();
+        }
+        currentSlotView = null;
         spriteRenderer.color = DamplingGameUtils.GetColorById(colorId);
 
         if (rb != null)
@@ -32,7 +42,11 @@ public class BallView : MonoBehaviour
             rb.angularVelocity = 0f;
         }
 
-        transform.DOComplete();
+        // Kill any active tweens on this object before re-initializing its state.
+        transform.DOKill();
+
+        // Ensure the collider is re-enabled when the ball is pulled from the pool.
+        if (col != null) col.enabled = true;
     }
 
     public void ActivatePhysicsSim()
@@ -43,6 +57,15 @@ public class BallView : MonoBehaviour
         }
     }
 
+    void LateUpdate()
+    {
+        // If captured, snap to the slot's position each frame. This avoids parenting.
+        if (isCaptured && currentBeltSlot != null)
+        {
+            transform.position = currentBeltSlot.position;
+        }
+    }
+
     void OnTriggerEnter2D(Collider2D other)
     {
         //Debug.Log("TriggerEnter");
@@ -50,22 +73,23 @@ public class BallView : MonoBehaviour
         // 1. BELT CONVEYOR SLOT INTERCEPTION
         if (!isCaptured && other.CompareTag("Slot"))
         {
-            if (other.transform.childCount == 0)
+            SlotView slotView = other.GetComponent<SlotView>();
+            if (slotView != null && slotView.TryClaim(this))
             {
                 isCaptured = true;
                 currentBeltSlot = other.transform;
+                currentSlotView = slotView;
 
                 rb.bodyType = RigidbodyType2D.Kinematic;
                 rb.linearVelocity = Vector2.zero;
                 rb.angularVelocity = 0f;
 
-                transform.SetParent(currentBeltSlot);
-                transform.localPosition = Vector3.zero;
+                // Position will be snapped in the next LateUpdate.
             }
         }
 
         // 2. SCROLLING CONTAINER MATCH RESOLUTION HANDSHAKE
-        if (isCaptured && currentBeltSlot != null && other.CompareTag("Container"))
+        if (isCaptured && other.CompareTag("Container"))
         {
             ContainerView container = other.GetComponent<ContainerView>();
             if (container != null && container.CurrentRequiredColorId == ColorId)
@@ -82,8 +106,16 @@ public class BallView : MonoBehaviour
     private void ExecuteTransferToContainer(ContainerView targetContainer, Vector3 destinationWorldPos)
     {
         // Sever ties immediately with the conveyor slot infrastructure
+        if (currentSlotView != null)
+        {
+            currentSlotView.Release();
+            currentSlotView = null;
+        }
         currentBeltSlot = null;
-        transform.SetParent(null);
+        isCaptured = false; // Stop following the slot in LateUpdate
+
+        // CRITICAL: Disable the collider BEFORE the jump starts to prevent re-triggering other slots.
+        if (col != null) col.enabled = false;
 
         Sequence jumpSeq = DOTween.Sequence();
 

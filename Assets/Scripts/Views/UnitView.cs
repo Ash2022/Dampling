@@ -11,7 +11,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private SpriteRenderer lidRenderer; // Reference to the round box lid
 
     private Vector2Int gridCoordinate;
-    private List<GameObject> preAllocatedBalls = new List<GameObject>();
+    private List<BallView> preAllocatedBallViews = new List<BallView>();
     private Sequence resolveSequence;
     private string unitColorId;
 
@@ -76,9 +76,15 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             ball.transform.localScale = Vector3.one * 0.4f;
 
             BallView bView = ball.GetComponent<BallView>();
-            if (bView != null) bView.Initialize(contents[i].ColorId);
+            if (bView != null)
+            {
+                bView.Initialize(contents[i].ColorId);
+                // CRITICAL FIX: Disable collider on pre-allocated balls to prevent them
+                // from interacting with the world while still inside the unit.
+                if (bView.Collider != null) bView.Collider.enabled = false;
+            }
 
-            preAllocatedBalls.Add(ball);
+            preAllocatedBallViews.Add(bView);
         }
     }
 
@@ -110,35 +116,37 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         // 2. Eject the 9 balls one by one sequentially
         float delayBetweenBalls = 0.05f;
-        for (int i = 0; i < preAllocatedBalls.Count; i++)
+        for (int i = 0; i < preAllocatedBallViews.Count; i++)
         {
-            GameObject ball = preAllocatedBalls[i];
+            BallView ballView = preAllocatedBallViews[i];
+            Transform ballTransform = ballView.transform;
             float jumpDelay = 0.1f + (i * delayBetweenBalls);
 
             // Jump arc outward while expanding up to native scale
-            Vector3 jumpTarget = ball.transform.position + new Vector3(Random.Range(-0.05f, 0.05f), 0.2f, 0f); // Target down toward funnel
-            resolveSequence.Insert(jumpDelay, ball.transform.DOJump(jumpTarget, 0.25f, 1, 0.35f).SetEase(Ease.OutQuad));
-            resolveSequence.Insert(jumpDelay, ball.transform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack));
+            Vector3 jumpTarget = ballTransform.position + new Vector3(Random.Range(-0.05f, 0.05f), 0.2f, 0f); // Target down toward funnel
+            resolveSequence.Insert(jumpDelay, ballTransform.DOJump(jumpTarget, 0.25f, 1, 0.35f).SetEase(Ease.OutQuad));
+            resolveSequence.Insert(jumpDelay, ballTransform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack));
 
             // Switch Rigidbody2D back to Dynamic right as the jump animation lands
             resolveSequence.InsertCallback(jumpDelay + 0.35f, () =>
             {
-                if (ball != null)
+                if (ballView != null)
                 {
-                    BallView bView = ball.GetComponent<BallView>();
-                    if (bView != null) bView.ActivatePhysicsSim();
+                    // Re-enable the collider just before activating physics.
+                    if (ballView.Collider != null) ballView.Collider.enabled = true;
+                    ballView.ActivatePhysicsSim();
                 }
             });
         }
 
         // 3. Fade out the main round box container base right after the final ball exits
-        float fadeOutStart = 0.1f + (preAllocatedBalls.Count * delayBetweenBalls) + 0.15f;
+        float fadeOutStart = 0.1f + (preAllocatedBallViews.Count * delayBetweenBalls) + 0.15f;
         resolveSequence.Insert(fadeOutStart, spriteRenderer.DOFade(0f, 0.3f));
 
         // 4. Return this unit safely to the pool once completely empty and hidden
         resolveSequence.OnComplete(() =>
         {
-            preAllocatedBalls.Clear(); // The actual ball instances are now loose processing on the belt
+            preAllocatedBallViews.Clear(); // The actual ball instances are now loose processing on the belt
             DamplingObjectPool.Instance.ReturnUnit(gameObject);
         });
 
@@ -147,11 +155,11 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     private void ReturnBallsToPool()
     {
-        foreach (var ball in preAllocatedBalls)
+        foreach (var ballView in preAllocatedBallViews)
         {
-            if (ball != null) DamplingObjectPool.Instance.ReturnBall(ball);
+            if (ballView != null) DamplingObjectPool.Instance.ReturnBall(ballView.gameObject);
         }
-        preAllocatedBalls.Clear();
+        preAllocatedBallViews.Clear();
     }
 
     private void CleanUpActiveSequence()

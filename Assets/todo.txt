@@ -1,0 +1,4 @@
+
+1. refactor UnitView to use BallView instead of GO.
+2. make SlotView to register its state.
+3. make BallView not switch parents - instead it can just follow the position 
