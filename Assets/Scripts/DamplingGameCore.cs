@@ -249,31 +249,58 @@ public class DamplingGameCore
     // --- Dependency Calculations Helper Methods ---
     public bool IsUnitBlocked(GameLevelSchema.Coordinate coord, GameLevelSchema.GridUnit unit)
     {
-        // 1. Trivial structural spatial layout verification rule: y=0 row is natively unblocked by geography
-        if (coord.Y > 0)
+        // 1. Check for explicit dependencies that have not been cleared.
+        foreach (var dependencyId in unit.ExplicitlyBlockedByUnitIds)
         {
-            // Check if there is an active unit blocking path directly above it at Y - 1
-            var cellAboveKey = new GameLevelSchema.Coordinate(coord.X, coord.Y - 1);
-            var cellAbove = ActiveLevelData.Grid.Matrix.FirstOrDefault(c => c.Position.X == cellAboveKey.X && c.Position.Y == cellAboveKey.Y);
-            if (cellAbove != null) {
-                if (cellAbove.OccupyingUnit != null && !PlayedUnitIds.Contains(cellAbove.OccupyingUnit.Id))
+            if (!PlayedUnitIds.Contains(dependencyId))
+            {
+                return true; // Blocked by an explicit rule.
+            }
+        }
+
+        // 2. Perform a spatial pathfinding check (BFS) to see if a path to the exit row (Y=0) exists.
+        if (coord.Y == 0)
+        {
+            return false; // Already at the exit row, so not blocked.
+        }
+
+        Queue<GameLevelSchema.Coordinate> queue = new Queue<GameLevelSchema.Coordinate>();
+        HashSet<GameLevelSchema.Coordinate> visited = new HashSet<GameLevelSchema.Coordinate>();
+
+        queue.Enqueue(coord);
+        visited.Add(coord);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+
+            // Define potential moves: one step down, or one step sideways.
+            var neighbors = new GameLevelSchema.Coordinate[]
+            {
+                new GameLevelSchema.Coordinate(current.X, current.Y - 1), // Down
+                new GameLevelSchema.Coordinate(current.X - 1, current.Y), // Left
+                new GameLevelSchema.Coordinate(current.X + 1, current.Y)  // Right
+            };
+
+            foreach (var neighborCoord in neighbors)
+            {
+                if (visited.Contains(neighborCoord)) continue;
+
+                var neighborCell = ActiveLevelData.Grid.Matrix.FirstOrDefault(c => c.Position.X == neighborCoord.X && c.Position.Y == neighborCoord.Y);
+
+                // A cell is a valid path node if it exists, is playable, and is empty (or its unit is already played).
+                if (neighborCell != null && neighborCell.IsPlayablePath && (neighborCell.OccupyingUnit == null || PlayedUnitIds.Contains(neighborCell.OccupyingUnit.Id)))
                 {
-                    return true; // Simple positional line track is blocked
+                    if (neighborCoord.Y == 0) return false; // Path found, so the unit is NOT blocked.
+
+                    visited.Add(neighborCoord);
+                    queue.Enqueue(neighborCoord);
                 }
             }
         }
 
-        // 2. Explicit dependency validation checking loop
-        foreach (var dependencyId in unit.ExplicitlyBlockedByUnitIds)
-        {
-            // If the explicit blocker item isn't in our cleared set, the block continues operating
-            if (!PlayedUnitIds.Contains(dependencyId))
-            {
-                return true; 
-            }
-        }
-
-        return false; // Free node path verified
+        // If the queue is exhausted and we never reached the exit, no path exists.
+        return true; // No path found, so the unit IS blocked.
     }
 
     private GameLevelSchema.GridUnit FindUnitById(Guid id)
