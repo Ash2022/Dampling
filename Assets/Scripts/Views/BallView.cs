@@ -8,6 +8,7 @@ public class BallView : MonoBehaviour
     private Rigidbody2D rb;
     private Collider2D col;
     private bool isCaptured;
+    private bool isAnimatingCapture;
     private Transform currentBeltSlot;
     private SlotView currentSlotView;
 
@@ -26,6 +27,7 @@ public class BallView : MonoBehaviour
     {
         ColorId = colorId;
         isCaptured = false;
+        isAnimatingCapture = false;
         currentBeltSlot = null;
         // If this ball is being recycled while holding a slot, release it.
         if (currentSlotView != null)
@@ -59,8 +61,8 @@ public class BallView : MonoBehaviour
 
     void LateUpdate()
     {
-        // If captured, snap to the slot's position each frame. This avoids parenting.
-        if (isCaptured && currentBeltSlot != null)
+        // If hooked to a slot (captured AND not animating), snap to its position.
+        if (isCaptured && !isAnimatingCapture && currentBeltSlot != null)
         {
             transform.position = currentBeltSlot.position;
         }
@@ -80,11 +82,15 @@ public class BallView : MonoBehaviour
                 currentBeltSlot = other.transform;
                 currentSlotView = slotView;
 
-                rb.bodyType = RigidbodyType2D.Kinematic;
-                rb.linearVelocity = Vector2.zero;
-                rb.angularVelocity = 0f;
+                rb.bodyType = RigidbodyType2D.Kinematic; rb.velocity = Vector2.zero; rb.angularVelocity = 0f;
 
-                // Position will be snapped in the next LateUpdate.
+                isAnimatingCapture = true;
+                Vector3 startPos = transform.position;
+                transform.DOKill();
+                DOVirtual.Float(0f, 1f, 0.15f, t =>
+                {
+                    if (currentBeltSlot) transform.position = Vector3.Lerp(startPos, currentBeltSlot.position, t);
+                }).SetEase(Ease.OutQuad).OnComplete(() => isAnimatingCapture = false);
             }
         }
 
@@ -92,18 +98,18 @@ public class BallView : MonoBehaviour
         if (isCaptured && other.CompareTag("Container"))
         {
             ContainerView container = other.GetComponent<ContainerView>();
-            if (container != null && container.CurrentRequiredColorId == ColorId)
+            if (container.CurrentRequiredColorId == ColorId)
             {
                 // Request slot target reservation space atomically
-                if (container.TryReserveTargetSlot(out Vector3 targetWorldPosition))
+                if (container.TryReserveTargetSlot(out Transform targetSlotTransform))
                 {
-                    ExecuteTransferToContainer(container, targetWorldPosition);
+                    ExecuteTransferToContainer(container, targetSlotTransform);
                 }
             }
         }
     }
 
-    private void ExecuteTransferToContainer(ContainerView targetContainer, Vector3 destinationWorldPos)
+    private void ExecuteTransferToContainer(ContainerView targetContainer, Transform destinationSlot)
     {
         // Sever ties immediately with the conveyor slot infrastructure
         if (currentSlotView != null)
@@ -117,25 +123,17 @@ public class BallView : MonoBehaviour
         // CRITICAL: Disable the collider BEFORE the jump starts to prevent re-triggering other slots.
         if (col != null) col.enabled = false;
 
-        Sequence jumpSeq = DOTween.Sequence();
-
-        // Jump arc up into the targeted visual slot inside the container column
-        jumpSeq.Append(transform.DOMove(destinationWorldPos, 0.4f).SetEase(Ease.InOutSine));
-
-        // Update atomic model tracking states
-        jumpSeq.OnComplete(() =>
+        Vector3 startPos = transform.position;
+        transform.DOKill();
+        DOVirtual.Float(0f, 1f, 0.4f, t =>
         {
-            if (targetContainer != null)
-            {
-                // Pass the direct BallView component reference straight to the container
-                targetContainer.OnBallAbsorbed(this);
-            }
-            else
-            {
-                DamplingObjectPool.Instance.ReturnBall(gameObject);
-            }
+            if (destinationSlot) transform.position = Vector3.Lerp(startPos, destinationSlot.position, t);
+        }).SetEase(Ease.InOutSine).OnComplete(() =>
+        {
+            // OnComplete: Snap to final local position and notify container.
+            //transform.SetParent(destinationSlot);
+            //transform.localPosition = Vector3.zero;
+            targetContainer.OnBallAbsorbed(this);
         });
-
-        jumpSeq.Play();
     }
 }

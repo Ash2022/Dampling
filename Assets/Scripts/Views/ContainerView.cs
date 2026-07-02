@@ -35,9 +35,9 @@ public class ContainerView : MonoBehaviour
     /// <summary>
     /// Checks if the container can accept a ball and reserves a visual slot atomically.
     /// </summary>
-    public bool TryReserveTargetSlot(out Vector3 targetWorldPosition)
+    public bool TryReserveTargetSlot(out Transform targetSlotTransform)
     {
-        targetWorldPosition = Vector3.zero;
+        targetSlotTransform = null;
 
         if (dataModel == null || reservedSlotsCount >= dataModel.Capacity)
             return false;
@@ -45,12 +45,14 @@ public class ContainerView : MonoBehaviour
         // Use local attachment references, fallback to math offsets if slots aren't manually assigned
         if (localBallTargetSlots != null && reservedSlotsCount < localBallTargetSlots.Length)
         {
-            targetWorldPosition = localBallTargetSlots[reservedSlotsCount].position;
+            targetSlotTransform = localBallTargetSlots[reservedSlotsCount];
         }
         else
         {
-            // Vertical stacking fallback calculation (+0.6f units per ball upwards)
-            targetWorldPosition = transform.position + new Vector3(0f, reservedSlotsCount * 0.6f, 0f);
+            // This fallback is problematic as it doesn't provide a transform to follow.
+            // This indicates a setup issue. For now, we will fail the reservation.
+            Debug.LogError($"Container '{name}' is missing a reference for localBallTargetSlots[{reservedSlotsCount}]. Cannot reserve a slot.", gameObject);
+            return false;
         }
 
         reservedSlotsCount++;
