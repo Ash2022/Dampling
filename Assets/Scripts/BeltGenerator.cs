@@ -94,7 +94,7 @@ public class BeltGenerator : MonoBehaviour
 
             // Find position in the pre-calculated path array
             float pathT = distance / perimeter;
-            float floatIndex = pathT * (PATH_RESOLUTION - 1);
+            float floatIndex = pathT * PATH_RESOLUTION;
             int index1 = (int)floatIndex;
             int index2 = (index1 + 1) % PATH_RESOLUTION;
             float lerpT = floatIndex - index1;
