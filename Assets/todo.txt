@@ -3,9 +3,11 @@
 2. make SlotView to register its state.
 3. make BallView not switch parents - instead it can just follow the position 
 
-ok - atm i only tested the standard units -
- so my unitView only supports that - made now a new level with a blocker and with 2
-  pipes and now we need to visualize them properly - 
-  for hidden indication we can start with simply making it black color 
-  - and for pipe we need to set to White color but also add a script on that
-   cell or unit to manage the counter - i need you to make a new prompt for the code assist agent to do this.
+well done - next thing we didnt do yet is visualize the new features in the game
+ - i still dont have the final design - but i want a solid plan
+  - at the moment we are doing everything with colors for the units
+   - later we will take sprites instead - but this has no effect
+    - need to plan - is the lock key going to be part of the unit
+     (i think so) and we need to have a way to visually draw a link between 2 units
+      (can start with line renderer) - and we need something for the pipe -
+       and also a PipeView script so that it can update the counter on the pipe - 

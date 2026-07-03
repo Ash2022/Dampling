@@ -10,14 +10,18 @@ public class DamplingObjectPool : MonoBehaviour
     [SerializeField] private GameObject unitPrefab;
     [SerializeField] private GameObject containerPrefab;
     [SerializeField] private GameObject ballPrefab;
+    [SerializeField] private GameObject EmptyUnitPrefab;
+    
 
     private Queue<GameObject> unitPool = new Queue<GameObject>();
     private Queue<GameObject> containerPool = new Queue<GameObject>();
     private Queue<GameObject> ballPool = new Queue<GameObject>();
+    private Queue<GameObject> emptyUnitPool = new Queue<GameObject>();
 
     private Transform unitRoot;
     private Transform containerRoot;
     private Transform ballRoot;
+    private Transform emptyUnitRoot;
 
     private void Awake()
     {
@@ -38,10 +42,14 @@ public class DamplingObjectPool : MonoBehaviour
         ballRoot = new GameObject("BallPool_Root").transform;
         ballRoot.SetParent(transform);
 
+        emptyUnitRoot = new GameObject("EmptyUnitPool_Root").transform;
+        emptyUnitRoot.SetParent(transform);
+
         // Pre-warm allocations sequentially, breaking across frames via task yields
         await PrewarmPoolAsync(unitPrefab, 100, unitPool, unitRoot, 25);
         await PrewarmPoolAsync(containerPrefab, 300, containerPool, containerRoot, 50);
         await PrewarmPoolAsync(ballPrefab, 1000, ballPool, ballRoot, 100);
+        await PrewarmPoolAsync(EmptyUnitPrefab, 20, emptyUnitPool, emptyUnitRoot, 10);
     }
 
     private async Task PrewarmPoolAsync(GameObject prefab, int count, Queue<GameObject> pool, Transform root, int objectsPerFrame)
@@ -87,6 +95,15 @@ public class DamplingObjectPool : MonoBehaviour
         return obj;
     }
 
+    public GameObject GetEmptyUnit(Vector3 position, Quaternion rotation, Transform parent)
+    {
+        GameObject obj = emptyUnitPool.Count > 0 ? emptyUnitPool.Dequeue() : Instantiate(EmptyUnitPrefab);
+        obj.transform.SetParent(parent);
+        obj.transform.SetPositionAndRotation(position, rotation);
+        obj.SetActive(true);
+        return obj;
+    }
+
     public void ReturnUnit(GameObject unit)
     {
         unit.SetActive(false);
@@ -106,5 +123,12 @@ public class DamplingObjectPool : MonoBehaviour
         ball.SetActive(false);
         ball.transform.SetParent(ballRoot);
         ballPool.Enqueue(ball);
+    }
+
+    public void ReturnEmptyUnit(GameObject emptyUnit)
+    {
+        emptyUnit.SetActive(false);
+        emptyUnit.transform.SetParent(emptyUnitRoot);
+        emptyUnitPool.Enqueue(emptyUnit);
     }
 }

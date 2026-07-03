@@ -140,22 +140,49 @@ public class GameManager : MonoBehaviour
     }
 
     public void AdvanceContainerQueue(int queueIndex, ContainerView resolvedView)
-{
-    // 1. Fixed spacing delta based directly on your layout rules
-    float containerSpacingY = 0.3f; 
-
-    // 2. Loop directly over your active references tracking dictionary values
-    var remainingViewsInColumn = activeBoardReferences.ContainerViews.Values
-        .Where(v => v != null && v.QueueIndex == queueIndex && v != resolvedView)
-        .ToList();
-
-    // 3. Shift the verified active presentation views down cleanly
-    foreach (var container in remainingViewsInColumn)
     {
-        Vector3 targetPosition = container.transform.position - new Vector3(0f, containerSpacingY, 0f);
-        
-        container.transform.DOKill(); 
-        container.transform.DOMove(targetPosition, 0.3f).SetEase(Ease.OutBack);
+        // 1. Fixed spacing delta based directly on your layout rules
+        float containerSpacingY = 0.3f;
+
+        // 2. Loop directly over your active references tracking dictionary values
+        var remainingViewsInColumn = activeBoardReferences.ContainerViews.Values
+            .Where(v => v != null && v.QueueIndex == queueIndex && v != resolvedView)
+            .ToList();
+
+        // 3. Shift the verified active presentation views down cleanly
+        foreach (var container in remainingViewsInColumn)
+        {
+            Vector3 targetPosition = container.transform.position - new Vector3(0f, containerSpacingY, 0f);
+
+            container.transform.DOKill();
+            container.transform.DOMove(targetPosition, 0.3f).SetEase(Ease.OutBack);
+        }
     }
-}
+
+    public bool IsUnitActingAsKey(Guid unitId)
+    {
+        // Search the active grid matrix matrix to see if any unplayed unit lists this ID as a blocker
+        foreach (var cellNode in currentLevelData.Grid.Matrix)
+        {
+            if (cellNode.OccupyingUnit != null &&
+                cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Contains(unitId))
+            {
+                return true; // Found a lock that depends on this specific unit ID key
+            }
+        }
+        return false;
+    }
+
+    public Vector3 GetUnitWorldPositionById(Guid id)
+    {
+        // Search directly through the coordinate map you built in the creation loop
+        foreach (var unitView in activeBoardReferences.UnitViews.Values)
+        {
+            if (unitView != null && unitView.UnitId == id)
+            {
+                return unitView.transform.position;
+            }
+        }
+        return Vector3.zero;
+    }
 }

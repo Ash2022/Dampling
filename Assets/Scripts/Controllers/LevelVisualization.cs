@@ -18,7 +18,7 @@ public class LevelVisualization : MonoBehaviour
     public BoardVisualReferences RenderInitialBoard(GameLevelSchema levelData)
     {
         ClearCurrentVisualization();
-        
+
         // Instantiate the packet to return tracking data straight to GameManager
         BoardVisualReferences references = new BoardVisualReferences();
 
@@ -44,7 +44,7 @@ public class LevelVisualization : MonoBehaviour
                 spawnedVisualElements.Add(containerInstance);
 
                 ContainerView containerView = containerInstance.GetComponent<ContainerView>();
-                containerView.Initialize(activeQueueList[c],q);
+                containerView.Initialize(activeQueueList[c], q);
 
                 containerInstance.name = $"Container_Q{q}_Idx{c}_{activeQueueList[c].ColorId}";
 
@@ -60,7 +60,6 @@ public class LevelVisualization : MonoBehaviour
 
         foreach (var cellNode in levelData.Grid.Matrix)
         {
-            if (!cellNode.IsPlayablePath) continue;
             int gridX = cellNode.Position.X;
             int gridY = cellNode.Position.Y;
             Vector2Int coord = new Vector2Int(gridX, gridY);
@@ -69,18 +68,41 @@ public class LevelVisualization : MonoBehaviour
             float worldY = GridTopY - (gridY * unitSize.y);
             Vector3 spawnPosition = new Vector3(worldX, worldY, 0f);
 
-            GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
-            spawnedVisualElements.Add(unitInstance);
+            // 1. If it's a valid playable path, spawn the active game units or pipes
+            if (cellNode.IsPlayablePath)
+            {
+                GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
+                spawnedVisualElements.Add(unitInstance);
 
-            UnitView unitView = unitInstance.GetComponent<UnitView>();
-            unitView.Initialize(cellNode);
+                UnitView unitView = unitInstance.GetComponent<UnitView>();
+                unitView.Initialize(cellNode);
 
-            unitInstance.name = cellNode.ContinuousPipe != null ? $"PipeUnit_({gridX},{gridY})" :
-                                cellNode.OccupyingUnit != null ? $"StandardUnit_({gridX},{gridY})" : 
-                                $"EmptyCell_({gridX},{gridY})";
+                unitInstance.name = cellNode.ContinuousPipe != null ? $"PipeUnit_({gridX},{gridY})" :
+                                    cellNode.OccupyingUnit != null ? $"StandardUnit_({gridX},{gridY})" : 
+                                    $"EmptyCell_({gridX},{gridY})";
 
-            // Map reference by space tracking coordinate
-            references.UnitViews.Add(coord, unitView);
+                // Map reference by space tracking coordinate for later link-rendering pass
+                references.UnitViews.Add(coord, unitView);
+            }
+            // 2. If it's NOT a playable path (blocked gap/hole), inline spawn the structural EmptyUnit instead
+            else
+            {
+                GameObject emptyInstance = DamplingObjectPool.Instance.GetEmptyUnit(spawnPosition, Quaternion.identity, transform);
+                emptyInstance.name = $"EmptyUnit_({gridX},{gridY})";
+                spawnedVisualElements.Add(emptyInstance);
+            }
+        }
+
+        // --- SECOND PASS: Draw Line Links Between Instantiated Units Safely ---
+        foreach (var cellNode in levelData.Grid.Matrix)
+        {
+            if (!cellNode.IsPlayablePath) continue;
+
+            Vector2Int coord = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
+            if (references.UnitViews.TryGetValue(coord, out UnitView unitView))
+            {
+                unitView.RenderLinkLines(cellNode);
+            }
         }
 
         return references;

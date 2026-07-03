@@ -1,0 +1,147 @@
+{
+  "LevelId": 1,
+  "LevelName": "NewLevel5",
+  "ConveyorBeltMaxCapacity": 28,
+  "ResolutionQueues": [
+    [
+      {
+        "Id": "b9d7abd7-f958-4610-8b07-d1d632e93b48",
+        "ColorId": "Color_0",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": "304819ac-8b09-4d52-a665-d675d7d22c94",
+        "ColorId": "Color_0",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ],
+    [
+      {
+        "Id": "ddf1a39c-a8e2-4258-a7e8-43b1c961bfa8",
+        "ColorId": "Color_1",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": "9708499c-f786-4459-bd08-397908d71ea5",
+        "ColorId": "Color_1",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ],
+    [
+      {
+        "Id": "88a35ea8-2150-4892-94c0-5411d7a8ebf8",
+        "ColorId": "Color_1",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ],
+    [
+      {
+        "Id": "1d3b0eb5-95c8-4bc2-ac90-18e2045be72f",
+        "ColorId": "Color_0",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ]
+  ],
+  "Grid": {
+    "Columns": 1,
+    "Rows": 2,
+    "Matrix": [
+      {
+        "Position": {
+          "X": 0,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "Id": "3fb17a50-ac5c-4a9e-84f3-1a111c7c569e",
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [
+            "0c93793e-8fdc-44f8-867f-e5813c27aa4e"
+          ]
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 0,
+          "Y": 1
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "Id": "0c93793e-8fdc-44f8-867f-e5813c27aa4e",
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [
+            "3fb17a50-ac5c-4a9e-84f3-1a111c7c569e"
+          ]
+        },
+        "ContinuousPipe": null
+      }
+    ]
+  }
+}

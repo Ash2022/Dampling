@@ -4,35 +4,57 @@ using System.Collections.Generic;
 using DG.Tweening;
 using static GameLevelSchema;
 using UnityEngine.EventSystems;
+using System;
 
 public class UnitView : MonoBehaviour, IPointerClickHandler
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private SpriteRenderer lidRenderer; // Reference to the round box lid
 
+    [SerializeField] private SpriteRenderer lockOverlayRenderer; // Padlock/Chain overlay graphic
+    [SerializeField] private SpriteRenderer keyIndicatorRenderer; // Decorative key badge icon
+    [SerializeField] private TMPro.TextMeshPro statusText;
+    [SerializeField] private LineRenderer linkLineRenderer;
+
     private Vector2Int gridCoordinate;
     private List<BallView> preAllocatedBallViews = new List<BallView>();
     private Sequence resolveSequence;
     private string unitColorId;
 
-    public void Initialize(CellNode cellNode)
+    public Guid UnitId { get; private set; }
+    public void Initialize(GameLevelSchema.CellNode cellNode)
     {
         gridCoordinate = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
         CleanUpActiveSequence();
         ReturnBallsToPool();
 
-        bool isLocked = GameManager.Instance.IsUnitLockedAt(gridCoordinate);
+        // Reset relation overlays, lines, and text layers to safely handle recycling
+        lockOverlayRenderer.gameObject.SetActive(false);
+        keyIndicatorRenderer.gameObject.SetActive(false);
+        linkLineRenderer.positionCount = 0;
+        statusText.text = "";
 
+        // 1. Process Static Pipe Generation Matrix Cells
         if (cellNode.ContinuousPipe != null)
         {
+            UnitId = Guid.Empty; // Pipes are anchor locations, not standard unit structures
+
             var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
             unitColorId = firstUnit?.InteriorContents.FirstOrDefault()?.ColorId ?? "";
-            spriteRenderer.color = DamplingGameUtils.GetColorById(unitColorId);
-            lidRenderer.color = DamplingGameUtils.GetColorById(unitColorId);
+            Color pipeColor = DamplingGameUtils.GetColorById(unitColorId);
+
+            spriteRenderer.color = pipeColor;
+            lidRenderer.color = pipeColor;
             lidRenderer.gameObject.SetActive(true);
+
+            int emissionsLeft = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
+            statusText.text = emissionsLeft > 0 ? emissionsLeft.ToString() : "";
         }
+        // 2. Process Standard Playable Unit Grid Cells
         else if (cellNode.OccupyingUnit != null)
         {
+            UnitId = cellNode.OccupyingUnit.Id; // Safely assigned inside verified non-null block
+
             bool isHidden = cellNode.OccupyingUnit.IsHiddenUntilUnblocked;
             unitColorId = isHidden ? "Hidden" : (cellNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorId ?? "");
 
@@ -41,18 +63,82 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             lidRenderer.color = unitColor;
             lidRenderer.gameObject.SetActive(true);
 
-            // Pre-allocate and arrange the 9 balls sitting silently scaled down inside the box layout
+            // Process Structural Dependencies & Key/Lock Graph States
+            if (cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count > 0)
+            {
+                lockOverlayRenderer.gameObject.SetActive(true);
+            }
+
+            bool isAKeyUnit = GameManager.Instance.IsUnitActingAsKey(cellNode.OccupyingUnit.Id);
+            if (isAKeyUnit)
+            {
+                keyIndicatorRenderer.gameObject.SetActive(true);
+            }
+
+            if (isHidden)
+            {
+                statusText.text = "?";
+            }
+
             if (!isHidden && cellNode.OccupyingUnit.InteriorContents.Count > 0)
             {
                 SetupNestedInteriorBalls(cellNode.OccupyingUnit.InteriorContents);
             }
         }
+        // 3. Process Empty / Carved Out Boundary Gaps / Blocked Cells
         else
         {
+            UnitId = Guid.Empty;
             spriteRenderer.color = DamplingGameUtils.GetColorById("");
             lidRenderer.gameObject.SetActive(false);
         }
     }
+
+    public void RenderLinkLines(GameLevelSchema.CellNode cellNode)
+{
+    linkLineRenderer.positionCount = 0;
+
+    if (cellNode.OccupyingUnit == null)
+    {
+        Debug.Log($"[LINK DEBUG] Cell ({gridCoordinate.x},{gridCoordinate.y}) has no OccupyingUnit.");
+        return;
+    }
+
+    if (cellNode.OccupyingUnit.LinkedUnitIds.Count == 0)
+    {
+        Debug.Log($"[LINK DEBUG] Unit at ({gridCoordinate.x},{gridCoordinate.y}) has 0 entries in LinkedUnitIds.");
+        return;
+    }
+
+    Debug.Log($"[LINK DEBUG] Unit at ({gridCoordinate.x},{gridCoordinate.y}) has {cellNode.OccupyingUnit.LinkedUnitIds.Count} links. Checking handshake comparisons...");
+
+    foreach (var linkedId in cellNode.OccupyingUnit.LinkedUnitIds)
+    {
+        int comparisonResult = cellNode.OccupyingUnit.Id.CompareTo(linkedId);
+        
+        if (comparisonResult > 0)
+        {
+            Vector3 targetWorldPos = GameManager.Instance.GetUnitWorldPositionById(linkedId);
+            
+            if (targetWorldPos != Vector3.zero)
+            {
+                linkLineRenderer.positionCount = 2;
+                linkLineRenderer.SetPosition(0, transform.position);
+                linkLineRenderer.SetPosition(1, targetWorldPos);
+                Debug.Log($"<color=green><b>[LINK SUCCESS]:</b></color> Rendered line from ({gridCoordinate.x},{gridCoordinate.y}) to target world position {targetWorldPos}");
+                break;
+            }
+            else
+            {
+                Debug.LogError($"[LINK ERROR] Handshake passed, but GameManager returned Vector3.zero for target Guid: {linkedId}. Target view missing in runtime registries!");
+            }
+        }
+        else
+        {
+            Debug.Log($"[LINK SKIP] Handshake comparison for ({gridCoordinate.x},{gridCoordinate.y}) was <= 0 (Result: {comparisonResult}). Partner unit should handle drawing instead.");
+        }
+    }
+}
 
     private void SetupNestedInteriorBalls(List<GameLevelSchema.DumplingItem> contents)
     {
@@ -123,7 +209,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             float jumpDelay = 0.1f + (i * delayBetweenBalls);
 
             // Jump arc outward while expanding up to native scale
-            Vector3 jumpTarget = ballTransform.position + new Vector3(Random.Range(-0.05f, 0.05f), 0.2f, 0f); // Target down toward funnel
+            Vector3 jumpTarget = ballTransform.position + new Vector3(UnityEngine.Random.Range(-0.05f, 0.05f), 0.2f, 0f); // Target down toward funnel
             resolveSequence.Insert(jumpDelay, ballTransform.DOJump(jumpTarget, 0.25f, 1, 0.35f).SetEase(Ease.OutQuad));
             resolveSequence.Insert(jumpDelay, ballTransform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack));
 
