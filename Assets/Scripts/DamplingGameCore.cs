@@ -28,10 +28,10 @@ public class DamplingGameCore
     public class EngineEvent
     {
         public EngineEventType EventType { get; set; }
-        public Guid TargetId { get; set; }        // Unit ID, Container ID, etc.
-        public string ColorValue { get; set; }     // Transferred element color
-        public int QueueIndex { get; set; }       // Target column lane indices
-        public object Payload { get; set; }        // Extensible debugging telemetry
+        public Guid TargetId { get; set; }        
+        public string ColorValue { get; set; }     
+        public int QueueIndex { get; set; }       
+        public object Payload { get; set; }       
     }
 
     // --- Core Engine Initializer ---
@@ -43,13 +43,11 @@ public class DamplingGameCore
         IsGameOver = false;
         IsGameWon = false;
 
-        // Convert the grid list to a dictionary for O(1) lookups.
         gridMatrix = new Dictionary<GameLevelSchema.Coordinate, GameLevelSchema.CellNode>();
         foreach (var node in ActiveLevelData.Grid.Matrix) {
             gridMatrix[node.Position] = node;
         }
 
-        // Instantiate dynamic deep-cloned tracking copies of the demand resolution layout structures
         DynamicQueues = new List<List<GameLevelSchema.ContainerData>>();
         foreach (var originalQueue in levelData.ResolutionQueues)
         {
@@ -74,62 +72,63 @@ public class DamplingGameCore
 
         if (IsGameOver) return outputTransactionHistory;
 
-        // 1. Position Verification & Key Lookup
         var coord = new GameLevelSchema.Coordinate(x, y);
         if (!gridMatrix.TryGetValue(coord, out var primaryCellNode)) return outputTransactionHistory;
         
         var activeUnit = primaryCellNode.OccupyingUnit;
-        if (activeUnit == null || PlayedUnitIds.Contains(activeUnit.Id))
+        if (activeUnit == null || PlayedUnitIds.Contains(activeUnit.Id)) return outputTransactionHistory;
+
+        // Collect all related linked units into an evaluation block for atomic simulation validation
+        List<GameLevelSchema.GridUnit> linkedCluster = new List<GameLevelSchema.GridUnit>();
+        HashSet<Guid> visitedClusterIds = new HashSet<Guid>();
+        Queue<GameLevelSchema.GridUnit> clusterQueue = new Queue<GameLevelSchema.GridUnit>();
+
+        clusterQueue.Enqueue(activeUnit);
+        visitedClusterIds.Add(activeUnit.Id);
+
+        while (clusterQueue.Count > 0)
         {
-            return outputTransactionHistory; // Node empty or already spent
-        }
+            var currentClusterUnit = clusterQueue.Dequeue();
+            linkedCluster.Add(currentClusterUnit);
 
-        // 2. Dynamic Topological Path Blockage Graph Calculations
-        if (IsUnitBlocked(primaryCellNode.Position, activeUnit))
-        {
-            return outputTransactionHistory; // Blocked node interaction rejected
-        }
-
-        // 3. Collect Evaluation Target Execution Ring (Including Linked Units)
-        Queue<GameLevelSchema.GridUnit> executionQueue = new Queue<GameLevelSchema.GridUnit>();
-        executionQueue.Enqueue(activeUnit);
-
-        HashSet<Guid> visitedInThisClick = new HashSet<Guid> { activeUnit.Id };
-
-        while (executionQueue.Count > 0)
-        {
-            var currentUnit = executionQueue.Dequeue();
-            PlayedUnitIds.Add(currentUnit.Id);
-
-            // Dump interior payload systematically onto the back array of the virtual belt line
-            foreach (var dumpling in currentUnit.InteriorContents)
+            foreach (var linkedId in currentClusterUnit.LinkedUnitIds)
             {
-                VirtualBelt.Add(dumpling);
-            }
-
-            // Route execution parameters down the linkage network
-            foreach (var linkedId in currentUnit.LinkedUnitIds)
-            {
-                if (!PlayedUnitIds.Contains(linkedId) && !visitedInThisClick.Contains(linkedId))
+                if (!PlayedUnitIds.Contains(linkedId) && !visitedClusterIds.Contains(linkedId))
                 {
-                    // Locate linked structural units on the target grid mapping arrays
-                    var linkedUnit = FindUnitById(linkedId);
-                    if (linkedUnit != null)
+                    var foundLinkedUnit = FindUnitById(linkedId);
+                    if (foundLinkedUnit != null)
                     {
-                        visitedInThisClick.Add(linkedId);
-                        executionQueue.Enqueue(linkedUnit);
+                        visitedClusterIds.Add(linkedId);
+                        clusterQueue.Enqueue(foundLinkedUnit);
                     }
                 }
             }
         }
 
-        // 4. Run Core Matching Pipeline Mechanics Loop
+        // ATOMIC TRANSACTION RULE: Verify blockers across the ENTIRE linked collection
+        // If even one unit inside this linked chain is blocked, the play interaction is invalid
+        foreach (var clusterUnit in linkedCluster)
+        {
+            var unitCellNode = FindCellNodeByUnitId(clusterUnit.Id);
+            if (IsUnitBlocked(unitCellNode.Position, clusterUnit))
+            {
+                return outputTransactionHistory; // Atomic block rejection
+            }
+        }
+
+        // Execute processing steps for the verified playable transaction group
+        foreach (var currentUnit in linkedCluster)
+        {
+            PlayedUnitIds.Add(currentUnit.Id);
+
+            foreach (var dumpling in currentUnit.InteriorContents)
+            {
+                VirtualBelt.Add(dumpling);
+            }
+        }
+
         ProcessBeltResolutionPipeline(outputTransactionHistory);
-
-        // 5. Check and Calculate Newly Unlocked System Parameters
         EvaluateNewlyUnblockedUnits(outputTransactionHistory);
-
-        // 6. Final Boundary State Validations
         EvaluateGameStatusStates(outputTransactionHistory);
 
         return outputTransactionHistory;
@@ -143,12 +142,10 @@ public class DamplingGameCore
         {
             stateChanged = false;
 
-            // Iterate through the belt. Since it maps physics behaviors, any slot matching the active lanes flies out
             for (int i = 0; i < VirtualBelt.Count; i++)
             {
                 var dumpling = VirtualBelt[i];
                 
-                // Scan the front container of each active lane array layout matching structural metrics
                 for (int q = 0; q < DynamicQueues.Count; q++)
                 {
                     if (DynamicQueues[q].Count == 0) continue;
@@ -156,7 +153,6 @@ public class DamplingGameCore
                     var activeContainer = DynamicQueues[q][0];
                     if (activeContainer.ColorId == dumpling.ColorId && activeContainer.Capacity > 0)
                     {
-                        // Deduct volume capacity requirements sequentially
                         activeContainer.Capacity--;
                         VirtualBelt.RemoveAt(i);
                         
@@ -168,7 +164,6 @@ public class DamplingGameCore
                             QueueIndex = q
                         });
 
-                        // Evaluate zero-sum completion metrics for individual container segments
                         if (activeContainer.Capacity <= 0)
                         {
                             transactions.Add(new EngineEvent
@@ -178,15 +173,15 @@ public class DamplingGameCore
                                 QueueIndex = q
                             });
                             
-                            DynamicQueues[q].RemoveAt(0); // Shift lane line index layout items up by 1 position
+                            DynamicQueues[q].RemoveAt(0); 
                         }
 
                         stateChanged = true;
-                        i--; // Counteract sequential indexing offset changes natively
+                        i--; 
                         break; 
                     }
                 }
-                if (stateChanged) break; // Break loop execution layer up to process from head position again
+                if (stateChanged) break; 
             }
         } while (stateChanged);
     }
@@ -197,7 +192,6 @@ public class DamplingGameCore
         {
             if (cellNode.OccupyingUnit == null || PlayedUnitIds.Contains(cellNode.OccupyingUnit.Id)) continue;
 
-            // Check if this unplayed unit is now unblocked
             if (!IsUnitBlocked(cellNode.Position, cellNode.OccupyingUnit))
             {
                 transactions.Add(new EngineEvent
@@ -212,7 +206,6 @@ public class DamplingGameCore
 
     private void EvaluateGameStatusStates(List<EngineEvent> transactions)
     {
-        // WIN CHECK: Are all demand-side queues completely resolved and dried out?
         bool allQueuesEmpty = DynamicQueues.All(q => q.Count == 0);
         if (allQueuesEmpty)
         {
@@ -222,10 +215,8 @@ public class DamplingGameCore
             return;
         }
 
-        // LOSE CHECK: Has the conveyor belt completely overloaded past the maximum boundary limits?
         if (VirtualBelt.Count >= ActiveLevelData.ConveyorBeltMaxCapacity)
         {
-            // Verify if a stalemate condition exists where no items on the belt match the current front targets
             bool matchPossible = false;
             foreach (var dumpling in VirtualBelt)
             {
@@ -253,19 +244,19 @@ public class DamplingGameCore
     // --- Dependency Calculations Helper Methods ---
     public bool IsUnitBlocked(GameLevelSchema.Coordinate coord, GameLevelSchema.GridUnit unit)
     {
-        // 1. Check for explicit dependencies that have not been cleared.
+        // 1. Explicit Blocker and Key validation checkpoint
         foreach (var dependencyId in unit.ExplicitlyBlockedByUnitIds)
         {
             if (!PlayedUnitIds.Contains(dependencyId))
             {
-                return true; // Blocked by an explicit rule.
+                return true; 
             }
         }
 
-        // 2. Perform a spatial pathfinding check (BFS) to see if a path to the exit row (Y=0) exists.
+        // 2. Spatial 2D Flow Pathfinding matrix evaluation routing
         if (coord.Y == 0)
         {
-            return false; // Already at the exit row, so not blocked.
+            return false; 
         }
 
         Queue<GameLevelSchema.Coordinate> queue = new Queue<GameLevelSchema.Coordinate>();
@@ -278,23 +269,21 @@ public class DamplingGameCore
         {
             var current = queue.Dequeue();
 
-            // Define potential moves: one step down, or one step sideways.
             var neighbors = new GameLevelSchema.Coordinate[]
             {
-                new GameLevelSchema.Coordinate(current.X, current.Y - 1), // Down
-                new GameLevelSchema.Coordinate(current.X - 1, current.Y), // Left
-                new GameLevelSchema.Coordinate(current.X + 1, current.Y)  // Right
+                new GameLevelSchema.Coordinate(current.X, current.Y - 1), 
+                new GameLevelSchema.Coordinate(current.X - 1, current.Y), 
+                new GameLevelSchema.Coordinate(current.X + 1, current.Y)  
             };
 
             foreach (var neighborCoord in neighbors)
             {
                 if (visited.Contains(neighborCoord)) continue;
 
-                // A cell is a valid path node if it exists, is playable, and is empty (or its unit is already played).
                 if (gridMatrix.TryGetValue(neighborCoord, out var neighborCell) && 
                     neighborCell.IsPlayablePath && (neighborCell.OccupyingUnit == null || PlayedUnitIds.Contains(neighborCell.OccupyingUnit.Id)))
                 {
-                    if (neighborCoord.Y == 0) return false; // Path found, so the unit is NOT blocked.
+                    if (neighborCoord.Y == 0) return false; 
 
                     visited.Add(neighborCoord);
                     queue.Enqueue(neighborCoord);
@@ -302,8 +291,7 @@ public class DamplingGameCore
             }
         }
 
-        // If the queue is exhausted and we never reached the exit, no path exists.
-        return true; // No path found, so the unit IS blocked.
+        return true; 
     }
 
     private GameLevelSchema.GridUnit FindUnitById(Guid id)
@@ -311,6 +299,15 @@ public class DamplingGameCore
         foreach (var node in gridMatrix.Values)
         {
             if (node.OccupyingUnit != null && node.OccupyingUnit.Id == id) return node.OccupyingUnit;
+        }
+        return null;
+    }
+
+    private GameLevelSchema.CellNode FindCellNodeByUnitId(Guid id)
+    {
+        foreach (var node in gridMatrix.Values)
+        {
+            if (node.OccupyingUnit != null && node.OccupyingUnit.Id == id) return node;
         }
         return null;
     }
