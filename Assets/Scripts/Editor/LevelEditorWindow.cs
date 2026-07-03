@@ -16,12 +16,12 @@ public class LevelEditorWindow : EditorWindow
     private int colorCount = 4;
 
     private enum CellBehavior { Standard, Blocker, Pipe }
-    
+
     private class EditorCell
     {
         public CellBehavior Behavior = CellBehavior.Standard;
         public int PipeEmissions = 3;
-        public string AssignedColorId = ""; 
+        public string AssignedColorId = "";
         public bool StartHidden = false;
 
         // Relationship Feature Group IDs (0 means unassigned)
@@ -187,8 +187,8 @@ public class LevelEditorWindow : EditorWindow
 
         // --- LEFT PANEL: SUPPLY GRID DRAWING LAYER ---
         GUILayout.BeginVertical();
-        int activeUnitsCount = editorMatrix.Values.Sum(cell => 
-            cell.Behavior == CellBehavior.Standard ? 1 : 
+        int activeUnitsCount = editorMatrix.Values.Sum(cell =>
+            cell.Behavior == CellBehavior.Standard ? 1 :
             cell.Behavior == CellBehavior.Pipe ? cell.PipeEmissions : 0
         );
         GUILayout.Label($"Supply Grid Layout (Active Units: {activeUnitsCount})", EditorStyles.boldLabel);
@@ -216,7 +216,7 @@ public class LevelEditorWindow : EditorWindow
                 {
                     CellBehavior.Blocker => new Color(0.25f, 0.25f, 0.25f),
                     CellBehavior.Pipe => new Color(0.18f, 0.44f, 0.72f),
-                    _ => isTargetedByPipeBelow ? new Color(0.25f, 0.55f, 0.85f, 0.4f) : 
+                    _ => isTargetedByPipeBelow ? new Color(0.25f, 0.55f, 0.85f, 0.4f) :
                          !string.IsNullOrEmpty(cell.AssignedColorId) ? GetColorValue(cell.AssignedColorId) :
                          new Color(0.85f, 0.85f, 0.85f)
                 };
@@ -282,7 +282,7 @@ public class LevelEditorWindow : EditorWindow
                         {
                             int nextKeyId = GetNextAvailableKeyGroupId();
                             menu.AddItem(new GUIContent($"Chains/Set as Key_{nextKeyId}"), false, () => { cell.KeyGroupId = nextKeyId; activeKeySource = coord; Repaint(); });
-                            
+
                             if (activeKeySource != new Vector2Int(-1, -1) && activeKeySource != coord)
                             {
                                 int pendingKeyNum = editorMatrix[activeKeySource].KeyGroupId;
@@ -294,7 +294,7 @@ public class LevelEditorWindow : EditorWindow
                         {
                             int nextLinkId = GetNextAvailableLinkGroupId();
                             menu.AddItem(new GUIContent($"Linking/Link From Here... (L_{nextLinkId})"), false, () => { cell.LinkGroupId = nextLinkId; activeLinkSource = coord; Repaint(); });
-                            
+
                             if (activeLinkSource != new Vector2Int(-1, -1) && activeLinkSource != coord)
                             {
                                 int pendingLinkNum = editorMatrix[activeLinkSource].LinkGroupId;
@@ -442,12 +442,12 @@ public class LevelEditorWindow : EditorWindow
         generatedQueues = levelData.ResolutionQueues;
 
         // Build temporary reverse matrix mapping from standard coordinates to their Guid values
-        Dictionary<Guid, Vector2Int> guidToCoordMap = new Dictionary<Guid, Vector2Int>();
+        Dictionary<int, Vector2Int> guidToCoordMap = new Dictionary<int, Vector2Int>();
         foreach (var cellNode in levelData.Grid.Matrix)
         {
             if (cellNode.OccupyingUnit != null)
             {
-                guidToCoordMap[cellNode.OccupyingUnit.Id] = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
+                guidToCoordMap[cellNode.OccupyingUnit.UnitId] = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
             }
         }
 
@@ -521,6 +521,26 @@ public class LevelEditorWindow : EditorWindow
 
     private GameLevelSchema AssembleActiveEditorStateToSchema()
     {
+        // --- CONTAINER ID SEQUENCING PASS ---
+        int nextContainerId = 0;
+        if (generatedQueues != null)
+        {
+            foreach (var lane in generatedQueues)
+            {
+                if (lane != null)
+                {
+                    foreach (var container in lane)
+                    {
+                        if (container != null)
+                        {
+                            container.Id = nextContainerId;
+                            nextContainerId++;
+                        }
+                    }
+                }
+            }
+        }
+
         GameLevelSchema level = new GameLevelSchema
         {
             LevelId = 1,
@@ -533,14 +553,29 @@ public class LevelEditorWindow : EditorWindow
         level.Grid.Rows = gridRows;
         level.Grid.Matrix = new List<GameLevelSchema.CellNode>();
 
-        // Generate matching tracking Guids mapping exactly to coordinates beforehand
-        Dictionary<Vector2Int, Guid> positionToGuidMap = new Dictionary<Vector2Int, Guid>();
-        foreach (var kvp in editorMatrix)
+        // 1. Assign sequential integer IDs matching coordinates beforehand
+        Dictionary<Vector2Int, int> positionToIdMap = new Dictionary<Vector2Int, int>();
+        int nextUnitId = 0;
+
+        // Order the loop deterministically so unit IDs increment smoothly across the grid
+        var sortedCoordinates = editorMatrix.OrderBy(p => p.Key.y).ThenBy(p => p.Key.x).ToList();
+
+        foreach (var kvp in sortedCoordinates)
         {
-            positionToGuidMap[kvp.Key] = Guid.NewGuid();
+            // Give EVERY playable or pipe cell a clean sequential integer ID
+            if (kvp.Value.Behavior != CellBehavior.Blocker)
+            {
+                positionToIdMap[kvp.Key] = nextUnitId;
+                nextUnitId++;
+            }
+            else
+            {
+                positionToIdMap[kvp.Key] = -1; // Blocker spaces have no valid unit ID
+            }
         }
 
-        foreach (var kvp in editorMatrix.OrderBy(p => p.Key.y).ThenBy(p => p.Key.x))
+        // 2. Build the Cell Matrix Nodes using the stable integer maps
+        foreach (var kvp in sortedCoordinates)
         {
             var coord = new GameLevelSchema.Coordinate(kvp.Key.x, kvp.Key.y);
             var node = new GameLevelSchema.CellNode { Position = coord };
@@ -554,9 +589,14 @@ public class LevelEditorWindow : EditorWindow
                 node.ContinuousPipe = new GameLevelSchema.PipeGenerator { MaxTotalEmissions = kvp.Value.PipeEmissions };
                 for (int i = 0; i < kvp.Value.PipeEmissions; i++)
                 {
-                    var unit = new GameLevelSchema.GridUnit { Id = Guid.NewGuid() };
+                    // Internal pipe units take the layout ID assigned to this cell position
+                    var unit = new GameLevelSchema.GridUnit { UnitId = positionToIdMap[kvp.Key] };
                     string color = !string.IsNullOrEmpty(kvp.Value.AssignedColorId) ? kvp.Value.AssignedColorId : "Color_0";
-                    for (int d = 0; d < 9; d++) unit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = color });
+
+                    for (int d = 0; d < 9; d++)
+                    {
+                        unit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = color });
+                    }
                     node.ContinuousPipe.ReservoirQueue.Add(unit);
                 }
             }
@@ -564,34 +604,34 @@ public class LevelEditorWindow : EditorWindow
             {
                 if (!string.IsNullOrEmpty(kvp.Value.AssignedColorId))
                 {
-                    node.OccupyingUnit = new GameLevelSchema.GridUnit { Id = positionToGuidMap[kvp.Key] };
+                    node.OccupyingUnit = new GameLevelSchema.GridUnit { UnitId = positionToIdMap[kvp.Key] };
                     node.OccupyingUnit.IsHiddenUntilUnblocked = kvp.Value.StartHidden;
-                    
-                    for (int d = 0; d < 9; d++) 
+
+                    for (int d = 0; d < 9; d++)
                     {
                         node.OccupyingUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = kvp.Value.AssignedColorId });
                     }
 
-                    // Map Local Numerical Lock IDs to Schema Target Guids
+                    // Map Local Numerical Lock IDs to Schema Target Integers
                     if (kvp.Value.LockGroupId > 0)
                     {
                         foreach (var cellPair in editorMatrix)
                         {
                             if (cellPair.Value.KeyGroupId == kvp.Value.LockGroupId)
                             {
-                                node.OccupyingUnit.ExplicitlyBlockedByUnitIds.Add(positionToGuidMap[cellPair.Key]);
+                                node.OccupyingUnit.ExplicitlyBlockedByUnitIds.Add(positionToIdMap[cellPair.Key]);
                             }
                         }
                     }
 
-                    // Map Local Numerical Link IDs to Schema Partner Guids
+                    // Map Local Numerical Link IDs to Schema Partner Integers
                     if (kvp.Value.LinkGroupId > 0)
                     {
                         foreach (var cellPair in editorMatrix)
                         {
                             if (cellPair.Key != kvp.Key && cellPair.Value.LinkGroupId == kvp.Value.LinkGroupId)
                             {
-                                node.OccupyingUnit.LinkedUnitIds.Add(positionToGuidMap[cellPair.Key]);
+                                node.OccupyingUnit.LinkedUnitIds.Add(positionToIdMap[cellPair.Key]);
                             }
                         }
                     }
@@ -601,4 +641,5 @@ public class LevelEditorWindow : EditorWindow
         }
         return level;
     }
+
 }

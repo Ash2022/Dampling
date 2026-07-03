@@ -159,7 +159,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public bool IsUnitActingAsKey(Guid unitId)
+    public bool IsUnitActingAsKey(int unitId)
     {
         // Search the active grid matrix matrix to see if any unplayed unit lists this ID as a blocker
         foreach (var cellNode in currentLevelData.Grid.Matrix)
@@ -173,7 +173,7 @@ public class GameManager : MonoBehaviour
         return false;
     }
 
-    public Vector3 GetUnitWorldPositionById(Guid id)
+    public Vector3 GetUnitWorldPositionById(int id)
     {
         // Search directly through the coordinate map you built in the creation loop
         foreach (var unitView in activeBoardReferences.UnitViews.Values)

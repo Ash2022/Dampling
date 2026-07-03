@@ -132,7 +132,7 @@ public class DamplingSimulationAgent
         List<GameLevelSchema.Coordinate> activeOptionsPool = new List<GameLevelSchema.Coordinate>();
         foreach (var cellNode in engine.ActiveLevelData.Grid.Matrix)
         {
-            if (cellNode.OccupyingUnit == null || engine.PlayedUnitIds.Contains(cellNode.OccupyingUnit.Id)) 
+            if (cellNode.OccupyingUnit == null || engine.PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId)) 
                 continue;
 
             if (!engine.IsUnitBlocked(cellNode.Position, cellNode.OccupyingUnit))

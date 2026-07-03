@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class DamplingGameCore
@@ -10,7 +11,7 @@ public class DamplingGameCore
     private Dictionary<GameLevelSchema.Coordinate, GameLevelSchema.CellNode> gridMatrix;
     public List<GameLevelSchema.DumplingItem> VirtualBelt { get; private set; }
     public List<List<GameLevelSchema.ContainerData>> DynamicQueues { get; private set; }
-    public HashSet<Guid> PlayedUnitIds { get; private set; }
+    public HashSet<int> PlayedUnitIds { get; private set; }
 
     public bool IsGameOver { get; private set; }
     public bool IsGameWon { get; private set; }
@@ -28,7 +29,7 @@ public class DamplingGameCore
     public class EngineEvent
     {
         public EngineEventType EventType { get; set; }
-        public Guid TargetId { get; set; }        
+        public int TargetId { get; set; }        
         public string ColorValue { get; set; }     
         public int QueueIndex { get; set; }       
         public object Payload { get; set; }       
@@ -39,7 +40,7 @@ public class DamplingGameCore
     {
         ActiveLevelData = levelData;
         VirtualBelt = new List<GameLevelSchema.DumplingItem>();
-        PlayedUnitIds = new HashSet<Guid>();
+        PlayedUnitIds = new HashSet<int>();
         IsGameOver = false;
         IsGameWon = false;
 
@@ -76,15 +77,15 @@ public class DamplingGameCore
         if (!gridMatrix.TryGetValue(coord, out var primaryCellNode)) return outputTransactionHistory;
         
         var activeUnit = primaryCellNode.OccupyingUnit;
-        if (activeUnit == null || PlayedUnitIds.Contains(activeUnit.Id)) return outputTransactionHistory;
+        if (activeUnit == null || PlayedUnitIds.Contains(activeUnit.UnitId)) return outputTransactionHistory;
 
         // Collect all related linked units into an evaluation block for atomic simulation validation
         List<GameLevelSchema.GridUnit> linkedCluster = new List<GameLevelSchema.GridUnit>();
-        HashSet<Guid> visitedClusterIds = new HashSet<Guid>();
+        HashSet<int> visitedClusterIds = new HashSet<int>();
         Queue<GameLevelSchema.GridUnit> clusterQueue = new Queue<GameLevelSchema.GridUnit>();
 
         clusterQueue.Enqueue(activeUnit);
-        visitedClusterIds.Add(activeUnit.Id);
+        visitedClusterIds.Add(activeUnit.UnitId);
 
         while (clusterQueue.Count > 0)
         {
@@ -109,7 +110,7 @@ public class DamplingGameCore
         // If even one unit inside this linked chain is blocked, the play interaction is invalid
         foreach (var clusterUnit in linkedCluster)
         {
-            var unitCellNode = FindCellNodeByUnitId(clusterUnit.Id);
+            var unitCellNode = FindCellNodeByUnitId(clusterUnit.UnitId);
             if (IsUnitBlocked(unitCellNode.Position, clusterUnit))
             {
                 return outputTransactionHistory; // Atomic block rejection
@@ -119,7 +120,7 @@ public class DamplingGameCore
         // Execute processing steps for the verified playable transaction group
         foreach (var currentUnit in linkedCluster)
         {
-            PlayedUnitIds.Add(currentUnit.Id);
+            PlayedUnitIds.Add(currentUnit.UnitId);
 
             foreach (var dumpling in currentUnit.InteriorContents)
             {
@@ -190,14 +191,14 @@ public class DamplingGameCore
     {
         foreach (var cellNode in ActiveLevelData.Grid.Matrix)
         {
-            if (cellNode.OccupyingUnit == null || PlayedUnitIds.Contains(cellNode.OccupyingUnit.Id)) continue;
+            if (cellNode.OccupyingUnit == null || PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId)) continue;
 
             if (!IsUnitBlocked(cellNode.Position, cellNode.OccupyingUnit))
             {
                 transactions.Add(new EngineEvent
                 {
                     EventType = EngineEventType.UnitUnblocked,
-                    TargetId = cellNode.OccupyingUnit.Id,
+                    TargetId = cellNode.OccupyingUnit.UnitId,
                     Payload = new Vector2Int(cellNode.Position.X, cellNode.Position.Y)
                 });
             }
@@ -281,7 +282,7 @@ public class DamplingGameCore
                 if (visited.Contains(neighborCoord)) continue;
 
                 if (gridMatrix.TryGetValue(neighborCoord, out var neighborCell) && 
-                    neighborCell.IsPlayablePath && (neighborCell.OccupyingUnit == null || PlayedUnitIds.Contains(neighborCell.OccupyingUnit.Id)))
+                    neighborCell.IsPlayablePath && (neighborCell.OccupyingUnit == null || PlayedUnitIds.Contains(neighborCell.OccupyingUnit.UnitId)))
                 {
                     if (neighborCoord.Y == 0) return false; 
 
@@ -294,20 +295,20 @@ public class DamplingGameCore
         return true; 
     }
 
-    private GameLevelSchema.GridUnit FindUnitById(Guid id)
+    private GameLevelSchema.GridUnit FindUnitById(int id)
     {
         foreach (var node in gridMatrix.Values)
         {
-            if (node.OccupyingUnit != null && node.OccupyingUnit.Id == id) return node.OccupyingUnit;
+            if (node.OccupyingUnit != null && node.OccupyingUnit.UnitId == id) return node.OccupyingUnit;
         }
         return null;
     }
 
-    private GameLevelSchema.CellNode FindCellNodeByUnitId(Guid id)
+    private GameLevelSchema.CellNode FindCellNodeByUnitId(int id)
     {
         foreach (var node in gridMatrix.Values)
         {
-            if (node.OccupyingUnit != null && node.OccupyingUnit.Id == id) return node;
+            if (node.OccupyingUnit != null && node.OccupyingUnit.UnitId == id) return node;
         }
         return null;
     }

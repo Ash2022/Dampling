@@ -21,7 +21,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     private Sequence resolveSequence;
     private string unitColorId;
 
-    public Guid UnitId { get; private set; }
+    public int UnitId { get; private set; }
     public void Initialize(GameLevelSchema.CellNode cellNode)
     {
         gridCoordinate = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
@@ -37,7 +37,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         // 1. Process Static Pipe Generation Matrix Cells
         if (cellNode.ContinuousPipe != null)
         {
-            UnitId = Guid.Empty; // Pipes are anchor locations, not standard unit structures
+            UnitId = -1; // Pipes are anchor locations, not standard unit structures
 
             var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
             unitColorId = firstUnit?.InteriorContents.FirstOrDefault()?.ColorId ?? "";
@@ -53,7 +53,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         // 2. Process Standard Playable Unit Grid Cells
         else if (cellNode.OccupyingUnit != null)
         {
-            UnitId = cellNode.OccupyingUnit.Id; // Safely assigned inside verified non-null block
+            UnitId = cellNode.OccupyingUnit.UnitId; // Safely assigned inside verified non-null block
 
             bool isHidden = cellNode.OccupyingUnit.IsHiddenUntilUnblocked;
             unitColorId = isHidden ? "Hidden" : (cellNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorId ?? "");
@@ -69,7 +69,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                 lockOverlayRenderer.gameObject.SetActive(true);
             }
 
-            bool isAKeyUnit = GameManager.Instance.IsUnitActingAsKey(cellNode.OccupyingUnit.Id);
+            bool isAKeyUnit = GameManager.Instance.IsUnitActingAsKey(cellNode.OccupyingUnit.UnitId);
             if (isAKeyUnit)
             {
                 keyIndicatorRenderer.gameObject.SetActive(true);
@@ -88,7 +88,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         // 3. Process Empty / Carved Out Boundary Gaps / Blocked Cells
         else
         {
-            UnitId = Guid.Empty;
+            UnitId = -1;
             spriteRenderer.color = DamplingGameUtils.GetColorById("");
             lidRenderer.gameObject.SetActive(false);
         }
@@ -114,7 +114,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     foreach (var linkedId in cellNode.OccupyingUnit.LinkedUnitIds)
     {
-        int comparisonResult = cellNode.OccupyingUnit.Id.CompareTo(linkedId);
+        int comparisonResult = cellNode.OccupyingUnit.UnitId.CompareTo(linkedId);
         
         if (comparisonResult > 0)
         {

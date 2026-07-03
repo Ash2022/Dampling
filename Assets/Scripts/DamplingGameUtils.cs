@@ -46,7 +46,7 @@ public static class DamplingGameUtils
                     MaxTotalEmissions = sourceNode.ContinuousPipe.MaxTotalEmissions,
                     ReservoirQueue = sourceNode.ContinuousPipe.ReservoirQueue.Select(u => new GameLevelSchema.GridUnit
                     {
-                        Id = u.Id,
+                        UnitId = u.UnitId,
                         IsHiddenUntilUnblocked = u.IsHiddenUntilUnblocked,
                         InteriorContents = u.InteriorContents.Select(d => new GameLevelSchema.DumplingItem { ColorId = d.ColorId }).ToList()
                     }).ToList()
@@ -58,7 +58,7 @@ public static class DamplingGameUtils
             {
                 copyNode.OccupyingUnit = new GameLevelSchema.GridUnit
                 {
-                    Id = sourceNode.OccupyingUnit.Id,
+                    UnitId = sourceNode.OccupyingUnit.UnitId,
                     IsHiddenUntilUnblocked = sourceNode.OccupyingUnit.IsHiddenUntilUnblocked,
                     InteriorContents = sourceNode.OccupyingUnit.InteriorContents.Select(d => new GameLevelSchema.DumplingItem { ColorId = d.ColorId }).ToList(),
                     ExplicitlyBlockedByUnitIds = sourceNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.ToList(),

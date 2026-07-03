@@ -25,7 +25,7 @@ public class GameLevelSchema
 
     public class ContainerData
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public int Id { get; set; }
         public string ColorId { get; set; }
         public int Capacity { get; set; } = 3;
         public int FilledSlotsCount { get; set; } = 0;
@@ -62,17 +62,20 @@ public class GameLevelSchema
 
     public class GridUnit
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        // The flat, simple identity number of this unit (0, 1, 2...)
+        // If it's unassigned or empty, it defaults strictly to -1
+        public int UnitId { get; set; } = -1;
+
         public bool IsHiddenUntilUnblocked { get; set; } = false;
 
-        // Content Layer (Supports single color or multi-color arrangements)
+        // Content Layer
         public List<DumplingItem> InteriorContents { get; set; } = new List<DumplingItem>();
 
-        // Explicit Dependency Graph overrides (For non-trivial structural locks)
-        public List<Guid> ExplicitlyBlockedByUnitIds { get; set; } = new List<Guid>();
+        // Stores the plain integer IDs of the Key units that block this unit
+        public List<int> ExplicitlyBlockedByUnitIds { get; set; } = new List<int>();
 
-        // Linkage Feature: Triggering this unit forces the simultaneous play of these targeted units
-        public List<Guid> LinkedUnitIds { get; set; } = new List<Guid>();
+        // Stores the plain integer IDs of the partner units linked to this unit
+        public List<int> LinkedUnitIds { get; set; } = new List<int>();
     }
 
     public class DumplingItem
@@ -82,7 +85,7 @@ public class GameLevelSchema
 
     public class PipeGenerator
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public int Id { get; set; }
 
         // The sequence of units queued inside the pipe to emit into the grid when space clears
         public List<GridUnit> ReservoirQueue { get; set; } = new List<GridUnit>();
@@ -94,6 +97,6 @@ public class GameLevelSchema
     public class BoardVisualReferences
     {
         public Dictionary<Vector2Int, UnitView> UnitViews { get; set; } = new Dictionary<Vector2Int, UnitView>();
-        public Dictionary<Guid, ContainerView> ContainerViews { get; set; } = new Dictionary<Guid, ContainerView>();
+        public Dictionary<int, ContainerView> ContainerViews { get; set; } = new Dictionary<int, ContainerView>();
     }
 }
