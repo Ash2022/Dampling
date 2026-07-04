@@ -87,9 +87,12 @@ public class LevelVisualization : MonoBehaviour
             // 2. If it's NOT a playable path (blocked gap/hole), inline spawn the structural EmptyUnit instead
             else
             {
-                GameObject emptyInstance = DamplingObjectPool.Instance.GetEmptyUnit(spawnPosition, Quaternion.identity, transform);
-                emptyInstance.name = $"EmptyUnit_({gridX},{gridY})";
-                spawnedVisualElements.Add(emptyInstance);
+                GameObject cellBlocker = DamplingObjectPool.Instance.GetCellBlocker(spawnPosition, Quaternion.identity, transform);
+                cellBlocker.name = $"EmptyUnit_({gridX},{gridY})";                
+                BlockerCellView blockerView = cellBlocker.GetComponent<BlockerCellView>();
+                blockerView.Initialize(coord, cellNode.CrateDurability);
+                
+                spawnedVisualElements.Add(cellBlocker);
             }
         }
 

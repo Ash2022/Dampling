@@ -58,6 +58,13 @@ public class GameLevelSchema
 
         // Pipe/Dispenser Behavior: If assigned, this cell behaves as an infinite or finite generator
         public PipeGenerator ContinuousPipe { get; set; }
+
+        /// <summary>
+        ///  0 = Normal empty floor tile.
+        /// -1 = Permanent structural blocker (wall/gap).
+        /// >0 = Destructible Crate (takes this many adjacent hits to break).
+        /// </summary>
+        public int CrateDurability { get; set; } = 0;
     }
 
     public class GridUnit
@@ -76,6 +83,12 @@ public class GameLevelSchema
 
         // Stores the plain integer IDs of the partner units linked to this unit
         public List<int> LinkedUnitIds { get; set; } = new List<int>();
+
+        /// <summary>
+        /// 0 = Normal active/thawed unit.
+        /// >0 = Unit is frozen in ice. It cannot be clicked or pathfind until this hits 0.
+        /// </summary>
+        public int IceLayers { get; set; } = 0;
     }
 
     public class DumplingItem
@@ -98,5 +111,7 @@ public class GameLevelSchema
     {
         public Dictionary<Vector2Int, UnitView> UnitViews { get; set; } = new Dictionary<Vector2Int, UnitView>();
         public Dictionary<int, ContainerView> ContainerViews { get; set; } = new Dictionary<int, ContainerView>();
+    
+        public Dictionary<Vector2Int, BlockerCellView> BlockerViews { get; set; } = new Dictionary<Vector2Int, BlockerCellView>();
     }
 }

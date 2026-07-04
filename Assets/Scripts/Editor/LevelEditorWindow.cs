@@ -28,6 +28,9 @@ public class LevelEditorWindow : EditorWindow
         public int KeyGroupId = 0;
         public int LockGroupId = 0;
         public int LinkGroupId = 0;
+
+        public int CrateDurability = 0; // Default: 0 (not a crate). -1 = solid wall. >0 = crate health
+        public int IceLayers = 0;
     }
 
     private Dictionary<Vector2Int, EditorCell> editorMatrix = new Dictionary<Vector2Int, EditorCell>();
@@ -212,11 +215,13 @@ public class LevelEditorWindow : EditorWindow
                 Vector2Int belowCoord = new Vector2Int(x, y + 1);
                 bool isTargetedByPipeBelow = editorMatrix.ContainsKey(belowCoord) && editorMatrix[belowCoord].Behavior == CellBehavior.Pipe;
 
+                // COLOR FEEDBACK: Change blocker color if it's a destructible crate vs permanent hole
                 Color displayColor = cell.Behavior switch
                 {
-                    CellBehavior.Blocker => new Color(0.25f, 0.25f, 0.25f),
+                    CellBehavior.Blocker => cell.CrateDurability > 0 ? new Color(0.45f, 0.35f, 0.25f) : new Color(0.25f, 0.25f, 0.25f),
                     CellBehavior.Pipe => new Color(0.18f, 0.44f, 0.72f),
                     _ => isTargetedByPipeBelow ? new Color(0.25f, 0.55f, 0.85f, 0.4f) :
+                         cell.IceLayers > 0 ? new Color(0.6f, 0.85f, 0.95f) : // Light icy blue color tint
                          !string.IsNullOrEmpty(cell.AssignedColorId) ? GetColorValue(cell.AssignedColorId) :
                          new Color(0.85f, 0.85f, 0.85f)
                 };
@@ -240,21 +245,35 @@ public class LevelEditorWindow : EditorWindow
 
                     if (!string.IsNullOrEmpty(relationOverlay))
                     {
-                        Rect tagRect = new Rect(cellRect.x + 2, cellRect.y + 25, cellRect.width - 4, 20f);
+                        Rect tagRect = new Rect(cellRect.x + 2, cellRect.y + 20, cellRect.width - 4, 16f);
                         EditorGUI.DrawRect(tagRect, new Color(0.1f, 0.1f, 0.1f, 0.85f));
                         GUI.Label(tagRect, relationOverlay, EditorStyles.whiteMiniLabel);
                     }
 
+                    // ICE BOX EDITOR FIELD: If unit has ice layers, show numeric field modifier
+                    if (cell.IceLayers > 0)
+                    {
+                        Rect iceRect = new Rect(cellRect.x + 2, cellRect.y + cellRect.height - 36, cellRect.width - 4, 16f);
+                        EditorGUI.DrawRect(iceRect, new Color(0f, 0.3f, 0.5f, 0.9f));
+                        GUI.Label(new Rect(iceRect.x + 2, iceRect.y, 35, 16), "Ice:", EditorStyles.whiteMiniLabel);
+                        cell.IceLayers = EditorGUI.IntField(new Rect(iceRect.x + 28, iceRect.y, iceRect.width - 30, 16), cell.IceLayers);
+                    }
+
                     if (cell.StartHidden && hasColor)
                     {
-                        Rect hiddenIndicatorRect = new Rect(cellRect.x + 2, cellRect.y + cellRect.height - 20, cellRect.width - 4, 20f);
+                        Rect hiddenIndicatorRect = new Rect(cellRect.x + 2, cellRect.y + cellRect.height - 18, cellRect.width - 4, 16f);
                         EditorGUI.DrawRect(hiddenIndicatorRect, new Color(0f, 0f, 0f, 0.6f));
                         GUI.Label(hiddenIndicatorRect, "HIDDEN STATE", EditorStyles.whiteMiniLabel);
                     }
                 }
                 else if (cell.Behavior == CellBehavior.Blocker)
                 {
-                    GUI.Label(cellRect, "BLOCK", EditorStyles.whiteMiniLabel);
+                    string labelText = cell.CrateDurability > 0 ? "CRATE" : "WALL BLOCK";
+                    GUI.Label(new Rect(cellRect.x + 4, cellRect.y + 4, cellRect.width - 8, 16), labelText, EditorStyles.whiteMiniLabel);
+
+                    // CRATE DURABILITY INPUT FIELD: Always editable right on the tile
+                    Rect crateInputRect = new Rect(cellRect.x + 6, cellRect.y + 26, cellRect.width - 12, 18f);
+                    cell.CrateDurability = EditorGUI.IntField(crateInputRect, cell.CrateDurability);
                 }
                 else if (cell.Behavior == CellBehavior.Pipe)
                 {
@@ -266,52 +285,60 @@ public class LevelEditorWindow : EditorWindow
                     cell.PipeEmissions = EditorGUI.IntField(inputRect, cell.PipeEmissions);
                 }
 
-                // Interactive Context Configuration Processing
+                // Interactive Context Configuration Processing (Right-Click Controls)
                 if (cellRect.Contains(e.mousePosition) && e.type == EventType.ContextClick)
                 {
                     GenericMenu menu = new GenericMenu();
 
-                    if (cell.Behavior == CellBehavior.Standard && !string.IsNullOrEmpty(cell.AssignedColorId))
+                    if (cell.Behavior == CellBehavior.Standard)
                     {
-                        menu.AddItem(new GUIContent("Unit/Start Revealed"), !cell.StartHidden, () => { cell.StartHidden = false; Repaint(); });
-                        menu.AddItem(new GUIContent("Unit/Start Hidden"), cell.StartHidden, () => { cell.StartHidden = true; Repaint(); });
-                        menu.AddSeparator("Unit/");
+                        // Ice Layer Menu Interactions
+                        menu.AddItem(new GUIContent("Environment/Add Ice Layer"), cell.IceLayers > 0, () => { if (cell.IceLayers == 0) cell.IceLayers = 1; Repaint(); });
+                        menu.AddItem(new GUIContent("Environment/Thaw Ice Completely"), cell.IceLayers == 0, () => { cell.IceLayers = 0; Repaint(); });
+                        menu.AddSeparator("Environment/");
 
-                        // Gated Option Verification via Mutual Exclusion
-                        if (cell.LinkGroupId == 0)
+                        if (!string.IsNullOrEmpty(cell.AssignedColorId))
                         {
-                            int nextKeyId = GetNextAvailableKeyGroupId();
-                            menu.AddItem(new GUIContent($"Chains/Set as Key_{nextKeyId}"), false, () => { cell.KeyGroupId = nextKeyId; activeKeySource = coord; Repaint(); });
+                            menu.AddItem(new GUIContent("Unit/Start Revealed"), !cell.StartHidden, () => { cell.StartHidden = false; Repaint(); });
+                            menu.AddItem(new GUIContent("Unit/Start Hidden"), cell.StartHidden, () => { cell.StartHidden = true; Repaint(); });
+                            menu.AddSeparator("Unit/");
 
-                            if (activeKeySource != new Vector2Int(-1, -1) && activeKeySource != coord)
+                            if (cell.LinkGroupId == 0)
                             {
-                                int pendingKeyNum = editorMatrix[activeKeySource].KeyGroupId;
-                                menu.AddItem(new GUIContent($"Chains/Connect as Lock for Key_{pendingKeyNum}"), false, () => { cell.LockGroupId = pendingKeyNum; activeKeySource = new Vector2Int(-1, -1); Repaint(); });
+                                int nextKeyId = GetNextAvailableKeyGroupId();
+                                menu.AddItem(new GUIContent($"Chains/Set as Key_{nextKeyId}"), false, () => { cell.KeyGroupId = nextKeyId; activeKeySource = coord; Repaint(); });
+
+                                if (activeKeySource != new Vector2Int(-1, -1) && activeKeySource != coord)
+                                {
+                                    int pendingKeyNum = editorMatrix[activeKeySource].KeyGroupId;
+                                    menu.AddItem(new GUIContent($"Chains/Connect as Lock for Key_{pendingKeyNum}"), false, () => { cell.LockGroupId = pendingKeyNum; activeKeySource = new Vector2Int(-1, -1); Repaint(); });
+                                }
                             }
-                        }
 
-                        if (cell.KeyGroupId == 0 && cell.LockGroupId == 0)
-                        {
-                            int nextLinkId = GetNextAvailableLinkGroupId();
-                            menu.AddItem(new GUIContent($"Linking/Link From Here... (L_{nextLinkId})"), false, () => { cell.LinkGroupId = nextLinkId; activeLinkSource = coord; Repaint(); });
-
-                            if (activeLinkSource != new Vector2Int(-1, -1) && activeLinkSource != coord)
+                            if (cell.KeyGroupId == 0 && cell.LockGroupId == 0)
                             {
-                                int pendingLinkNum = editorMatrix[activeLinkSource].LinkGroupId;
-                                menu.AddItem(new GUIContent($"Linking/Complete Link to Group L_{pendingLinkNum}"), false, () => { cell.LinkGroupId = pendingLinkNum; activeLinkSource = new Vector2Int(-1, -1); Repaint(); });
-                            }
-                        }
+                                int nextLinkId = GetNextAvailableLinkGroupId();
+                                menu.AddItem(new GUIContent($"Linking/Link From Here... (L_{nextLinkId})"), false, () => { cell.LinkGroupId = nextLinkId; activeLinkSource = coord; Repaint(); });
 
-                        menu.AddItem(new GUIContent("Relations/Clear All Links & Chains"), false, () => { cell.KeyGroupId = 0; cell.LockGroupId = 0; cell.LinkGroupId = 0; Repaint(); });
-                        menu.AddSeparator("");
-                        menu.AddItem(new GUIContent("Convert Cell/To Blocker (Hole)"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Blocker; cell.AssignedColorId = ""; cell.StartHidden = false; Repaint(); });
-                        menu.AddItem(new GUIContent("Convert Cell/To Pipe Generator"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Pipe; cell.AssignedColorId = ""; cell.StartHidden = false; Repaint(); });
+                                if (activeLinkSource != new Vector2Int(-1, -1) && activeLinkSource != coord)
+                                {
+                                    int pendingLinkNum = editorMatrix[activeLinkSource].LinkGroupId;
+                                    menu.AddItem(new GUIContent($"Linking/Complete Link to Group L_{pendingLinkNum}"), false, () => { cell.LinkGroupId = pendingLinkNum; activeLinkSource = new Vector2Int(-1, -1); Repaint(); });
+                                }
+                            }
+
+                            menu.AddItem(new GUIContent("Relations/Clear All Links & Chains"), false, () => { cell.KeyGroupId = 0; cell.LockGroupId = 0; cell.LinkGroupId = 0; Repaint(); });
+                            menu.AddSeparator("");
+                            menu.AddItem(new GUIContent("Convert Cell/To Blocker (Hole)"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Blocker; cell.CrateDurability = -1; cell.AssignedColorId = ""; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
+                            menu.AddItem(new GUIContent("Convert Cell/To Pipe Generator"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Pipe; cell.AssignedColorId = ""; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
+                        }
                     }
                     else
                     {
-                        menu.AddItem(new GUIContent("Set Standard Unit"), cell.Behavior == CellBehavior.Standard, () => { cell.Behavior = CellBehavior.Standard; cell.AssignedColorId = ""; cell.StartHidden = false; Repaint(); });
-                        menu.AddItem(new GUIContent("Set Blocker (Hole)"), cell.Behavior == CellBehavior.Blocker, () => { cell.Behavior = CellBehavior.Blocker; cell.StartHidden = false; Repaint(); });
-                        menu.AddItem(new GUIContent("Set Pipe Generator"), cell.Behavior == CellBehavior.Pipe, () => { cell.Behavior = CellBehavior.Pipe; cell.StartHidden = false; Repaint(); });
+                        menu.AddItem(new GUIContent("Set Standard Unit"), cell.Behavior == CellBehavior.Standard, () => { cell.Behavior = CellBehavior.Standard; cell.CrateDurability = 0; cell.AssignedColorId = ""; cell.StartHidden = false; Repaint(); });
+                        menu.AddItem(new GUIContent("Set Blocker (Hole)"), cell.Behavior == CellBehavior.Blocker && cell.CrateDurability == -1, () => { cell.Behavior = CellBehavior.Blocker; cell.CrateDurability = -1; cell.StartHidden = false; Repaint(); });
+                        menu.AddItem(new GUIContent("Set Destructible Crate"), cell.Behavior == CellBehavior.Blocker && cell.CrateDurability > 0, () => { cell.Behavior = CellBehavior.Blocker; cell.CrateDurability = 1; cell.StartHidden = false; Repaint(); });
+                        menu.AddItem(new GUIContent("Set Pipe Generator"), cell.Behavior == CellBehavior.Pipe, () => { cell.Behavior = CellBehavior.Pipe; cell.CrateDurability = 0; cell.StartHidden = false; Repaint(); });
                     }
 
                     menu.ShowAsContext();
@@ -441,7 +468,6 @@ public class LevelEditorWindow : EditorWindow
         BuildCanvas();
         generatedQueues = levelData.ResolutionQueues;
 
-        // Build temporary reverse matrix mapping from standard coordinates to their Guid values
         Dictionary<int, Vector2Int> guidToCoordMap = new Dictionary<int, Vector2Int>();
         foreach (var cellNode in levelData.Grid.Matrix)
         {
@@ -453,7 +479,6 @@ public class LevelEditorWindow : EditorWindow
 
         int keyGroupCounter = 1;
         int linkGroupCounter = 1;
-        Dictionary<int, int> schemaKeyToEditorId = new Dictionary<int, int>();
 
         foreach (var cellNode in levelData.Grid.Matrix)
         {
@@ -462,9 +487,18 @@ public class LevelEditorWindow : EditorWindow
 
             EditorCell cell = editorMatrix[key];
 
-            if (!cellNode.IsPlayablePath)
+            // Read Crate and Path definitions safely
+            cell.CrateDurability = cellNode.CrateDurability;
+
+            if (!cellNode.IsPlayablePath && cell.CrateDurability == 0)
+            {
+                cell.CrateDurability = -1; // Force backward safety for raw solid blocks
+            }
+
+            if (cell.CrateDurability == -1 || cell.CrateDurability > 0)
             {
                 cell.Behavior = CellBehavior.Blocker;
+                cell.IceLayers = 0;
             }
             else if (cellNode.ContinuousPipe != null)
             {
@@ -472,6 +506,7 @@ public class LevelEditorWindow : EditorWindow
                 cell.PipeEmissions = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
                 var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
                 cell.AssignedColorId = firstUnit?.InteriorContents.FirstOrDefault()?.ColorId ?? "";
+                cell.IceLayers = 0;
             }
             else
             {
@@ -480,10 +515,11 @@ public class LevelEditorWindow : EditorWindow
                 cell.AssignedColorId = firstItem?.ColorId ?? "";
                 cell.StartHidden = cellNode.OccupyingUnit?.IsHiddenUntilUnblocked ?? false;
 
-                // Restore Complex Feature Groups during deserialization passes
+                // Re-map structural Ice parameters natively
+                cell.IceLayers = cellNode.OccupyingUnit?.IceLayers ?? 0;
+
                 if (cellNode.OccupyingUnit != null)
                 {
-                    // 1. Process Linked Groups Reconstruction
                     if (cellNode.OccupyingUnit.LinkedUnitIds.Count > 0 && cell.LinkGroupId == 0)
                     {
                         int targetLinkId = linkGroupCounter++;
@@ -497,7 +533,6 @@ public class LevelEditorWindow : EditorWindow
                         }
                     }
 
-                    // 2. Process Explicit Dependency Chains Reconstruction
                     if (cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count > 0)
                     {
                         foreach (var blockerGuid in cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds)
@@ -521,7 +556,6 @@ public class LevelEditorWindow : EditorWindow
 
     private GameLevelSchema AssembleActiveEditorStateToSchema()
     {
-        // --- CONTAINER ID SEQUENCING PASS ---
         int nextContainerId = 0;
         if (generatedQueues != null)
         {
@@ -553,16 +587,13 @@ public class LevelEditorWindow : EditorWindow
         level.Grid.Rows = gridRows;
         level.Grid.Matrix = new List<GameLevelSchema.CellNode>();
 
-        // 1. Assign sequential integer IDs matching coordinates beforehand
         Dictionary<Vector2Int, int> positionToIdMap = new Dictionary<Vector2Int, int>();
         int nextUnitId = 0;
 
-        // Order the loop deterministically so unit IDs increment smoothly across the grid
         var sortedCoordinates = editorMatrix.OrderBy(p => p.Key.y).ThenBy(p => p.Key.x).ToList();
 
         foreach (var kvp in sortedCoordinates)
         {
-            // Give EVERY playable or pipe cell a clean sequential integer ID
             if (kvp.Value.Behavior != CellBehavior.Blocker)
             {
                 positionToIdMap[kvp.Key] = nextUnitId;
@@ -570,27 +601,32 @@ public class LevelEditorWindow : EditorWindow
             }
             else
             {
-                positionToIdMap[kvp.Key] = -1; // Blocker spaces have no valid unit ID
+                positionToIdMap[kvp.Key] = -1;
             }
         }
 
-        // 2. Build the Cell Matrix Nodes using the stable integer maps
         foreach (var kvp in sortedCoordinates)
         {
             var coord = new GameLevelSchema.Coordinate(kvp.Key.x, kvp.Key.y);
             var node = new GameLevelSchema.CellNode { Position = coord };
 
+            // Export Crate Durability properties explicitly
+            node.CrateDurability = kvp.Value.CrateDurability;
+
             if (kvp.Value.Behavior == CellBehavior.Blocker)
             {
-                node.IsPlayablePath = false;
+                // If it's a permanent wall, it's not a playable path. If it's a crate (>0), it IS a playable path!
+                node.IsPlayablePath = kvp.Value.CrateDurability > 0;
+                if (kvp.Value.CrateDurability == 0) node.CrateDurability = -1; // Fallback defense for standard solid walls
             }
             else if (kvp.Value.Behavior == CellBehavior.Pipe)
             {
+                node.IsPlayablePath = true;
+                node.CrateDurability = 0;
                 node.ContinuousPipe = new GameLevelSchema.PipeGenerator { MaxTotalEmissions = kvp.Value.PipeEmissions };
                 for (int i = 0; i < kvp.Value.PipeEmissions; i++)
                 {
-                    // Internal pipe units take the layout ID assigned to this cell position
-                    var unit = new GameLevelSchema.GridUnit { UnitId = positionToIdMap[kvp.Key] };
+                    var unit = new GameLevelSchema.GridUnit { UnitId = positionToIdMap[kvp.Key], IceLayers = 0 };
                     string color = !string.IsNullOrEmpty(kvp.Value.AssignedColorId) ? kvp.Value.AssignedColorId : "Color_0";
 
                     for (int d = 0; d < 9; d++)
@@ -602,9 +638,16 @@ public class LevelEditorWindow : EditorWindow
             }
             else if (kvp.Value.Behavior == CellBehavior.Standard)
             {
+                node.IsPlayablePath = true;
+                node.CrateDurability = 0;
+
                 if (!string.IsNullOrEmpty(kvp.Value.AssignedColorId))
                 {
-                    node.OccupyingUnit = new GameLevelSchema.GridUnit { UnitId = positionToIdMap[kvp.Key] };
+                    node.OccupyingUnit = new GameLevelSchema.GridUnit
+                    {
+                        UnitId = positionToIdMap[kvp.Key],
+                        IceLayers = kvp.Value.IceLayers // Export custom ice layers into unit payload
+                    };
                     node.OccupyingUnit.IsHiddenUntilUnblocked = kvp.Value.StartHidden;
 
                     for (int d = 0; d < 9; d++)
@@ -612,7 +655,6 @@ public class LevelEditorWindow : EditorWindow
                         node.OccupyingUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = kvp.Value.AssignedColorId });
                     }
 
-                    // Map Local Numerical Lock IDs to Schema Target Integers
                     if (kvp.Value.LockGroupId > 0)
                     {
                         foreach (var cellPair in editorMatrix)
@@ -624,7 +666,6 @@ public class LevelEditorWindow : EditorWindow
                         }
                     }
 
-                    // Map Local Numerical Link IDs to Schema Partner Integers
                     if (kvp.Value.LinkGroupId > 0)
                     {
                         foreach (var cellPair in editorMatrix)

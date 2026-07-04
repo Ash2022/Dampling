@@ -73,12 +73,20 @@ public class GameManager : MonoBehaviour
         // Step 1: Grab target data from model manager via updated progression index
         currentLevelData = ModelManager.Instance.GetLevelByIndex(CurrentLevelIndex);
 
-        // Step 2: Spin up a fresh simulation core instance to clear past game states completely
-        gameCore = new DamplingGameCore();
-        gameCore.InitializeLevel(currentLevelData);
+        ClearActiveBoard();
 
         // Step 3: Wipe past scene instances and render the fresh board layout array mapping setup
         activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData);
+
+        // Step 2: Spin up a fresh simulation core instance to clear past game states completely
+        gameCore = new DamplingGameCore();
+        gameCore.InitializeLevel(
+            currentLevelData,
+            HandleUnitUnblocked,
+            HandleUnitIceChanged,
+            HandleCrateDurabilityChanged,
+            HandleLockKeyCollected
+        );
 
         beltGenerator.StartBeltMovement();
 
@@ -90,7 +98,8 @@ public class GameManager : MonoBehaviour
         var cellNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == coordinate.x && c.Position.Y == coordinate.y);
         if (cellNode == null || cellNode.OccupyingUnit == null) return false;
 
-        return gameCore.IsUnitBlocked(cellNode.Position, cellNode.OccupyingUnit);
+        // If you are checking an individual unit outside a click loop (like your bot or setup):
+        return gameCore.IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, new HashSet<int>());
     }
 
     public void OnUnitElementClicked(Vector2Int coordinate)
@@ -172,5 +181,136 @@ public class GameManager : MonoBehaviour
         }
         return false;
     }
-   
+
+    /// <summary>
+    /// Core hook triggered when an element on the grid thaws out or clears a path dependency.
+    /// </summary>
+    private void HandleUnitUnblocked(int unitId)
+    {
+        if (activeBoardReferences == null) return;
+
+        UnitView targetView = null;
+        foreach (var view in activeBoardReferences.UnitViews.Values)
+        {
+            if (view != null && view.UnitId == unitId)
+            {
+                targetView = view;
+                break;
+            }
+        }
+
+        if (targetView != null)
+        {
+            // 1. Hide lock overlays or icons
+            // 2. If it was hidden ("?"), clear the text overlay and set up nested interior assets
+        }
+    }
+
+    /// <summary>
+    /// Core hook triggered when a unit's ice layer drops or breaks completely.
+    /// </summary>
+    private void HandleUnitIceChanged(int unitId, int remainingIceLayers)
+    {
+        if (activeBoardReferences == null) return;
+
+        UnitView targetView = null;
+        foreach (var view in activeBoardReferences.UnitViews.Values)
+        {
+            if (view != null && view.UnitId == unitId)
+            {
+                targetView = view;
+                break;
+            }
+        }
+
+        if (targetView != null)
+        {
+            // Accessing the local lowercase field from your script block
+            Color naturalColor = DamplingGameUtils.GetColorById(targetView.unitColorId);
+
+            if (remainingIceLayers > 0)
+            {
+                targetView.UpdateIceLayers(remainingIceLayers, naturalColor);
+            }
+            else
+            {
+                targetView.ShatterIce(naturalColor);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Core hook triggered when a crate takes damage or shatters out of the maze layout.
+    /// </summary>
+    private void HandleCrateDurabilityChanged(Vector2Int gridPos, int remainingDurability)
+    {
+        if (activeBoardReferences != null && activeBoardReferences.BlockerViews.TryGetValue(gridPos, out BlockerCellView crateView))
+        {
+            if (remainingDurability > 0)
+            {
+                crateView.UpdateDurability(remainingDurability);
+            }
+            else
+            {
+                // 1. Play destruction visual or sound effect sequence
+                crateView.PlayShatterAndClear();
+
+                // 2. POOL CLEANUP: Remove the reference from the GameManager's active tracker collection
+                activeBoardReferences.BlockerViews.Remove(gridPos);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Core hook triggered when a targeted key is successfully collected by the player.
+    /// </summary>
+    private void HandleLockKeyCollected(int lockedUnitId, int collectedKeyUnitId)
+    {
+        if (activeBoardReferences == null) return;
+
+        // Scan values sequentially since the collection is keyed by coordinate vectors instead of integer IDs
+        UnitView lockedView = null;
+        foreach (var view in activeBoardReferences.UnitViews.Values)
+        {
+            if (view != null && view.UnitId == lockedUnitId)
+            {
+                lockedView = view;
+                break;
+            }
+        }
+
+        if (lockedView != null)
+        {
+            if (lockedView.lockOverlayRenderer != null)
+            {
+                lockedView.lockOverlayRenderer.gameObject.SetActive(false);
+            }
+        }
+    }
+
+    public void ClearActiveBoard()
+    {
+        if (activeBoardReferences == null) return;
+
+        // 1. Release all remaining solid walls and intact crates
+        foreach (var blockerView in activeBoardReferences.BlockerViews.Values)
+        {
+            if (blockerView != null)
+            {
+                blockerView.gameObject.SetActive(false); // Or PoolManager.Despawn(blockerView.gameObject);
+            }
+        }
+        activeBoardReferences.BlockerViews.Clear();
+
+        // 2. Release all your standard unit views as well
+        foreach (var unitView in activeBoardReferences.UnitViews.Values)
+        {
+            if (unitView != null)
+            {
+                unitView.gameObject.SetActive(false); // Or PoolManager.Despawn(unitView.gameObject);
+            }
+        }
+        activeBoardReferences.UnitViews.Clear();
+    }
+
 }

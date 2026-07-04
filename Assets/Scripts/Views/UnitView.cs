@@ -11,15 +11,19 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private SpriteRenderer lidRenderer; // Reference to the round box lid
 
-    [SerializeField] private SpriteRenderer lockOverlayRenderer; // Padlock/Chain overlay graphic
+    [SerializeField] public SpriteRenderer lockOverlayRenderer; // Padlock/Chain overlay graphic
     [SerializeField] private SpriteRenderer keyIndicatorRenderer; // Decorative key badge icon
     [SerializeField] private TMPro.TextMeshPro statusText;
     [SerializeField] private LineRenderer linkLineRenderer;
 
+    [Header("Ice Overlay Features")]
+    [SerializeField] private GameObject iceOverlayRenderer; // Assign in Inspector
+    [SerializeField] private TMPro.TextMeshPro iceCountText;
+
     private Vector2Int gridCoordinate;
     private List<BallView> preAllocatedBallViews = new List<BallView>();
     private Sequence resolveSequence;
-    private string unitColorId;
+    public string unitColorId;
 
     public int UnitId { get; private set; }
     public void Initialize(GameLevelSchema.CellNode cellNode)
@@ -31,6 +35,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         // Reset relation overlays, lines, and text layers to safely handle recycling
         lockOverlayRenderer.gameObject.SetActive(false);
         keyIndicatorRenderer.gameObject.SetActive(false);
+        iceOverlayRenderer.gameObject.SetActive(false);
         linkLineRenderer.positionCount = 0;
         statusText.text = "";
 
@@ -84,6 +89,23 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             {
                 SetupNestedInteriorBalls(cellNode.OccupyingUnit.InteriorContents);
             }
+
+            // --- Process Structural Ice Constraints ---
+            int iceLayers = cellNode.OccupyingUnit.IceLayers;
+            if (iceLayers > 0)
+            {
+                iceOverlayRenderer.gameObject.SetActive(true);
+
+                if (iceCountText != null)
+                {
+                    iceCountText.text = iceLayers.ToString();
+                }
+
+                // Blend a frosty light-blue tint over the unit's main color to look frozen
+                spriteRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
+                lidRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
+            }
+
         }
         // 3. Process Empty / Carved Out Boundary Gaps / Blocked Cells
         else
@@ -216,6 +238,35 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         {
             resolveSequence.Kill();
         }
+    }
+
+    /// <summary>
+    /// Incremental update called when nearby tiles explode, reducing the freeze counter.
+    /// </summary>
+    public void UpdateIceLayers(int remainingLayers, Color originalUnitColor)
+    {
+        if (iceCountText != null && remainingLayers > 0)
+        {
+            iceCountText.text = remainingLayers.ToString();
+        }
+
+        // Optional: Fade the frosty blue tint slightly as ice gets thinner
+        // spriteRenderer.color = Color.Lerp(originalUnitColor, new Color(0.5f, 0.8f, 1f), remainingLayers * 0.2f);
+    }
+
+    /// <summary>
+    /// Instantly thaws the unit, hiding visual blocks and restoring natural sprite coloring.
+    /// </summary>
+    public void ShatterIce(Color originalUnitColor)
+    {
+        if (iceOverlayRenderer != null)
+        {
+            iceOverlayRenderer.gameObject.SetActive(false);
+        }
+
+        // Restore the unit's natural coloring
+        spriteRenderer.color = originalUnitColor;
+        lidRenderer.color = originalUnitColor;
     }
 
     private void OnDestroy()

@@ -135,7 +135,9 @@ public class DamplingSimulationAgent
             if (cellNode.OccupyingUnit == null || engine.PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId)) 
                 continue;
 
-            if (!engine.IsUnitBlocked(cellNode.Position, cellNode.OccupyingUnit))
+            
+
+            if (!engine.IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, new HashSet<int>()))
             {
                 activeOptionsPool.Add(cellNode.Position);
             }
