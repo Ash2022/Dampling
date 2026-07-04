@@ -55,8 +55,23 @@ public class LevelVisualization : MonoBehaviour
 
         // 2. GENERATE AND CENTER SUPPLY GRID MAP
         int columns = levelData.Grid.Columns;
-        float totalGridWidth = columns * unitSize.x;
-        float gridStartX = -(totalGridWidth / 2f) + (unitSize.x / 2f);
+
+        // A. Dynamically scan the active matrix to find the true physical layout edges
+        int minX = int.MaxValue;
+        int maxX = int.MinValue;
+
+        foreach (var cellNode in levelData.Grid.Matrix)
+        {
+            if (cellNode.Position.X < minX) minX = cellNode.Position.X;
+            if (cellNode.Position.X > maxX) maxX = cellNode.Position.X;
+        }
+
+        // If the grid matrix is empty, fallback safely to standard behavior
+        if (minX == int.MaxValue) { minX = 0; maxX = columns - 1; }
+
+        // B. Calculate the true center based on actual active span
+        float physicalWidth = (maxX - minX) * unitSize.x;
+        float gridStartX = -(physicalWidth / 2f) - (minX * unitSize.x);
 
         foreach (var cellNode in levelData.Grid.Matrix)
         {
@@ -88,10 +103,10 @@ public class LevelVisualization : MonoBehaviour
             else
             {
                 GameObject cellBlocker = DamplingObjectPool.Instance.GetCellBlocker(spawnPosition, Quaternion.identity, transform);
-                cellBlocker.name = $"EmptyUnit_({gridX},{gridY})";                
+                cellBlocker.name = $"EmptyUnit_({gridX},{gridY})";
                 BlockerCellView blockerView = cellBlocker.GetComponent<BlockerCellView>();
                 blockerView.Initialize(coord, cellNode.CrateDurability);
-                
+
                 spawnedVisualElements.Add(cellBlocker);
             }
         }
@@ -170,5 +185,5 @@ public class LevelVisualization : MonoBehaviour
         }
         return Vector2.one;
     }
-    
+
 }
