@@ -93,53 +93,15 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             lidRenderer.gameObject.SetActive(false);
         }
     }
-
-    public void RenderLinkLines(GameLevelSchema.CellNode cellNode)
-{
-    linkLineRenderer.positionCount = 0;
-
-    if (cellNode.OccupyingUnit == null)
+    public void RenderLinkLines(UnitView partnerView)
     {
-        Debug.Log($"[LINK DEBUG] Cell ({gridCoordinate.x},{gridCoordinate.y}) has no OccupyingUnit.");
-        return;
+        if (partnerView == null || linkLineRenderer == null) return;
+
+        // Configure and draw the line directly between the two verified transforms
+        linkLineRenderer.positionCount = 2;
+        linkLineRenderer.SetPosition(0, this.transform.position);
+        linkLineRenderer.SetPosition(1, partnerView.transform.position);
     }
-
-    if (cellNode.OccupyingUnit.LinkedUnitIds.Count == 0)
-    {
-        Debug.Log($"[LINK DEBUG] Unit at ({gridCoordinate.x},{gridCoordinate.y}) has 0 entries in LinkedUnitIds.");
-        return;
-    }
-
-    Debug.Log($"[LINK DEBUG] Unit at ({gridCoordinate.x},{gridCoordinate.y}) has {cellNode.OccupyingUnit.LinkedUnitIds.Count} links. Checking handshake comparisons...");
-
-    foreach (var linkedId in cellNode.OccupyingUnit.LinkedUnitIds)
-    {
-        int comparisonResult = cellNode.OccupyingUnit.UnitId.CompareTo(linkedId);
-        
-        if (comparisonResult > 0)
-        {
-            Vector3 targetWorldPos = GameManager.Instance.GetUnitWorldPositionById(linkedId);
-            
-            if (targetWorldPos != Vector3.zero)
-            {
-                linkLineRenderer.positionCount = 2;
-                linkLineRenderer.SetPosition(0, transform.position);
-                linkLineRenderer.SetPosition(1, targetWorldPos);
-                Debug.Log($"<color=green><b>[LINK SUCCESS]:</b></color> Rendered line from ({gridCoordinate.x},{gridCoordinate.y}) to target world position {targetWorldPos}");
-                break;
-            }
-            else
-            {
-                Debug.LogError($"[LINK ERROR] Handshake passed, but GameManager returned Vector3.zero for target Guid: {linkedId}. Target view missing in runtime registries!");
-            }
-        }
-        else
-        {
-            Debug.Log($"[LINK SKIP] Handshake comparison for ({gridCoordinate.x},{gridCoordinate.y}) was <= 0 (Result: {comparisonResult}). Partner unit should handle drawing instead.");
-        }
-    }
-}
-
     private void SetupNestedInteriorBalls(List<GameLevelSchema.DumplingItem> contents)
     {
         float radius = 0.1f;

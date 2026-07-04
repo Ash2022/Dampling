@@ -1,0 +1,147 @@
+{
+  "LevelId": 1,
+  "LevelName": "NewLevel3",
+  "ConveyorBeltMaxCapacity": 28,
+  "ResolutionQueues": [
+    [
+      {
+        "Id": 0,
+        "ColorId": "Color_1",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 1,
+        "ColorId": "Color_0",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ],
+    [
+      {
+        "Id": 2,
+        "ColorId": "Color_1",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 3,
+        "ColorId": "Color_1",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ],
+    [
+      {
+        "Id": 4,
+        "ColorId": "Color_0",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ],
+    [
+      {
+        "Id": 5,
+        "ColorId": "Color_0",
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ]
+  ],
+  "Grid": {
+    "Columns": 2,
+    "Rows": 1,
+    "Matrix": [
+      {
+        "Position": {
+          "X": 0,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 0,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            },
+            {
+              "ColorId": "Color_1"
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [
+            1
+          ]
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 1,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 1,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            },
+            {
+              "ColorId": "Color_0"
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [
+            0
+          ]
+        },
+        "ContinuousPipe": null
+      }
+    ]
+  }
+}

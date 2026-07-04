@@ -172,17 +172,5 @@ public class GameManager : MonoBehaviour
         }
         return false;
     }
-
-    public Vector3 GetUnitWorldPositionById(int id)
-    {
-        // Search directly through the coordinate map you built in the creation loop
-        foreach (var unitView in activeBoardReferences.UnitViews.Values)
-        {
-            if (unitView != null && unitView.UnitId == id)
-            {
-                return unitView.transform.position;
-            }
-        }
-        return Vector3.zero;
-    }
+   
 }

@@ -78,7 +78,7 @@ public class LevelVisualization : MonoBehaviour
                 unitView.Initialize(cellNode);
 
                 unitInstance.name = cellNode.ContinuousPipe != null ? $"PipeUnit_({gridX},{gridY})" :
-                                    cellNode.OccupyingUnit != null ? $"StandardUnit_({gridX},{gridY})" : 
+                                    cellNode.OccupyingUnit != null ? $"StandardUnit_({gridX},{gridY})" :
                                     $"EmptyCell_({gridX},{gridY})";
 
                 // Map reference by space tracking coordinate for later link-rendering pass
@@ -93,15 +93,39 @@ public class LevelVisualization : MonoBehaviour
             }
         }
 
-        // --- SECOND PASS: Draw Line Links Between Instantiated Units Safely ---
+        // --- SAFE SECOND PASS: Handshake and view lookup happen entirely here ---
         foreach (var cellNode in levelData.Grid.Matrix)
         {
-            if (!cellNode.IsPlayablePath) continue;
+            // Skip if empty space, blocker, or if the unit has no links
+            if (!cellNode.IsPlayablePath || cellNode.OccupyingUnit == null) continue;
+            if (cellNode.OccupyingUnit.LinkedUnitIds == null || cellNode.OccupyingUnit.LinkedUnitIds.Count == 0) continue;
 
             Vector2Int coord = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
-            if (references.UnitViews.TryGetValue(coord, out UnitView unitView))
+            if (references.UnitViews.TryGetValue(coord, out UnitView myView) && myView != null)
             {
-                unitView.RenderLinkLines(cellNode);
+                foreach (var partnerId in cellNode.OccupyingUnit.LinkedUnitIds)
+                {
+                    // 1. Strict integer handshake check
+                    if (cellNode.OccupyingUnit.UnitId > partnerId)
+                    {
+                        // 2. Find the partner view right here using the local parameter
+                        UnitView partnerView = null;
+                        foreach (var view in references.UnitViews.Values)
+                        {
+                            if (view != null && view.UnitId == partnerId)
+                            {
+                                partnerView = view;
+                                break;
+                            }
+                        }
+
+                        // 3. Only call the view if the partner actually exists on the board
+                        if (partnerView != null)
+                        {
+                            myView.RenderLinkLines(partnerView);
+                        }
+                    }
+                }
             }
         }
 
@@ -143,4 +167,5 @@ public class LevelVisualization : MonoBehaviour
         }
         return Vector2.one;
     }
+    
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.Mathematics;
 using UnityEngine;
 
 public class DamplingGameCore
@@ -23,7 +22,8 @@ public class DamplingGameCore
         ContainerResolved,
         UnitUnblocked,
         LevelWon,
-        LevelLost
+        LevelLost,
+        PipeEmittedUnit
     }
 
     public class EngineEvent
@@ -79,7 +79,7 @@ public class DamplingGameCore
         var activeUnit = primaryCellNode.OccupyingUnit;
         if (activeUnit == null || PlayedUnitIds.Contains(activeUnit.UnitId)) return outputTransactionHistory;
 
-        // Collect all related linked units into an evaluation block for atomic simulation validation
+        // 1. Collect all related linked units into an evaluation block
         List<GameLevelSchema.GridUnit> linkedCluster = new List<GameLevelSchema.GridUnit>();
         HashSet<int> visitedClusterIds = new HashSet<int>();
         Queue<GameLevelSchema.GridUnit> clusterQueue = new Queue<GameLevelSchema.GridUnit>();
@@ -106,21 +106,25 @@ public class DamplingGameCore
             }
         }
 
-        // ATOMIC TRANSACTION RULE: Verify blockers across the ENTIRE linked collection
-        // If even one unit inside this linked chain is blocked, the play interaction is invalid
+        // 2. ATOMIC TRANSACTION RULE: Verify blockers across cluster
+        // Pass visitedClusterIds so linked units blocking each other don't trigger false rejections
         foreach (var clusterUnit in linkedCluster)
         {
             var unitCellNode = FindCellNodeByUnitId(clusterUnit.UnitId);
-            if (IsUnitBlocked(unitCellNode.Position, clusterUnit))
+            if (IsUnitClusterBlocked(unitCellNode.Position, clusterUnit, visitedClusterIds))
             {
-                return outputTransactionHistory; // Atomic block rejection
+                return outputTransactionHistory; // Block rejection
             }
         }
 
-        // Execute processing steps for the verified playable transaction group
+        // 3. Execute processing steps for the verified playable cluster group
         foreach (var currentUnit in linkedCluster)
         {
             PlayedUnitIds.Add(currentUnit.UnitId);
+
+            // Clear it from the grid matrix cell data manually
+            var node = FindCellNodeByUnitId(currentUnit.UnitId);
+            if (node != null) node.OccupyingUnit = null;
 
             foreach (var dumpling in currentUnit.InteriorContents)
             {
@@ -128,7 +132,9 @@ public class DamplingGameCore
             }
         }
 
+        // 4. Run downstream board reactions
         ProcessBeltResolutionPipeline(outputTransactionHistory);
+        ProcessPipeEmissions(outputTransactionHistory);
         EvaluateNewlyUnblockedUnits(outputTransactionHistory);
         EvaluateGameStatusStates(outputTransactionHistory);
 
@@ -187,13 +193,46 @@ public class DamplingGameCore
         } while (stateChanged);
     }
 
+    private void ProcessPipeEmissions(List<EngineEvent> transactions)
+    {
+        // Loop through all matrix cells to find pipes that have room above them
+        foreach (var cellNode in ActiveLevelData.Grid.Matrix)
+        {
+            if (cellNode.ContinuousPipe != null && cellNode.ContinuousPipe.ReservoirQueue.Count > 0)
+            {
+                // Check the cell directly above this pipe (Y + 1 or Y - 1 depending on gravity layout, assuming standard grid flow checks)
+                var spaceAboveCoord = new GameLevelSchema.Coordinate(cellNode.Position.X, cellNode.Position.Y - 1);
+                
+                if (gridMatrix.TryGetValue(spaceAboveCoord, out var spaceAboveNode))
+                {
+                    // If the cell directly above the pipe is empty, shift a unit up out of the reservoir
+                    if (spaceAboveNode.IsPlayablePath && spaceAboveNode.OccupyingUnit == null)
+                    {
+                        var nextUnit = cellNode.ContinuousPipe.ReservoirQueue[0];
+                        cellNode.ContinuousPipe.ReservoirQueue.RemoveAt(0);
+
+                        spaceAboveNode.OccupyingUnit = nextUnit;
+
+                        transactions.Add(new EngineEvent
+                        {
+                            EventType = EngineEventType.PipeEmittedUnit,
+                            TargetId = nextUnit.UnitId,
+                            Payload = new Vector2Int(spaceAboveNode.Position.X, spaceAboveNode.Position.Y)
+                        });
+                    }
+                }
+            }
+        }
+    }
+
     private void EvaluateNewlyUnblockedUnits(List<EngineEvent> transactions)
     {
         foreach (var cellNode in ActiveLevelData.Grid.Matrix)
         {
             if (cellNode.OccupyingUnit == null || PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId)) continue;
 
-            if (!IsUnitBlocked(cellNode.Position, cellNode.OccupyingUnit))
+            // Simple empty tracking sets passed to evaluate flat individual states
+            if (!IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, new HashSet<int>()))
             {
                 transactions.Add(new EngineEvent
                 {
@@ -243,12 +282,13 @@ public class DamplingGameCore
     }
 
     // --- Dependency Calculations Helper Methods ---
-    public bool IsUnitBlocked(GameLevelSchema.Coordinate coord, GameLevelSchema.GridUnit unit)
+    public bool IsUnitClusterBlocked(GameLevelSchema.Coordinate coord, GameLevelSchema.GridUnit unit, HashSet<int> currentClusterIds)
     {
-        // 1. Explicit Blocker and Key validation checkpoint
+        // 1. Explicit Blocker verification
         foreach (var dependencyId in unit.ExplicitlyBlockedByUnitIds)
         {
-            if (!PlayedUnitIds.Contains(dependencyId))
+            // If dependency key isn't played AND isn't exploding right now in this click combo, it blocks!
+            if (!PlayedUnitIds.Contains(dependencyId) && !currentClusterIds.Contains(dependencyId))
             {
                 return true; 
             }
@@ -281,13 +321,21 @@ public class DamplingGameCore
             {
                 if (visited.Contains(neighborCoord)) continue;
 
-                if (gridMatrix.TryGetValue(neighborCoord, out var neighborCell) && 
-                    neighborCell.IsPlayablePath && (neighborCell.OccupyingUnit == null || PlayedUnitIds.Contains(neighborCell.OccupyingUnit.UnitId)))
+                if (gridMatrix.TryGetValue(neighborCoord, out var neighborCell) && neighborCell.IsPlayablePath)
                 {
-                    if (neighborCoord.Y == 0) return false; 
+                    // PIPES BLOCK FLOW NATIVELY: If an active pipe has elements left, it blocks structural exit paths
+                    if (neighborCell.ContinuousPipe != null && neighborCell.ContinuousPipe.ReservoirQueue.Count > 0)
+                    {
+                        continue; 
+                    }
 
-                    visited.Add(neighborCoord);
-                    queue.Enqueue(neighborCoord);
+                    if (neighborCell.OccupyingUnit == null || PlayedUnitIds.Contains(neighborCell.OccupyingUnit.UnitId))
+                    {
+                        if (neighborCoord.Y == 0) return false; 
+
+                        visited.Add(neighborCoord);
+                        queue.Enqueue(neighborCoord);
+                    }
                 }
             }
         }
