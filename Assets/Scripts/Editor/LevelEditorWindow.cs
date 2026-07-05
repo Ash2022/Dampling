@@ -22,6 +22,8 @@ public class LevelEditorWindow : EditorWindow
         public CellBehavior Behavior = CellBehavior.Standard;
         public int PipeEmissions = 3;
         public string AssignedColorId = "";
+
+        public List<string> PipeEmittedColorIds = new List<string>();
         public bool StartHidden = false;
 
         // Relationship Feature Group IDs (0 means unassigned)
@@ -158,15 +160,28 @@ public class LevelEditorWindow : EditorWindow
             }
             else if (cell.Behavior == CellBehavior.Pipe)
             {
-                cell.AssignedColorId = unitColorAssignments[assignedCount % unitColorAssignments.Count];
-                assignedCount += cell.PipeEmissions;
+                cell.PipeEmittedColorIds.Clear();
+
+                // Loop through each emission slot this pipe has and assign a unique color
+                for (int e = 0; e < cell.PipeEmissions; e++)
+                {
+                    if (assignedCount < unitColorAssignments.Count)
+                    {
+                        cell.PipeEmittedColorIds.Add(unitColorAssignments[assignedCount++]);
+                    }
+                }
+
+                // Backward compatibility fallback for primary UI color tracking
+                cell.AssignedColorId = cell.PipeEmittedColorIds.Count > 0 ? cell.PipeEmittedColorIds[0] : "";
             }
             else
             {
                 cell.AssignedColorId = "";
+                cell.PipeEmittedColorIds.Clear();
             }
         }
 
+        // Generate exact matching demand containers matching the exact colors generated on screen
         List<GameLevelSchema.ContainerData> globalContainerPool = new List<GameLevelSchema.ContainerData>();
         foreach (var color in unitColorAssignments)
         {
@@ -504,9 +519,25 @@ public class LevelEditorWindow : EditorWindow
             {
                 cell.Behavior = CellBehavior.Pipe;
                 cell.PipeEmissions = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
+                cell.IceLayers = 0;
+
+                // Clear any leftover runtime junk before loading fresh data
+                cell.PipeEmittedColorIds.Clear();
+
+                // Loop through EVERY unit inside the saved pipe reservoir queue
+                if (cellNode.ContinuousPipe.ReservoirQueue != null)
+                {
+                    foreach (var unit in cellNode.ContinuousPipe.ReservoirQueue)
+                    {
+                        // Extract the color profile for this specific unit
+                        string unitColor = unit.InteriorContents.FirstOrDefault()?.ColorId ?? "Color_0";
+                        cell.PipeEmittedColorIds.Add(unitColor);
+                    }
+                }
+
+                // Maintain backwards compatibility tracking for the primary UI cell field
                 var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
                 cell.AssignedColorId = firstUnit?.InteriorContents.FirstOrDefault()?.ColorId ?? "";
-                cell.IceLayers = 0;
             }
             else
             {
@@ -624,15 +655,47 @@ public class LevelEditorWindow : EditorWindow
                 node.IsPlayablePath = true;
                 node.CrateDurability = 0;
                 node.ContinuousPipe = new GameLevelSchema.PipeGenerator { MaxTotalEmissions = kvp.Value.PipeEmissions };
+
+                // Ensure the reservoir queue list is instantiated
+                if (node.ContinuousPipe.ReservoirQueue == null)
+                {
+                    node.ContinuousPipe.ReservoirQueue = new List<GameLevelSchema.GridUnit>();
+                }
+
                 for (int i = 0; i < kvp.Value.PipeEmissions; i++)
                 {
-                    var unit = new GameLevelSchema.GridUnit { UnitId = positionToIdMap[kvp.Key], IceLayers = 0 };
-                    string color = !string.IsNullOrEmpty(kvp.Value.AssignedColorId) ? kvp.Value.AssignedColorId : "Color_0";
+                    // 1. UNIQUE ID GENERATION
+                    // Mix the position-based ID with the index 'i' so every unit gets a unique ID, 
+                    // or replace this with your own incrementing global tracking integer variable.
+                    int uniqueUnitId = (positionToIdMap[kvp.Key] * 100) + i;
 
+                    var unit = new GameLevelSchema.GridUnit
+                    {
+                        UnitId = uniqueUnitId,
+                        IceLayers = 0,
+                        ExplicitlyBlockedByUnitIds = new List<int>(),
+                        LinkedUnitIds = new List<int>(),
+                        IsHiddenUntilUnblocked = false
+                    };
+
+                    // 2. UNIQUE COLOR SELECTION
+                    // Pull the specific color assigned to this emission index from our new list.
+                    string color = "Color_0";
+                    if (kvp.Value.PipeEmittedColorIds != null && i < kvp.Value.PipeEmittedColorIds.Count)
+                    {
+                        color = kvp.Value.PipeEmittedColorIds[i];
+                    }
+                    else if (!string.IsNullOrEmpty(kvp.Value.AssignedColorId))
+                    {
+                        color = kvp.Value.AssignedColorId; // Fallback to primary if list isn't populated
+                    }
+
+                    // 3. FILL INTERIOR
                     for (int d = 0; d < 9; d++)
                     {
                         unit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = color });
                     }
+
                     node.ContinuousPipe.ReservoirQueue.Add(unit);
                 }
             }

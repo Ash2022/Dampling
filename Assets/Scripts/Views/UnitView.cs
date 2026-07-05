@@ -25,6 +25,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     private Sequence resolveSequence;
     public string unitColorId;
 
+    private bool wasInitiallyHidden = false;
+
     public int UnitId { get; private set; }
     public void Initialize(GameLevelSchema.CellNode cellNode)
     {
@@ -48,8 +50,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             unitColorId = firstUnit?.InteriorContents.FirstOrDefault()?.ColorId ?? "";
             Color pipeColor = DamplingGameUtils.GetColorById(unitColorId);
 
-            spriteRenderer.color = pipeColor;
-            lidRenderer.color = pipeColor;
+            //override the PIPE color
+            spriteRenderer.color = Color.gray;
+            lidRenderer.color = Color.gray;
             lidRenderer.gameObject.SetActive(true);
 
             int emissionsLeft = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
@@ -58,9 +61,12 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         // 2. Process Standard Playable Unit Grid Cells
         else if (cellNode.OccupyingUnit != null)
         {
-            UnitId = cellNode.OccupyingUnit.UnitId; // Safely assigned inside verified non-null block
+            UnitId = cellNode.OccupyingUnit.UnitId;
 
+            // --- 1. HIDDEN STATE ---
             bool isHidden = cellNode.OccupyingUnit.IsHiddenUntilUnblocked;
+            wasInitiallyHidden = isHidden; // Save the flag!
+
             unitColorId = isHidden ? "Hidden" : (cellNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorId ?? "");
 
             Color unitColor = DamplingGameUtils.GetColorById(unitColorId);
@@ -68,7 +74,17 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             lidRenderer.color = unitColor;
             lidRenderer.gameObject.SetActive(true);
 
-            // Process Structural Dependencies & Key/Lock Graph States
+            if (isHidden)
+            {
+                statusText.text = "?";
+            }
+            else if (cellNode.OccupyingUnit.InteriorContents.Count > 0)
+            {
+                SetupNestedInteriorBalls(cellNode.OccupyingUnit.InteriorContents);
+            }
+
+            // --- 2. LOCK / KEY STATE ---
+            // The lock overlay is ONLY for explicit dependencies!
             if (cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count > 0)
             {
                 lockOverlayRenderer.gameObject.SetActive(true);
@@ -80,17 +96,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                 keyIndicatorRenderer.gameObject.SetActive(true);
             }
 
-            if (isHidden)
-            {
-                statusText.text = "?";
-            }
-
-            if (!isHidden && cellNode.OccupyingUnit.InteriorContents.Count > 0)
-            {
-                SetupNestedInteriorBalls(cellNode.OccupyingUnit.InteriorContents);
-            }
-
-            // --- Process Structural Ice Constraints ---
+            // --- 3. ICE STATE ---
             int iceLayers = cellNode.OccupyingUnit.IceLayers;
             if (iceLayers > 0)
             {
@@ -101,11 +107,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                     iceCountText.text = iceLayers.ToString();
                 }
 
-                // Blend a frosty light-blue tint over the unit's main color to look frozen
                 spriteRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
                 lidRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
             }
-
         }
         // 3. Process Empty / Carved Out Boundary Gaps / Blocked Cells
         else
@@ -168,6 +172,11 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         if (GameManager.Instance.IsUnitLockedAt(gridCoordinate)) return;
 
         GameManager.Instance.OnUnitElementClicked(gridCoordinate);
+        ExecuteResolveTimeline();
+    }
+
+    public void LinkedUnitPlayed()
+    {
         ExecuteResolveTimeline();
     }
 
@@ -240,6 +249,11 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         }
     }
 
+    public void UpdatePipeCounter(int newPipeCount)
+    {
+        statusText.text = newPipeCount > 0 ? newPipeCount.ToString() : "";        
+    }
+
     /// <summary>
     /// Incremental update called when nearby tiles explode, reducing the freeze counter.
     /// </summary>
@@ -269,8 +283,48 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         lidRenderer.color = originalUnitColor;
     }
 
+    public void LockUnlocked()
+    {
+        lockOverlayRenderer.gameObject.SetActive(false);
+    }
+
     private void OnDestroy()
     {
         CleanUpActiveSequence();
+    }
+
+    internal void UnitBecameUnBlocked(GameLevelSchema.CellNode updatedNode)
+    {
+        // We only need to do a visual overhaul if the unit was hiding its true identity
+        if (wasInitiallyHidden)
+        {
+            wasInitiallyHidden = false;
+            statusText.text = ""; // Remove the "?"
+
+            // 1. Fetch the true color now that it is revealed
+            unitColorId = updatedNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorId ?? "";
+            Color realColor = DamplingGameUtils.GetColorById(unitColorId);
+
+            // 2. Apply color (respecting if it happens to still be covered in ice)
+            if (updatedNode.OccupyingUnit.IceLayers > 0)
+            {
+                spriteRenderer.color = Color.Lerp(realColor, new Color(0.5f, 0.8f, 1f), 0.6f);
+                lidRenderer.color = Color.Lerp(realColor, new Color(0.5f, 0.8f, 1f), 0.6f);
+            }
+            else
+            {
+                spriteRenderer.color = realColor;
+                lidRenderer.color = realColor;
+            }
+
+            // 3. Spawn the true contents inside it
+            if (updatedNode.OccupyingUnit.InteriorContents.Count > 0)
+            {
+                SetupNestedInteriorBalls(updatedNode.OccupyingUnit.InteriorContents);
+            }
+        }
+
+        // If it wasn't hidden, we do nothing here! 
+        // The lock turning off is handled safely by your HandleLockKeyCollected callback.
     }
 }

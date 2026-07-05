@@ -1158,7 +1158,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ModelManager
   levelTextAssets:
-  - {fileID: 4900000, guid: b2f8286b249376d438bc2e04a4f4dc2f, type: 3}
+  - {fileID: 4900000, guid: 8e2bec0904c4adf45a6ea83d58fa6f73, type: 3}
 --- !u!114 &2070676744
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -12,7 +12,7 @@
       },
       {
         "Id": 1,
-        "ColorId": "Color_0",
+        "ColorId": "Color_1",
         "Capacity": 3,
         "FilledSlotsCount": 0
       }
@@ -26,7 +26,7 @@
       },
       {
         "Id": 3,
-        "ColorId": "Color_1",
+        "ColorId": "Color_0",
         "Capacity": 3,
         "FilledSlotsCount": 0
       }
@@ -49,8 +49,8 @@
     ]
   ],
   "Grid": {
-    "Columns": 2,
-    "Rows": 1,
+    "Columns": 1,
+    "Rows": 2,
     "Matrix": [
       {
         "Position": {
@@ -93,14 +93,16 @@
           "ExplicitlyBlockedByUnitIds": [],
           "LinkedUnitIds": [
             1
-          ]
+          ],
+          "IceLayers": 0
         },
-        "ContinuousPipe": null
+        "ContinuousPipe": null,
+        "CrateDurability": 0
       },
       {
         "Position": {
-          "X": 1,
-          "Y": 0
+          "X": 0,
+          "Y": 1
         },
         "IsPlayablePath": true,
         "OccupyingUnit": {
@@ -138,9 +140,11 @@
           "ExplicitlyBlockedByUnitIds": [],
           "LinkedUnitIds": [
             0
-          ]
+          ],
+          "IceLayers": 0
         },
-        "ContinuousPipe": null
+        "ContinuousPipe": null,
+        "CrateDurability": 0
       }
     ]
   }

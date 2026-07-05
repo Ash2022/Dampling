@@ -85,7 +85,8 @@ public class GameManager : MonoBehaviour
             HandleUnitUnblocked,
             HandleUnitIceChanged,
             HandleCrateDurabilityChanged,
-            HandleLockKeyCollected
+            HandleLockKeyCollected,
+            HandleLinkedUnitPlayed
         );
 
         beltGenerator.StartBeltMovement();
@@ -119,7 +120,7 @@ public class GameManager : MonoBehaviour
                     if (activeBoardReferences.UnitViews.TryGetValue(unblockedCoord, out var unitView))
                     {
                         var updatedNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == unblockedCoord.x && c.Position.Y == unblockedCoord.y);
-                        unitView.Initialize(updatedNode);
+                        unitView.UnitBecameUnBlocked(updatedNode);
                     }
                     break;
 
@@ -127,6 +128,47 @@ public class GameManager : MonoBehaviour
                     if (activeBoardReferences.ContainerViews.TryGetValue(ev.TargetId, out var containerView))
                     {
                         // Animate belt transfers here
+                    }
+                    break;
+
+                case DamplingGameCore.EngineEventType.PipeEmittedUnit:
+                    // 1. UNPACK COMPOSITE COORDINATES
+                    var coords = (Tuple<Vector2Int, Vector2Int>)ev.Payload;
+                    Vector2Int spawnCoord = coords.Item1;
+                    Vector2Int pipeCoord = coords.Item2;
+
+                    Vector3 spawnPosition = Vector3.zero;
+
+                    // 2. CLEANUP CHECK
+                    if (activeBoardReferences.UnitViews.TryGetValue(spawnCoord, out var oldView))
+                    {
+                        if (oldView != null)
+                        {
+                            spawnPosition = oldView.transform.position;
+                            // Return oldView components/balls to pool here if needed
+                        }
+                    }
+
+                    // 3. SPAWN FROM POOL
+                    GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
+                    UnitView newUnitView = unitInstance.GetComponent<UnitView>();
+
+                    // 4. INITIALIZE FRESH UNIT VIEW
+                    var emittedNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == spawnCoord.x && c.Position.Y == spawnCoord.y);
+                    newUnitView.Initialize(emittedNode);
+
+                    // 5. REGISTER REGISTRY SLOT
+                    activeBoardReferences.UnitViews[spawnCoord] = newUnitView;
+
+                    // 6. UPDATE VISUAL PIPE COUNTER AT SOURCE
+                    if (activeBoardReferences.UnitViews.TryGetValue(pipeCoord, out var pipeView))
+                    {
+                        var pipeNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == pipeCoord.x && c.Position.Y == pipeCoord.y);
+                        if (pipeNode != null && pipeNode.ContinuousPipe != null)
+                        {
+                            int countLeft = pipeNode.ContinuousPipe.ReservoirQueue.Count;
+                            pipeView.UpdatePipeCounter(countLeft);
+                        }
                     }
                     break;
 
@@ -281,9 +323,29 @@ public class GameManager : MonoBehaviour
 
         if (lockedView != null)
         {
-            if (lockedView.lockOverlayRenderer != null)
+            lockedView.LockUnlocked();
+        }
+    }
+
+    /// <summary>
+    /// Core hook triggered when a unit within an activated link chain executes its gameplay action.
+    /// </summary>
+    private void HandleLinkedUnitPlayed(int unitId)
+    {
+        if (activeBoardReferences == null) return;
+
+        // Locate the corresponding view for the unit that was part of the triggered chain
+        foreach (var view in activeBoardReferences.UnitViews.Values)
+        {
+            if (view != null && view.UnitId == unitId)
             {
-                lockedView.lockOverlayRenderer.gameObject.SetActive(false);
+                // 1. Tell this specific unit view to release its physical contents onto the board
+                // (Replace this method call with your exact visualizer method name that handles launching/spawning the balls)
+                view.LinkedUnitPlayed();
+
+                // 2. Clear or update any structural text layers or lid states on the view, 
+                // but DO NOT disable the gameObject or return assets to the pool yet!
+                break;
             }
         }
     }

@@ -19,7 +19,8 @@ public class DamplingGameCore
     private Action<int> OnUnitUnblocked;                  // Param: UnitId
     private Action<int, int> OnUnitIceChanged;             // Params: UnitId, RemainingIceLayers
     private Action<Vector2Int, int> OnCrateDurabilityChanged; // Params: GridPosition, RemainingDurability
-    private Action<int, int> OnLockKeyCollected;          // Params: LockedUnitId, CollectedKeyUnitId
+    private Action<int, int> OnLockKeyCollected;
+    private Action<int> OnLinkedUnitPlayed;         // Params: LockedUnitId, CollectedKeyUnitId
 
     // --- Structural Feedback Transaction Packets ---
     public enum EngineEventType
@@ -39,10 +40,10 @@ public class DamplingGameCore
     public class EngineEvent
     {
         public EngineEventType EventType { get; set; }
-        public int TargetId { get; set; } 
-        public string ColorValue { get; set; }     
-        public int QueueIndex { get; set; }       
-        public object Payload { get; set; }       
+        public int TargetId { get; set; }
+        public string ColorValue { get; set; }
+        public int QueueIndex { get; set; }
+        public object Payload { get; set; }
     }
 
     // --- Core Engine Initializer ---
@@ -51,7 +52,8 @@ public class DamplingGameCore
         Action<int> onUnitUnblocked = null,
         Action<int, int> onUnitIceChanged = null,
         Action<Vector2Int, int> onCrateDurabilityChanged = null,
-        Action<int, int> onLockKeyCollected = null)
+        Action<int, int> onLockKeyCollected = null,
+        Action<int> onLinkedUnitPlayed = null)
     {
         ActiveLevelData = levelData;
         VirtualBelt = new List<GameLevelSchema.DumplingItem>();
@@ -64,9 +66,11 @@ public class DamplingGameCore
         OnUnitIceChanged = onUnitIceChanged;
         OnCrateDurabilityChanged = onCrateDurabilityChanged;
         OnLockKeyCollected = onLockKeyCollected;
+        OnLinkedUnitPlayed = onLinkedUnitPlayed;
 
         gridMatrix = new Dictionary<GameLevelSchema.Coordinate, GameLevelSchema.CellNode>();
-        foreach (var node in ActiveLevelData.Grid.Matrix) {
+        foreach (var node in ActiveLevelData.Grid.Matrix)
+        {
             gridMatrix[node.Position] = node;
         }
 
@@ -96,10 +100,10 @@ public class DamplingGameCore
 
         var coord = new GameLevelSchema.Coordinate(x, y);
         if (!gridMatrix.TryGetValue(coord, out var primaryCellNode)) return outputTransactionHistory;
-        
+
         var activeUnit = primaryCellNode.OccupyingUnit;
-        
-        if (activeUnit == null || activeUnit.IceLayers > 0 || PlayedUnitIds.Contains(activeUnit.UnitId)) 
+
+        if (activeUnit == null || activeUnit.IceLayers > 0 || PlayedUnitIds.Contains(activeUnit.UnitId))
             return outputTransactionHistory;
 
         // 1. Collect all related linked units into an evaluation block
@@ -135,7 +139,7 @@ public class DamplingGameCore
             var unitCellNode = FindCellNodeByUnitId(clusterUnit.UnitId);
             if (IsUnitClusterBlocked(unitCellNode.Position, clusterUnit, visitedClusterIds))
             {
-                return outputTransactionHistory; 
+                return outputTransactionHistory;
             }
         }
 
@@ -153,8 +157,12 @@ public class DamplingGameCore
             if (node != null)
             {
                 clearedCoordinates.Add(node.Position);
-                node.OccupyingUnit = null; 
+                node.OccupyingUnit = null;
             }
+
+            // --- TRIGGER THE ACTIVATION SIGNAL TO GAME MANAGER ---
+            // This tells the visual layer exactly which member of the chain is playing
+            OnLinkedUnitPlayed?.Invoke(currentUnit.UnitId);
 
             foreach (var dumpling in currentUnit.InteriorContents)
             {
@@ -181,10 +189,10 @@ public class DamplingGameCore
         {
             var neighbors = new GameLevelSchema.Coordinate[]
             {
-                new GameLevelSchema.Coordinate(origin.X, origin.Y - 1), 
-                new GameLevelSchema.Coordinate(origin.X, origin.Y + 1), 
-                new GameLevelSchema.Coordinate(origin.X - 1, origin.Y), 
-                new GameLevelSchema.Coordinate(origin.X + 1, origin.Y)  
+                new GameLevelSchema.Coordinate(origin.X, origin.Y - 1),
+                new GameLevelSchema.Coordinate(origin.X, origin.Y + 1),
+                new GameLevelSchema.Coordinate(origin.X - 1, origin.Y),
+                new GameLevelSchema.Coordinate(origin.X + 1, origin.Y)
             };
 
             foreach (var targetCoord in neighbors)
@@ -199,7 +207,7 @@ public class DamplingGameCore
                 if (neighborCell.IsPlayablePath && neighborCell.CrateDurability > 0)
                 {
                     neighborCell.CrateDurability--;
-                    
+
                     // Fire optional callback to GameManager view layer
                     OnCrateDurabilityChanged?.Invoke(unityCoord, neighborCell.CrateDurability);
 
@@ -271,7 +279,7 @@ public class DamplingGameCore
                     {
                         activeContainer.Capacity--;
                         VirtualBelt.RemoveAt(i);
-                        
+
                         transactions.Add(new EngineEvent
                         {
                             EventType = EngineEventType.DumplingMovedToContainer,
@@ -283,15 +291,15 @@ public class DamplingGameCore
                         if (activeContainer.Capacity <= 0)
                         {
                             transactions.Add(new EngineEvent { EventType = EngineEventType.ContainerResolved, TargetId = activeContainer.Id, QueueIndex = q });
-                            DynamicQueues[q].RemoveAt(0); 
+                            DynamicQueues[q].RemoveAt(0);
                         }
 
                         stateChanged = true;
-                        i--; 
-                        break; 
+                        i--;
+                        break;
                     }
                 }
-                if (stateChanged) break; 
+                if (stateChanged) break;
             }
         } while (stateChanged);
     }
@@ -303,7 +311,7 @@ public class DamplingGameCore
             if (cellNode.ContinuousPipe != null && cellNode.ContinuousPipe.ReservoirQueue.Count > 0)
             {
                 var spaceAboveCoord = new GameLevelSchema.Coordinate(cellNode.Position.X, cellNode.Position.Y - 1);
-                
+
                 if (gridMatrix.TryGetValue(spaceAboveCoord, out var spaceAboveNode))
                 {
                     if (spaceAboveNode.IsPlayablePath && spaceAboveNode.CrateDurability == 0 && spaceAboveNode.OccupyingUnit == null)
@@ -317,7 +325,11 @@ public class DamplingGameCore
                         {
                             EventType = EngineEventType.PipeEmittedUnit,
                             TargetId = nextUnit.UnitId,
-                            Payload = new Vector2Int(spaceAboveNode.Position.X, spaceAboveNode.Position.Y)
+                            // Pack both coordinates: Item 1 = Spawn Target, Item 2 = Source Pipe
+                            Payload = Tuple.Create(
+                                new Vector2Int(spaceAboveNode.Position.X, spaceAboveNode.Position.Y),
+                                new Vector2Int(cellNode.Position.X, cellNode.Position.Y)
+                            )
                         });
                     }
                 }
@@ -392,11 +404,13 @@ public class DamplingGameCore
         {
             if (!PlayedUnitIds.Contains(dependencyId) && !currentClusterIds.Contains(dependencyId))
             {
-                return true; 
+                return true;
             }
         }
 
-        if (coord.Y == 0) return false; 
+        // FIX 1: The Top Unit needs to instantly pass. 
+        if (coord.Y == 0)
+            return false;
 
         Queue<GameLevelSchema.Coordinate> queue = new Queue<GameLevelSchema.Coordinate>();
         HashSet<GameLevelSchema.Coordinate> visited = new HashSet<GameLevelSchema.Coordinate>();
@@ -410,9 +424,9 @@ public class DamplingGameCore
 
             var neighbors = new GameLevelSchema.Coordinate[]
             {
-                new GameLevelSchema.Coordinate(current.X, current.Y - 1), 
-                new GameLevelSchema.Coordinate(current.X - 1, current.Y), 
-                new GameLevelSchema.Coordinate(current.X + 1, current.Y)  
+            new GameLevelSchema.Coordinate(current.X, current.Y - 1),
+            new GameLevelSchema.Coordinate(current.X - 1, current.Y),
+            new GameLevelSchema.Coordinate(current.X + 1, current.Y)
             };
 
             foreach (var neighborCoord in neighbors)
@@ -425,9 +439,12 @@ public class DamplingGameCore
                     if (neighborCell.ContinuousPipe != null && neighborCell.ContinuousPipe.ReservoirQueue.Count > 0) continue;
                     if (neighborCell.OccupyingUnit != null && neighborCell.OccupyingUnit.IceLayers > 0) continue;
 
-                    if (neighborCell.OccupyingUnit == null || PlayedUnitIds.Contains(neighborCell.OccupyingUnit.UnitId))
+                    // FIX 2: The Bottom Unit needs to be allowed to pathfind *through* the Top Unit.
+                    if (neighborCell.OccupyingUnit == null ||
+                        PlayedUnitIds.Contains(neighborCell.OccupyingUnit.UnitId) ||
+                        currentClusterIds.Contains(neighborCell.OccupyingUnit.UnitId)) // <-- THIS IS THE MISSING KEY
                     {
-                        if (neighborCoord.Y == 0) return false; 
+                        if (neighborCoord.Y == 0) return false;
 
                         visited.Add(neighborCoord);
                         queue.Enqueue(neighborCoord);
@@ -436,7 +453,7 @@ public class DamplingGameCore
             }
         }
 
-        return true; 
+        return true;
     }
 
     private GameLevelSchema.GridUnit FindUnitById(int id)
