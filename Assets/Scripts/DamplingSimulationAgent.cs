@@ -11,11 +11,11 @@ public class DamplingSimulationAgent
         public int SuccessfulWins { get; set; }
         public int FatalLosses { get; set; }
         public float WinRatePercentage => TotalRunsSimulated > 0 ? ((float)SuccessfulWins / TotalRunsSimulated) * 100f : 0f;
-        
+
         public int MinMovesToWin { get; set; } = int.MaxValue;
         public int MaxMovesToWin { get; set; } = int.MinValue;
         public float AvgMovesToWin { get; set; }
-        public float AvgMaxBeltDensityReached { get; set; } 
+        public float AvgMaxBeltDensityReached { get; set; }
         public long TotalExecutionTimeMs { get; set; }
         public bool TimeoutTriggered { get; set; }
 
@@ -47,7 +47,7 @@ public class DamplingSimulationAgent
             }
 
             DamplingGameCore dynamicEngineInstance = new DamplingGameCore();
-            
+
             // Safe deep clone
             GameLevelSchema deepClonedSchema = DamplingGameUtils.CloneLevelSchema(sourceLevelData);
             dynamicEngineInstance.InitializeLevel(deepClonedSchema);
@@ -130,18 +130,39 @@ public class DamplingSimulationAgent
     private List<GameLevelSchema.Coordinate> GetPlayableMoves(DamplingGameCore engine)
     {
         List<GameLevelSchema.Coordinate> activeOptionsPool = new List<GameLevelSchema.Coordinate>();
+
+        // We use this to prevent the bot from adding multiple coordinates of the SAME linked cluster 
+        // to the options pool, which would skew the random selection weight.
+        HashSet<int> alreadyEvaluatedClusterIds = new HashSet<int>();
+
         foreach (var cellNode in engine.ActiveLevelData.Grid.Matrix)
         {
-            if (cellNode.OccupyingUnit == null || engine.PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId)) 
+            // Skip empty cells or units that have already been played
+            if (cellNode.OccupyingUnit == null || engine.PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId))
                 continue;
 
-            
+            // Skip if we already evaluated a different piece of this same linked cluster
+            if (alreadyEvaluatedClusterIds.Contains(cellNode.OccupyingUnit.UnitId))
+                continue;
 
-            if (!engine.IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, new HashSet<int>()))
+            // 1. GATHER THE CLUSTER (The Fix)
+            // Fetch the full list of IDs tied to this unit's chain
+            HashSet<int> clusterIds = engine.GetFullClusterIds(cellNode.OccupyingUnit.UnitId);
+
+            // Mark all units in this cluster as evaluated so we don't process them again in this loop
+            foreach (var id in clusterIds)
+            {
+                alreadyEvaluatedClusterIds.Add(id);
+            }
+
+            // 2. CHECK THE CLUSTER
+            // Pass the clusterIds into the pathfinder so it knows it can walk through linked partners
+            if (!engine.IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, clusterIds))
             {
                 activeOptionsPool.Add(cellNode.Position);
             }
         }
+
         return activeOptionsPool;
     }
 
@@ -160,7 +181,7 @@ public class DamplingSimulationAgent
         report.SummaryLog.Add($"Max Moves Required to Win  : {report.MaxMovesToWin}");
         report.SummaryLog.Add($"Average Moves to Clear Map : {report.AvgMovesToWin:F1}");
         report.SummaryLog.Add($"Avg Peak Belt Occupancy    : {report.AvgMaxBeltDensityReached:F1} items stacked");
-        
+
         if (report.FailStateDistribution.Count > 0)
         {
             report.SummaryLog.Add("--------------------------------------------------");
