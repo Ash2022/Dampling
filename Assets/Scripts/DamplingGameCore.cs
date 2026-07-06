@@ -133,7 +133,7 @@ public class DamplingGameCore
             }
         }
 
-        UnityEngine.Debug.Log($"Clicked Unit {activeUnit.UnitId}. Total units in cluster to evaluate: {linkedCluster.Count}");
+        //UnityEngine.Debug.Log($"Clicked Unit {activeUnit.UnitId}. Total units in cluster to evaluate: {linkedCluster.Count}");
 
         // 2. ATOMIC TRANSACTION RULE: Verify blockers across cluster
         foreach (var clusterUnit in linkedCluster)

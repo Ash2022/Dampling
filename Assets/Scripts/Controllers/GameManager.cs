@@ -4,6 +4,7 @@ using static GameLevelSchema;
 using System.Threading.Tasks;
 using System;
 using System.Linq;
+using UnityEngine.InputSystem;
 using DG.Tweening;
 
 public class GameManager : MonoBehaviour
@@ -43,6 +44,38 @@ public class GameManager : MonoBehaviour
         await InitializeGame();
 
         StartLevel(CurrentLevelIndex);
+    }
+
+    private void Update()
+    {
+        // Cheats for level switching using the new Input System.
+        if (Keyboard.current == null) return; // Input system not ready.
+
+        if (Keyboard.current.upArrowKey.wasPressedThisFrame)
+        {
+            int nextLevelIndex = CurrentLevelIndex + 1;
+            if (nextLevelIndex < ModelManager.Instance.LevelCount)
+            {
+                StartLevel(nextLevelIndex);
+            }
+            else
+            {
+                Debug.Log("Already at the last level.");
+            }
+        }
+
+        if (Keyboard.current.downArrowKey.wasPressedThisFrame)
+        {
+            int prevLevelIndex = CurrentLevelIndex - 1;
+            if (prevLevelIndex >= 0)
+            {
+                StartLevel(prevLevelIndex);
+            }
+            else
+            {
+                Debug.Log("Already at the first level.");
+            }
+        }
     }
 
     /// <summary>

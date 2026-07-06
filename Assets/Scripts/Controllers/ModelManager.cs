@@ -9,6 +9,8 @@ public class ModelManager : MonoBehaviour
     
     private List<GameLevelSchema> loadedLevels = new List<GameLevelSchema>();
 
+    public int LevelCount => loadedLevels.Count;
+
     private void Awake()
     {
         Instance = this;
