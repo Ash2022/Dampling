@@ -1157,8 +1157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 30f852846ac9a494cbcabaf74aa7f503, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ModelManager
-  levelTextAssets:
-  - {fileID: 4900000, guid: 08fd4913f40e2834992807fa69556134, type: 3}
+  levelTextAssets: []
 --- !u!114 &2070676744
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1173,6 +1172,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   levelVisualization: {fileID: 1764001290}
   beltGenerator: {fileID: 1502354385}
+  CurrentLevelIndex: 0
+  ballViews: []
 --- !u!4 &2070676745
 Transform:
   m_ObjectHideFlags: 0

@@ -29,9 +29,11 @@ public class GameManager : MonoBehaviour
     private GameState currentState;
 
     // Persistent progression tracker
-    public int CurrentLevelIndex { get; private set; } = 0;
+    public int CurrentLevelIndex = 0;
 
     private BoardVisualReferences activeBoardReferences;
+    public List<BallView> ballViews = new List<BallView>();
+
 
     private void Awake()
     {
@@ -420,6 +422,12 @@ public class GameManager : MonoBehaviour
             }
         }
         activeBoardReferences.UnitViews.Clear();
+
+        foreach (var ball in ballViews)
+            DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
+            
+        ballViews.Clear();
+
     }
 
 }

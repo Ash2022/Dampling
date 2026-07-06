@@ -140,7 +140,7 @@ public class LevelBatchBuilderWindow : EditorWindow
         
         // --- OPTIMIZATION: Dynamic Tolerance Cone ---
         float progressToMax = Mathf.Clamp01((float)currentProcessingLevel / LevelGeneratorConfig.MAX_DIFFICULTY_LEVEL);
-        float currentTolerance = Mathf.Lerp(0.05f, 0.20f, progressToMax); // 5% early game, up to 20% late game
+        float currentTolerance = Mathf.Lerp(0.05f, 0.30f, progressToMax); // 5% early game, up to 20% late game
 
         // --- OPTIMIZATION: Early Exit Cull ---
         // Run a tiny batch of 20 games first.

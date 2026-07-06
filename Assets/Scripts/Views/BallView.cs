@@ -82,7 +82,7 @@ public class BallView : MonoBehaviour
                 currentBeltSlot = other.transform;
                 currentSlotView = slotView;
 
-                rb.bodyType = RigidbodyType2D.Kinematic; rb.velocity = Vector2.zero; rb.angularVelocity = 0f;
+                rb.bodyType = RigidbodyType2D.Kinematic; rb.linearVelocity = Vector2.zero; rb.angularVelocity = 0f;
 
                 isAnimatingCapture = true;
                 Vector3 startPos = transform.position;

@@ -83,13 +83,13 @@ public class LevelGeneratorConfig
         rules.MaxGridSize = Mathf.RoundToInt(Mathf.Lerp(START_MAX_GRID, END_MAX_GRID, progress));
 
         // 2. DIFFICULTY CURVE (100% down to 30%)
-        rules.TargetWinRate = Mathf.Lerp(1.0f, 0.30f, progress);
+        rules.TargetWinRate = Mathf.Lerp(1.0f, 0.50f, progress);
 
         // 3. DYNAMIC FEATURE UNLOCKS
         rules.MaxColors = 2; // Absolute base fallback
 
         // Calculate how many features to unlock based on our progress percentage
-        int unlockedSteps = Mathf.RoundToInt(Mathf.Lerp(1, FeatureProgression.Length, progress));
+        int unlockedSteps = Mathf.FloorToInt(Mathf.Lerp(1, FeatureProgression.Length, progress));
 
         for (int i = 0; i < unlockedSteps; i++)
         {

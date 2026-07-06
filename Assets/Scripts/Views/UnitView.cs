@@ -156,6 +156,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                 // CRITICAL FIX: Disable collider on pre-allocated balls to prevent them
                 // from interacting with the world while still inside the unit.
                 if (bView.Collider != null) bView.Collider.enabled = false;
+
+                GameManager.Instance.ballViews.Add(bView);
             }
 
             preAllocatedBallViews.Add(bView);
