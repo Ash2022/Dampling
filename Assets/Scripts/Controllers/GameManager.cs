@@ -99,8 +99,22 @@ public class GameManager : MonoBehaviour
         var cellNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == coordinate.x && c.Position.Y == coordinate.y);
         if (cellNode == null || cellNode.OccupyingUnit == null) return false;
 
-        // If you are checking an individual unit outside a click loop (like your bot or setup):
-        return gameCore.IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, new HashSet<int>());
+        // 1. GATHER THE CLUSTER (Same logic as in ExecutePlayerClick)
+        // You need a helper in DamplingGameCore to get the cluster for a unit ID.
+        var clusterIds = gameCore.GetFullClusterIds(cellNode.OccupyingUnit.UnitId);
+
+        // 2. CHECK THE WHOLE CLUSTER
+        // Check if ANY unit in that cluster is blocked
+        foreach (var id in clusterIds)
+        {
+            var unit = gameCore.FindUnitById(id);
+            var node = gameCore.FindCellNodeByUnitId(id);
+            if (gameCore.IsUnitClusterBlocked(node.Position, unit, clusterIds))
+            {
+                return true; // The UI gatekeeper says "This click is illegal"
+            }
+        }
+        return false;
     }
 
     public void OnUnitElementClicked(Vector2Int coordinate)

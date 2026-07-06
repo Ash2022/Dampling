@@ -133,9 +133,12 @@ public class DamplingGameCore
             }
         }
 
+        UnityEngine.Debug.Log($"Clicked Unit {activeUnit.UnitId}. Total units in cluster to evaluate: {linkedCluster.Count}");
+
         // 2. ATOMIC TRANSACTION RULE: Verify blockers across cluster
         foreach (var clusterUnit in linkedCluster)
         {
+
             var unitCellNode = FindCellNodeByUnitId(clusterUnit.UnitId);
             if (IsUnitClusterBlocked(unitCellNode.Position, clusterUnit, visitedClusterIds))
             {
@@ -444,8 +447,11 @@ public class DamplingGameCore
                         PlayedUnitIds.Contains(neighborCell.OccupyingUnit.UnitId) ||
                         currentClusterIds.Contains(neighborCell.OccupyingUnit.UnitId)) // <-- THIS IS THE MISSING KEY
                     {
-                        if (neighborCoord.Y == 0) return false;
-
+                        if (neighborCoord.Y == 0)
+                        {
+                            //UnityEngine.Debug.Log($"Unit {unit.UnitId} cheated and found an escape at X:{neighborCoord.X}, Y:{neighborCoord.Y}");
+                            return false;
+                        }
                         visited.Add(neighborCoord);
                         queue.Enqueue(neighborCoord);
                     }
@@ -456,7 +462,7 @@ public class DamplingGameCore
         return true;
     }
 
-    private GameLevelSchema.GridUnit FindUnitById(int id)
+    public GameLevelSchema.GridUnit FindUnitById(int id)
     {
         foreach (var node in gridMatrix.Values)
         {
@@ -465,12 +471,35 @@ public class DamplingGameCore
         return null;
     }
 
-    private GameLevelSchema.CellNode FindCellNodeByUnitId(int id)
+    public GameLevelSchema.CellNode FindCellNodeByUnitId(int id)
     {
         foreach (var node in gridMatrix.Values)
         {
             if (node.OccupyingUnit != null && node.OccupyingUnit.UnitId == id) return node;
         }
         return null;
+    }
+
+    public HashSet<int> GetFullClusterIds(int startUnitId)
+    {
+        HashSet<int> cluster = new HashSet<int>();
+        Queue<int> queue = new Queue<int>();
+        queue.Enqueue(startUnitId);
+        cluster.Add(startUnitId);
+
+        while (queue.Count > 0)
+        {
+            var unit = FindUnitById(queue.Dequeue());
+            if (unit == null) continue;
+            foreach (var linkedId in unit.LinkedUnitIds)
+            {
+                if (!cluster.Contains(linkedId))
+                {
+                    cluster.Add(linkedId);
+                    queue.Enqueue(linkedId);
+                }
+            }
+        }
+        return cluster;
     }
 }
