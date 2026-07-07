@@ -11,3 +11,23 @@ well done - next thing we didnt do yet is visualize the new features in the game
      (i think so) and we need to have a way to visually draw a link between 2 units
       (can start with line renderer) - and we need something for the pipe -
        and also a PipeView script so that it can update the counter on the pipe - 
+
+
+
+
+       results are very impressive, things to add:
+       1. i want the file name to include the following : Lvl_{index}_WinRate{}_Cols_{number of colors}
+       2. i dont see any pipes
+       3. i dont see more than 1 link
+       4. i dont see any lock and key
+
+
+
+a couple of things to add - 
+1. there is no point in ever putting a blocker in the bottom most row  y=max y -- it blocks nothing. 
+2. in the level name also add the features that were used: B_{num of blockers}_P_{num of pipes}_L_{num of links} and so on
+and also - in the start where we show the win rate - show it as actual_target.
+3. 
+
+
+pipe cell should not be clickable\playable.

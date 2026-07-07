@@ -428,6 +428,7 @@ public class DamplingGameCore
             var neighbors = new GameLevelSchema.Coordinate[]
             {
             new GameLevelSchema.Coordinate(current.X, current.Y - 1),
+            new GameLevelSchema.Coordinate(current.X, current.Y + 1),
             new GameLevelSchema.Coordinate(current.X - 1, current.Y),
             new GameLevelSchema.Coordinate(current.X + 1, current.Y)
             };

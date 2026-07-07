@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-public class DamplingSimulationAgent
+public class DamplingSimulationAgentSmart
 {
     public class LevelAnalysisReport
     {
@@ -23,8 +23,8 @@ public class DamplingSimulationAgent
         public List<string> SummaryLog { get; set; } = new List<string>();
     }
 
-    private const int MaxMovesPerRunSafetyLimit = 1000; // Hard cap per game run to break infinite loops
-    private const long MaxBatchProcessingTimeMs = 3000;  // 3-second maximum total cutoff time for the whole batch
+    private const int MaxMovesPerRunSafetyLimit = 1000; 
+    private const long MaxBatchProcessingTimeMs = 5000; // Increased to 5s to allow for deeper heuristic calculations
 
     public LevelAnalysisReport RunBatchSimulation(GameLevelSchema sourceLevelData, int iterationRunsCount)
     {
@@ -37,18 +37,15 @@ public class DamplingSimulationAgent
 
         for (int run = 0; run < iterationRunsCount; run++)
         {
-            // Time Out Safety Check: Stop everything if the total run is taking too long
             if (batchTimer.ElapsedMilliseconds > MaxBatchProcessingTimeMs)
             {
                 report.TimeoutTriggered = true;
-                report.TotalRunsSimulated = run; // Update with the actual completed run count
-                report.SummaryLog.Add($"[TIMEOUT WARNING] Simulation batch aborted early at {MaxBatchProcessingTimeMs}ms to prevent editor freezing.");
+                report.TotalRunsSimulated = run; 
+                report.SummaryLog.Add($"[TIMEOUT WARNING] Smart simulation batch aborted early at {MaxBatchProcessingTimeMs}ms.");
                 break;
             }
 
             DamplingGameCore dynamicEngineInstance = new DamplingGameCore();
-
-            // Safe deep clone
             GameLevelSchema deepClonedSchema = DamplingGameUtils.CloneLevelSchema(sourceLevelData);
             dynamicEngineInstance.InitializeLevel(deepClonedSchema);
 
@@ -57,22 +54,20 @@ public class DamplingSimulationAgent
 
             while (!dynamicEngineInstance.IsGameOver)
             {
-                // Turn Limit Safety Check: Stop individual run if it gets stuck in an infinite matching loop
                 if (moveCount > MaxMovesPerRunSafetyLimit)
                 {
-                    dynamicEngineInstance.ExecutePlayerClick(-999, -999); // Force artificial fail state termination internally
-                    report.SummaryLog.Add($"Run #{run + 1}: Terminated early—exceeded single-game turn threshold safety cap.");
+                    dynamicEngineInstance.ExecutePlayerClick(-999, -999); 
+                    report.SummaryLog.Add($"Run #{run + 1}: Terminated early—exceeded safety cap.");
                     break;
                 }
 
                 List<GameLevelSchema.Coordinate> playableCoordinates = GetPlayableMoves(dynamicEngineInstance);
 
-                if (playableCoordinates.Count == 0)
-                {
-                    break; // Stalemate deadlock
-                }
+                if (playableCoordinates.Count == 0) break;
 
-                var selectedMove = playableCoordinates[randomProvider.Next(playableCoordinates.Count)];
+                // --- SMART STRATEGIC MOVE SELECTION ---
+                GameLevelSchema.Coordinate selectedMove = SelectSmartMove(dynamicEngineInstance, playableCoordinates, randomProvider);
+                
                 dynamicEngineInstance.ExecutePlayerClick(selectedMove.X, selectedMove.Y);
                 moveCount++;
 
@@ -111,15 +106,8 @@ public class DamplingSimulationAgent
         batchTimer.Stop();
         report.TotalExecutionTimeMs = batchTimer.ElapsedMilliseconds;
 
-        if (report.SuccessfulWins > 0)
-        {
-            report.AvgMovesToWin = (float)totalMovesAccumulator / report.SuccessfulWins;
-        }
-        else
-        {
-            report.MinMovesToWin = 0;
-            report.MaxMovesToWin = 0;
-        }
+        if (report.SuccessfulWins > 0) report.AvgMovesToWin = (float)totalMovesAccumulator / report.SuccessfulWins;
+        else { report.MinMovesToWin = 0; report.MaxMovesToWin = 0; }
 
         report.AvgMaxBeltDensityReached = totalMaxBeltDensityAccumulator / Math.Max(1, report.TotalRunsSimulated);
 
@@ -127,49 +115,120 @@ public class DamplingSimulationAgent
         return report;
     }
 
+    private GameLevelSchema.Coordinate SelectSmartMove(DamplingGameCore engine, List<GameLevelSchema.Coordinate> playableMoves, Random rand)
+    {
+        // Group available moves by their calculated heuristic priority tier
+        var highPriorityMoves = new List<GameLevelSchema.Coordinate>();
+        var normalPriorityMoves = new List<GameLevelSchema.Coordinate>();
+        var riskyMoves = new List<GameLevelSchema.Coordinate>();
+
+        int currentBeltCount = engine.VirtualBelt.Count;
+        int maxBeltCapacity = 28; // Standard buffer ceiling
+
+        // Fetch targets currently waiting at the front of resolution queues
+        var activeTargetColors = new HashSet<string>();
+        if (engine.ActiveLevelData.ResolutionQueues != null)
+        {
+            foreach (var queue in engine.ActiveLevelData.ResolutionQueues)
+            {
+                var firstActiveContainer = queue.FirstOrDefault(c => c.FilledSlotsCount < c.Capacity);
+                if (firstActiveContainer != null)
+                {
+                    activeTargetColors.Add(firstActiveContainer.ColorId);
+                }
+            }
+        }
+
+        foreach (var move in playableMoves)
+        {
+            var cellNode = engine.ActiveLevelData.Grid.Matrix.FirstOrDefault(n => n.Position.X == move.X && n.Position.Y == move.Y);
+            if (cellNode == null || cellNode.OccupyingUnit == null) continue;
+
+            var items = cellNode.OccupyingUnit.InteriorContents;
+            if (items == null || items.Count == 0) continue;
+
+            // Group contents by color to look for high concentrations
+            var primaryColorGroup = items.GroupBy(i => i.ColorId).OrderByDescending(g => g.Count()).First();
+            string dominantColor = primaryColorGroup.Key;
+
+            // --- THE VIRTUAL 3-BALL BATCH LOOK-AHEAD ---
+            // Simulate how the belt handles items dynamically in sets of 3
+            int simulatedBeltSpace = currentBeltCount;
+            bool causesImmediateOverflow = false;
+            int itemsClearingInstantly = 0;
+
+            // Split the 9 total items into 3 batches of 3
+            for (int batch = 0; batch < 3; batch++)
+            {
+                simulatedBeltSpace += 3;
+                
+                // If this batch matches a current target, simulate it clearing out instantly
+                if (activeTargetColors.Contains(dominantColor))
+                {
+                    itemsClearingInstantly += 3;
+                    simulatedBeltSpace -= 3; // Freed up
+                }
+
+                if (simulatedBeltSpace > maxBeltCapacity)
+                {
+                    causesImmediateOverflow = true;
+                }
+            }
+
+            // Assign weights based on the dynamic look-ahead result
+            if (itemsClearingInstantly >= 6 && !causesImmediateOverflow)
+            {
+                // Tier 1: High-Efficiency Clearing Move (Clears queues without overflow)
+                highPriorityMoves.Add(move);
+            }
+            else if (causesImmediateOverflow)
+            {
+                // Tier 3: Risky Move (Likely to cause deadlocks or overflow bounds)
+                riskyMoves.Add(move);
+            }
+            else
+            {
+                // Tier 2: Safe matching or sustaining setup move
+                normalPriorityMoves.Add(move);
+            }
+        }
+
+        // Return random item from the highest available successful tier
+        if (highPriorityMoves.Count > 0) return highPriorityMoves[rand.Next(highPriorityMoves.Count)];
+        if (normalPriorityMoves.Count > 0) return normalPriorityMoves[rand.Next(normalPriorityMoves.Count)];
+        if (riskyMoves.Count > 0) return riskyMoves[rand.Next(riskyMoves.Count)];
+
+        return playableMoves[rand.Next(playableMoves.Count)]; // Fallback
+    }
+
     private List<GameLevelSchema.Coordinate> GetPlayableMoves(DamplingGameCore engine)
     {
         List<GameLevelSchema.Coordinate> activeOptionsPool = new List<GameLevelSchema.Coordinate>();
-
-        // We use this to prevent the bot from adding multiple coordinates of the SAME linked cluster 
-        // to the options pool, which would skew the random selection weight.
         HashSet<int> alreadyEvaluatedClusterIds = new HashSet<int>();
 
         foreach (var cellNode in engine.ActiveLevelData.Grid.Matrix)
         {
-            // Skip empty cells or units that have already been played
             if (cellNode.OccupyingUnit == null || engine.PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId))
                 continue;
 
-            // Skip if we already evaluated a different piece of this same linked cluster
             if (alreadyEvaluatedClusterIds.Contains(cellNode.OccupyingUnit.UnitId))
                 continue;
 
-            // 1. GATHER THE CLUSTER (The Fix)
-            // Fetch the full list of IDs tied to this unit's chain
             HashSet<int> clusterIds = engine.GetFullClusterIds(cellNode.OccupyingUnit.UnitId);
+            foreach (var id in clusterIds) alreadyEvaluatedClusterIds.Add(id);
 
-            // Mark all units in this cluster as evaluated so we don't process them again in this loop
-            foreach (var id in clusterIds)
-            {
-                alreadyEvaluatedClusterIds.Add(id);
-            }
-
-            // 2. CHECK THE CLUSTER
-            // Pass the clusterIds into the pathfinder so it knows it can walk through linked partners
             if (!engine.IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, clusterIds))
             {
                 activeOptionsPool.Add(cellNode.Position);
             }
         }
-
         return activeOptionsPool;
     }
 
-    private void GenerateTextSummary(LevelAnalysisReport report)
+    public void GenerateTextSummary(LevelAnalysisReport report)
     {
         report.SummaryLog.Insert(0, "==================================================");
-        report.SummaryLog.Insert(1, $"        DAMPLING LEVEL ANALYSIS REPORT          ");
+        report.SummaryLog.Insert(1, $"        DAMPLING SMART AGENT V2 REPORT            ");
         report.SummaryLog.Insert(2, "==================================================");
         report.SummaryLog.Add($"Total Test Cycles Executed : {report.TotalRunsSimulated}");
         report.SummaryLog.Add($"Successful Wins            : {report.SuccessfulWins}");

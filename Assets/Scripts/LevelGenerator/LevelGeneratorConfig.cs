@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-// 1. THE VOCABULARY (Exact sequence requested)
+// 1. THE VOCABULARY
 public enum UnlockableFeature
 {
     None = 0,
@@ -25,19 +25,15 @@ public enum UnlockableFeature
 // 2. THE RULEBOOK
 public class LevelGeneratorConfig
 {
-    // --- MASTER CONFIGURATION CONSTANTS ---
-    // Change this one number to stretch or compress the entire game's difficulty curve
     public const int TOTAL_LEVELS = 500;
     public const int MAX_DIFFICULTY_LEVEL = 100;
 
-    // Grid Scaling Bounds
     public const int START_MIN_GRID = 2;
     public const int START_MAX_GRID = 3;
 
     public const int END_MIN_GRID = 5;
     public const int END_MAX_GRID = 8;
 
-    // The strict order of progression
     private static readonly UnlockableFeature[] FeatureProgression = new UnlockableFeature[]
     {
         UnlockableFeature.Colors_2,
@@ -67,6 +63,29 @@ public class LevelGeneratorConfig
         public float WinRateTolerance;
     }
 
+    // --- NEW: Tracks exactly which level a feature first appears ---
+    private static Dictionary<UnlockableFeature, int> _featureDebutLevels = null;
+    public static Dictionary<UnlockableFeature, int> FeatureDebutLevels
+    {
+        get
+        {
+            if (_featureDebutLevels == null)
+            {
+                _featureDebutLevels = new Dictionary<UnlockableFeature, int>();
+                for (int i = 1; i <= MAX_DIFFICULTY_LEVEL; i++)
+                {
+                    var rules = GetRulesForLevel(i);
+                    foreach (var mech in rules.AllowedMechanics)
+                    {
+                        if (!_featureDebutLevels.ContainsKey(mech))
+                            _featureDebutLevels[mech] = i; // Store the exact debut level
+                    }
+                }
+            }
+            return _featureDebutLevels;
+        }
+    }
+
     public static LevelRuleset GetRulesForLevel(int levelIndex)
     {
         LevelRuleset rules = new LevelRuleset
@@ -78,35 +97,26 @@ public class LevelGeneratorConfig
         int clampedLevel = Mathf.Min(levelIndex, MAX_DIFFICULTY_LEVEL);
         float progress = (float)clampedLevel / MAX_DIFFICULTY_LEVEL;
 
-        // 1. SMOOTH GRID SCALING (No if/else blocks)
         rules.MinGridSize = Mathf.RoundToInt(Mathf.Lerp(START_MIN_GRID, END_MIN_GRID, progress));
         rules.MaxGridSize = Mathf.RoundToInt(Mathf.Lerp(START_MAX_GRID, END_MAX_GRID, progress));
 
-        // 2. DIFFICULTY CURVE (100% down to 30%)
         rules.TargetWinRate = Mathf.Lerp(1.0f, 0.50f, progress);
+        rules.MaxColors = 2; 
 
-        // 3. DYNAMIC FEATURE UNLOCKS
-        rules.MaxColors = 2; // Absolute base fallback
-
-        // Calculate how many features to unlock based on our progress percentage
         int unlockedSteps = Mathf.FloorToInt(Mathf.Lerp(1, FeatureProgression.Length, progress));
 
         for (int i = 0; i < unlockedSteps; i++)
         {
             UnlockableFeature feature = FeatureProgression[i];
-
-            // Check if this feature is a color upgrade
             if (feature.ToString().StartsWith("Colors_"))
             {
-                // Extracts the number (e.g. "Colors_6" -> 6)
                 rules.MaxColors = int.Parse(feature.ToString().Split('_')[1]);
             }
-            else // Otherwise, it's a mechanical board feature
+            else 
             {
                 rules.AllowedMechanics.Add(feature);
             }
         }
-
         return rules;
     }
 }

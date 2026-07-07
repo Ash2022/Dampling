@@ -50,6 +50,11 @@ public class LevelEditorWindow : EditorWindow
 
     private string botReportOutputText = "";
 
+    DamplingSimulationAgent botAgent;
+    DamplingSimulationAgentSmart smartAgent;
+
+    DamplingSimulationAgentGreedy greedyAgent;
+
     [MenuItem("Tools/Dampling Level Editor")]
     public static void ShowWindow()
     {
@@ -80,6 +85,21 @@ public class LevelEditorWindow : EditorWindow
         if (GUILayout.Button("Load Level JSON")) { LoadLevelJson(); }
         GUILayout.EndHorizontal();
 
+        GUILayout.BeginHorizontal();
+        
+        if (GUILayout.Button("Validate Level", GUILayout.Height(30)))
+            ValidateSupplyAndDemand();
+                
+        if (GUILayout.Button("Run Bot Simulation (1000)", GUILayout.Height(30)))
+            RunEditorSimulation();
+
+        if (GUILayout.Button("Run Smart Bot Simulation (1000)", GUILayout.Height(30)))
+            RunEditorSimulationSmartAgent();
+
+        if (GUILayout.Button("Run Greedy Bot Simulation (1000)", GUILayout.Height(30)))
+            RunEditorSimulationGreedyAgent();
+        
+        GUILayout.EndHorizontal();
         EditorGUILayout.Space();
 
         if (isGridBuilt)
@@ -744,6 +764,183 @@ public class LevelEditorWindow : EditorWindow
             level.Grid.Matrix.Add(node);
         }
         return level;
+    }
+
+    private void RunEditorSimulation()
+    {
+        GameLevelSchema level = AssembleActiveEditorStateToSchema();
+
+        if (level == null)
+        {
+            Debug.LogError("No level loaded to simulate!");
+            return;
+        }
+
+        // Ensure agent is initialized
+        if (botAgent == null) botAgent = new DamplingSimulationAgent();
+
+        Debug.Log($"<color=blue>Simulating Level {level.LevelId}...</color>");
+
+        // 1. Run the 500 iterations
+        var report = botAgent.RunBatchSimulation(level, 1000);
+
+        // 2. Pass the report into the bot's summary method to fill the SummaryLog list
+        botAgent.GenerateTextSummary(report);
+
+        // 3. Combine the list elements into a single formatted string block
+        string reportSummary = string.Join("\n", report.SummaryLog);
+
+        // 4. Print to console for clear, scannable logs
+        Debug.Log($"--- Simulation Results for Level {level.LevelId} ---\n{reportSummary}");
+
+        // 5. Pop-up window displaying the stitched text block
+        EditorUtility.DisplayDialog($"Simulation Results: Level {level.LevelId}", reportSummary, "Close");
+    }
+
+    private void RunEditorSimulationSmartAgent()
+    {
+        GameLevelSchema level = AssembleActiveEditorStateToSchema();
+
+        if (level == null)
+        {
+            Debug.LogError("No level loaded to simulate!");
+            return;
+        }
+
+        // Ensure agent is initialized
+        if (smartAgent == null) smartAgent = new DamplingSimulationAgentSmart();
+
+        Debug.Log($"<color=blue>Simulating Level {level.LevelId}...</color>");
+
+        // 1. Run the 500 iterations
+        var report = smartAgent.RunBatchSimulation(level, 1000);
+
+        // 2. Pass the report into the bot's summary method to fill the SummaryLog list
+        smartAgent.GenerateTextSummary(report);
+
+        // 3. Combine the list elements into a single formatted string block
+        string reportSummary = string.Join("\n", report.SummaryLog);
+
+        // 4. Print to console for clear, scannable logs
+        Debug.Log($"--- SMART Simulation Results for Level {level.LevelId} ---\n{reportSummary}");
+
+        // 5. Pop-up window displaying the stitched text block
+        EditorUtility.DisplayDialog($"Simulation Results: Level {level.LevelId}", reportSummary, "Close");
+    }
+
+    private void RunEditorSimulationGreedyAgent()
+    {
+        GameLevelSchema level = AssembleActiveEditorStateToSchema();
+
+        if (level == null)
+        {
+            Debug.LogError("No level loaded to simulate!");
+            return;
+        }
+
+        // Ensure agent is initialized
+        if (greedyAgent == null) greedyAgent = new DamplingSimulationAgentGreedy();
+
+        Debug.Log($"<color=blue>Simulating Level {level.LevelId}...</color>");
+
+        // 1. Run the 500 iterations
+        var report = greedyAgent.RunBatchSimulation(level, 1000);
+
+        // 2. Pass the report into the bot's summary method to fill the SummaryLog list
+        greedyAgent.GenerateTextSummary(report);
+
+        // 3. Combine the list elements into a single formatted string block
+        string reportSummary = string.Join("\n", report.SummaryLog);
+
+        // 4. Print to console for clear, scannable logs
+        Debug.Log($"--- SMART Simulation Results for Level {level.LevelId} ---\n{reportSummary}");
+
+        // 5. Pop-up window displaying the stitched text block
+        EditorUtility.DisplayDialog($"Simulation Results: Level {level.LevelId}", reportSummary, "Close");
+    }
+
+    private bool ValidateSupplyAndDemand()
+    {
+        GameLevelSchema level = AssembleActiveEditorStateToSchema();
+        if (level == null)
+        {
+            Debug.LogError("Validation Failed: No level schema could be assembled.");
+            return false;
+        }
+
+        // 1. Tally up Supply (All Dumplings on the board + inside pipes)
+        Dictionary<string, int> supplyCounts = new Dictionary<string, int>();
+
+        foreach (var node in level.Grid.Matrix)
+        {
+            // Check normal unit contents
+            if (node.OccupyingUnit != null && node.OccupyingUnit.InteriorContents != null)
+            {
+                foreach (var item in node.OccupyingUnit.InteriorContents)
+                {
+                    if (!supplyCounts.ContainsKey(item.ColorId)) supplyCounts[item.ColorId] = 0;
+                    supplyCounts[item.ColorId]++;
+                }
+            }
+
+            // Check pipe reservoirs
+            if (node.ContinuousPipe != null && node.ContinuousPipe.ReservoirQueue != null)
+            {
+                foreach (var queuedUnit in node.ContinuousPipe.ReservoirQueue)
+                {
+                    if (queuedUnit.InteriorContents != null)
+                    {
+                        foreach (var item in queuedUnit.InteriorContents)
+                        {
+                            if (!supplyCounts.ContainsKey(item.ColorId)) supplyCounts[item.ColorId] = 0;
+                            supplyCounts[item.ColorId]++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 2. Tally up Demand (All Container Capacities in the Resolution Queues)
+        Dictionary<string, int> demandCounts = new Dictionary<string, int>();
+        if (level.ResolutionQueues != null)
+        {
+            foreach (var queue in level.ResolutionQueues)
+            {
+                foreach (var container in queue)
+                {
+                    if (!demandCounts.ContainsKey(container.ColorId)) demandCounts[container.ColorId] = 0;
+                    demandCounts[container.ColorId] += container.Capacity;
+                }
+            }
+        }
+
+        // 3. Compare Both Maps
+        HashSet<string> allColors = new HashSet<string>(supplyCounts.Keys.Concat(demandCounts.Keys));
+        List<string> errors = new List<string>();
+
+        foreach (var color in allColors)
+        {
+            int supply = supplyCounts.ContainsKey(color) ? supplyCounts[color] : 0;
+            int demand = demandCounts.ContainsKey(color) ? demandCounts[color] : 0;
+
+            if (supply != demand)
+            {
+                errors.Add($"[{color}] Mismatch! Board Supply: {supply} total dumplings vs Queue Demand: {demand} container slots.");
+            }
+        }
+
+        // 4. Output Results
+        if (errors.Count > 0)
+        {
+            string errorLog = string.Join("\n", errors);
+            Debug.LogError($"<color=red><b>LEVEL VALIDATION FAILED!</b></color>\n{errorLog}");
+            EditorUtility.DisplayDialog("Validation Error", "Supply and demand do not match!\n\nCheck the Unity Console for full details.", "OK");
+            return false;
+        }
+
+        Debug.Log("<color=green><b>✓ LEVEL VALIDATION PASSED:</b> Supply matches Demand perfectly.</color>");
+        EditorUtility.DisplayDialog("Validation Success", "All dumplings on the board perfectly match the resolution container slots!", "Excellent");
+        return true;
     }
 
 }

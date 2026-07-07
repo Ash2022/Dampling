@@ -27,6 +27,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     private bool wasInitiallyHidden = false;
 
+    bool disableButton = false;
+
     public int UnitId { get; private set; }
     public void Initialize(GameLevelSchema.CellNode cellNode)
     {
@@ -35,6 +37,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         ReturnBallsToPool();
 
         // Reset relation overlays, lines, and text layers to safely handle recycling
+        disableButton= false;
         lockOverlayRenderer.gameObject.SetActive(false);
         keyIndicatorRenderer.gameObject.SetActive(false);
         iceOverlayRenderer.gameObject.SetActive(false);
@@ -57,6 +60,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
             int emissionsLeft = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
             statusText.text = emissionsLeft > 0 ? emissionsLeft.ToString() : "";
+
+            disableButton = true;
         }
         // 2. Process Standard Playable Unit Grid Cells
         else if (cellNode.OccupyingUnit != null)
@@ -172,6 +177,10 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     public void OnViewClicked()
     {
         if (GameManager.Instance.IsUnitLockedAt(gridCoordinate)) return;
+
+        if(disableButton)
+            return;
+
 
         GameManager.Instance.OnUnitElementClicked(gridCoordinate);
         ExecuteResolveTimeline();
