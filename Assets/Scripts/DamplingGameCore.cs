@@ -18,7 +18,6 @@ public class DamplingGameCore
     // --- Optional View Notification Callbacks ---
     private Action<int> OnUnitUnblocked;                  // Param: UnitId
     private Action<int, int> OnUnitIceChanged;             // Params: UnitId, RemainingIceLayers
-    private Action<Vector2Int, int> OnCrateDurabilityChanged; // Params: GridPosition, RemainingDurability
     private Action<int, int> OnLockKeyCollected;
     private Action<int> OnLinkedUnitPlayed;         // Params: LockedUnitId, CollectedKeyUnitId
 
@@ -51,7 +50,6 @@ public class DamplingGameCore
         GameLevelSchema levelData,
         Action<int> onUnitUnblocked = null,
         Action<int, int> onUnitIceChanged = null,
-        Action<Vector2Int, int> onCrateDurabilityChanged = null,
         Action<int, int> onLockKeyCollected = null,
         Action<int> onLinkedUnitPlayed = null)
     {
@@ -64,7 +62,6 @@ public class DamplingGameCore
         // Assign optional callbacks
         OnUnitUnblocked = onUnitUnblocked;
         OnUnitIceChanged = onUnitIceChanged;
-        OnCrateDurabilityChanged = onCrateDurabilityChanged;
         OnLockKeyCollected = onLockKeyCollected;
         OnLinkedUnitPlayed = onLinkedUnitPlayed;
 
@@ -206,23 +203,6 @@ public class DamplingGameCore
                 processedNeighbors.Add(targetCoord);
                 Vector2Int unityCoord = new Vector2Int(targetCoord.X, targetCoord.Y);
 
-                // A. Handle Destructible Crates
-                if (neighborCell.IsPlayablePath && neighborCell.CrateDurability > 0)
-                {
-                    neighborCell.CrateDurability--;
-
-                    // Fire optional callback to GameManager view layer
-                    OnCrateDurabilityChanged?.Invoke(unityCoord, neighborCell.CrateDurability);
-
-                    if (neighborCell.CrateDurability == 0)
-                    {
-                        transactions.Add(new EngineEvent { EventType = EngineEventType.CrateDestroyed, Payload = unityCoord });
-                    }
-                    else
-                    {
-                        transactions.Add(new EngineEvent { EventType = EngineEventType.CrateDamaged, TargetId = neighborCell.CrateDurability, Payload = unityCoord });
-                    }
-                }
 
                 // B. Handle Frozen Ice Units
                 if (neighborCell.OccupyingUnit != null && neighborCell.OccupyingUnit.IceLayers > 0)
@@ -317,7 +297,7 @@ public class DamplingGameCore
 
                 if (gridMatrix.TryGetValue(spaceAboveCoord, out var spaceAboveNode))
                 {
-                    if (spaceAboveNode.IsPlayablePath && spaceAboveNode.CrateDurability == 0 && spaceAboveNode.OccupyingUnit == null)
+                    if (spaceAboveNode.IsPlayablePath  && spaceAboveNode.OccupyingUnit == null)
                     {
                         var nextUnit = cellNode.ContinuousPipe.ReservoirQueue[0];
                         cellNode.ContinuousPipe.ReservoirQueue.RemoveAt(0);
@@ -439,7 +419,6 @@ public class DamplingGameCore
 
                 if (gridMatrix.TryGetValue(neighborCoord, out var neighborCell) && neighborCell.IsPlayablePath)
                 {
-                    if (neighborCell.CrateDurability > 0 || neighborCell.CrateDurability == -1) continue;
                     if (neighborCell.ContinuousPipe != null && neighborCell.ContinuousPipe.ReservoirQueue.Count > 0) continue;
                     if (neighborCell.OccupyingUnit != null && neighborCell.OccupyingUnit.IceLayers > 0) continue;
 

@@ -23,7 +23,7 @@ public class LevelBatchBuilderWindow : EditorWindow
     private float bestCandidateDiff = float.MaxValue;
     private float bestCandidateWinRate = 0f;
 
-    private DamplingSimulationAgentGreedy botAgent;
+    private DamplingSimulationAgent botAgent;
     private System.Random rng;
 
     private readonly string[] MasterColorPalette = {
@@ -77,7 +77,7 @@ public class LevelBatchBuilderWindow : EditorWindow
     {
         if (startLevel > endLevel) return;
         if (!Directory.Exists(outputFolderPath)) Directory.CreateDirectory(outputFolderPath);
-        botAgent = new DamplingSimulationAgentGreedy();
+        botAgent = new DamplingSimulationAgent();
         rng = new System.Random();
         currentProcessingLevel = startLevel;
         currentAttempt = 0;
@@ -205,8 +205,8 @@ public class LevelBatchBuilderWindow : EditorWindow
                 var node = new GameLevelSchema.CellNode
                 {
                     Position = new GameLevelSchema.Coordinate(x, y),
-                    IsPlayablePath = true,
-                    CrateDurability = 0
+                    IsPlayablePath = true
+
                 };
 
                 // --- CHANGE: Added condition to ensure BlockedCell is never on the bottom row (y == height - 1)

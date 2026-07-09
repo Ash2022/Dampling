@@ -119,7 +119,6 @@ public class GameManager : MonoBehaviour
             currentLevelData,
             HandleUnitUnblocked,
             HandleUnitIceChanged,
-            HandleCrateDurabilityChanged,
             HandleLockKeyCollected,
             HandleLinkedUnitPlayed
         );
@@ -330,28 +329,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Core hook triggered when a crate takes damage or shatters out of the maze layout.
-    /// </summary>
-    private void HandleCrateDurabilityChanged(Vector2Int gridPos, int remainingDurability)
-    {
-        if (activeBoardReferences != null && activeBoardReferences.BlockerViews.TryGetValue(gridPos, out BlockerCellView crateView))
-        {
-            if (remainingDurability > 0)
-            {
-                crateView.UpdateDurability(remainingDurability);
-            }
-            else
-            {
-                // 1. Play destruction visual or sound effect sequence
-                crateView.PlayShatterAndClear();
-
-                // 2. POOL CLEANUP: Remove the reference from the GameManager's active tracker collection
-                activeBoardReferences.BlockerViews.Remove(gridPos);
-            }
-        }
-    }
-
+    
     /// <summary>
     /// Core hook triggered when a targeted key is successfully collected by the player.
     /// </summary>
@@ -403,15 +381,6 @@ public class GameManager : MonoBehaviour
     {
         if (activeBoardReferences == null) return;
 
-        // 1. Release all remaining solid walls and intact crates
-        foreach (var blockerView in activeBoardReferences.BlockerViews.Values)
-        {
-            if (blockerView != null)
-            {
-                blockerView.gameObject.SetActive(false); // Or PoolManager.Despawn(blockerView.gameObject);
-            }
-        }
-        activeBoardReferences.BlockerViews.Clear();
 
         // 2. Release all your standard unit views as well
         foreach (var unitView in activeBoardReferences.UnitViews.Values)
@@ -425,7 +394,7 @@ public class GameManager : MonoBehaviour
 
         foreach (var ball in ballViews)
             DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
-            
+
         ballViews.Clear();
 
     }

@@ -7,12 +7,14 @@ public class LevelVisualization : MonoBehaviour
 {
     [Header("Visual Prefabs")]
     public GameObject UnitPrefab;
+    public GameObject FramePrefab;
     public GameObject ContainerPrefab;
 
     [Header("Manual Y-Axis Baselines")]
     public float QueueBottomY = 3.0f;
     public float GridTopY = -1.0f;
 
+    float ScaleFactor = 1.2f;
     private List<GameObject> spawnedVisualElements = new List<GameObject>();
 
     public BoardVisualReferences RenderInitialBoard(GameLevelSchema levelData)
@@ -22,7 +24,9 @@ public class LevelVisualization : MonoBehaviour
         // Instantiate the packet to return tracking data straight to GameManager
         BoardVisualReferences references = new BoardVisualReferences();
 
-        Vector2 unitSize = GetPrefabSize(UnitPrefab);
+        
+
+        Vector2 unitSize = GetPrefabSize(UnitPrefab)*ScaleFactor;
         Vector2 containerSize = GetPrefabSize(ContainerPrefab);
 
         // 1. GENERATE AND CENTER DEMAND QUEUES
@@ -102,12 +106,7 @@ public class LevelVisualization : MonoBehaviour
             // 2. If it's NOT a playable path (blocked gap/hole), inline spawn the structural EmptyUnit instead
             else
             {
-                GameObject cellBlocker = DamplingObjectPool.Instance.GetCellBlocker(spawnPosition, Quaternion.identity, transform);
-                cellBlocker.name = $"EmptyUnit_({gridX},{gridY})";
-                BlockerCellView blockerView = cellBlocker.GetComponent<BlockerCellView>();
-                blockerView.Initialize(coord, cellNode.CrateDurability);
 
-                spawnedVisualElements.Add(cellBlocker);
             }
         }
 
@@ -147,6 +146,8 @@ public class LevelVisualization : MonoBehaviour
             }
         }
 
+        GenerateFramePass(levelData, unitSize);
+
         return references;
     }
 
@@ -184,6 +185,93 @@ public class LevelVisualization : MonoBehaviour
             return spriteRenderer.bounds.size;
         }
         return Vector2.one;
+    }
+
+    private void GenerateFramePass(GameLevelSchema levelData, Vector2 unitSize)
+    {
+        int extraPadding = 2;
+
+        HashSet<Vector2Int> playableMap = new HashSet<Vector2Int>();
+        int minX = int.MaxValue, maxX = int.MinValue, minY = 0, maxY = int.MinValue;
+
+        foreach (var cell in levelData.Grid.Matrix)
+        {
+            if (cell.IsPlayablePath)
+            {
+                playableMap.Add(new Vector2Int(cell.Position.X, cell.Position.Y));
+                minX = Math.Min(minX, cell.Position.X);
+                maxX = Math.Max(maxX, cell.Position.X);
+                maxY = Math.Max(maxY, cell.Position.Y);
+            }
+        }
+
+        float physicalWidth = (maxX - minX) * unitSize.x;
+        float gridStartX = -(physicalWidth / 2f) - (minX * unitSize.x);
+
+        // NEW: Dictionary to keep track of the frames we spawn for the post-pass
+        Dictionary<Vector2Int, FrameView> activeFrames = new Dictionary<Vector2Int, FrameView>();
+
+        for (int x = minX - extraPadding; x <= maxX + extraPadding; x++)
+        {
+            for (int y = minY; y <= maxY + extraPadding; y++)
+            {
+                Vector2Int coord = new Vector2Int(x, y);
+
+                if (!playableMap.Contains(coord))
+                {
+                    float worldX = gridStartX + (x * unitSize.x);
+                    float worldY = GridTopY - (y * unitSize.y);
+                    Vector3 spawnPos = new Vector3(worldX, worldY, 0f);
+
+                    GameObject frameInstance = Instantiate(FramePrefab, spawnPos, Quaternion.identity, transform);
+                    
+                    frameInstance.transform.localScale*=ScaleFactor;
+
+                    spawnedVisualElements.Add(frameInstance);
+
+                    FrameView fv = frameInstance.GetComponent<FrameView>();
+                    if (fv != null)
+                    {
+                        bool left = !playableMap.Contains(new Vector2Int(x - 1, y));
+                        bool right = !playableMap.Contains(new Vector2Int(x + 1, y));
+                        bool up = !playableMap.Contains(new Vector2Int(x, y - 1));
+                        bool down = !playableMap.Contains(new Vector2Int(x, y + 1));
+                        bool upLeft = !playableMap.Contains(new Vector2Int(x - 1, y - 1));
+                        bool upRight = !playableMap.Contains(new Vector2Int(x + 1, y - 1));
+                        bool downLeft = !playableMap.Contains(new Vector2Int(x - 1, y + 1));
+                        bool downRight = !playableMap.Contains(new Vector2Int(x + 1, y + 1));
+
+                        fv.ApplyFrameMask(left, right, up, down, upLeft, upRight, downLeft, downRight);
+
+                        // Add it to our dictionary
+                        activeFrames[coord] = fv;
+                    }
+                }
+            }
+        }
+
+        // NEW: Run the post-pass fix
+        ApplyTopRowCaps(activeFrames, playableMap, minX, maxX, minY);
+    }
+
+    private void ApplyTopRowCaps(Dictionary<Vector2Int, FrameView> activeFrames, HashSet<Vector2Int> playableMap, int minX, int maxX, int topY)
+    {
+        // Iterate purely across the top row of the grid
+        for (int x = minX - 1; x <= maxX + 1; x++)
+        {
+            Vector2Int coord = new Vector2Int(x, topY);
+
+            if (activeFrames.TryGetValue(coord, out FrameView fv))
+            {
+                // Check if there are playable paths flanking this frame block
+                // (Contains == true means there IS a path)
+                bool pathLeft = playableMap.Contains(new Vector2Int(x - 1, topY));
+                bool pathRight = playableMap.Contains(new Vector2Int(x + 1, topY));
+
+                // Force the cap logic
+                fv.ApplyTopRowOverride(pathLeft, pathRight);
+            }
+        }
     }
 
 }

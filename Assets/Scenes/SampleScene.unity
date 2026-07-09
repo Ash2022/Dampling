@@ -438,7 +438,7 @@ Transform:
   m_GameObject: {fileID: 794595532}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: -0.30070576, w: 0.953717}
-  m_LocalPosition: {x: 0.818, y: -0.945, z: 0}
+  m_LocalPosition: {x: 0.9, y: -0.7, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -810,7 +810,6 @@ MonoBehaviour:
   unitPrefab: {fileID: 4821244711540172710, guid: 5c28b3c190ae4e144af256b1ed1c7582, type: 3}
   containerPrefab: {fileID: 7279348674696300159, guid: cdf339978a2dd0546bf06cbd19877966, type: 3}
   ballPrefab: {fileID: 5515439124192318093, guid: c9c3ad3a88c2f504da4b85b75b3765ab, type: 3}
-  CellBlockerPrefab: {fileID: 4821244711540172710, guid: aac0ac8e4f305c544bd75960ec5dda86, type: 3}
 --- !u!4 &883112738
 Transform:
   m_ObjectHideFlags: 0
@@ -1163,9 +1162,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelVisualization
   UnitPrefab: {fileID: 4821244711540172710, guid: 5c28b3c190ae4e144af256b1ed1c7582, type: 3}
+  FramePrefab: {fileID: 3100029431806406040, guid: c4928ac0c38806d4199b344297c9cb6b, type: 3}
   ContainerPrefab: {fileID: 7279348674696300159, guid: cdf339978a2dd0546bf06cbd19877966, type: 3}
   QueueBottomY: 2.15
-  GridTopY: -2
+  GridTopY: -1.2
 --- !u!1 &1778849751
 GameObject:
   m_ObjectHideFlags: 0
@@ -1436,31 +1436,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ModelManager
   levelTextAssets:
-  - {fileID: 4900000, guid: e6608ca5f73ce414ca1d27c6c5891dc0, type: 3}
-  - {fileID: 4900000, guid: bf5fbe62a1878534c829b6ec33bcbb53, type: 3}
-  - {fileID: 4900000, guid: ae73ad79ae735f7468d63f0cb9bf1732, type: 3}
-  - {fileID: 4900000, guid: dbaa6966e3af2f94382d37e6589902a7, type: 3}
-  - {fileID: 4900000, guid: bbcfa65cff18b424fba4ca8621c6906b, type: 3}
-  - {fileID: 4900000, guid: b869866abb17e9741b30549d35d1f602, type: 3}
-  - {fileID: 4900000, guid: 95f30e4954508fa45a026da1321c3ec3, type: 3}
-  - {fileID: 4900000, guid: b287bac1066a0484199ab362064dd683, type: 3}
-  - {fileID: 4900000, guid: 4c599675a380a8e4a8666bbb34fafcaa, type: 3}
-  - {fileID: 4900000, guid: d0d4d83544d9f04459542621b1757460, type: 3}
-  - {fileID: 4900000, guid: b2945f8b97f44a74eb550406310a0ca4, type: 3}
-  - {fileID: 4900000, guid: 575ca0c90ef034b4baaeb7f2b2c391ff, type: 3}
-  - {fileID: 4900000, guid: 6e3a40e6107a3f944a5ce471dc26bf9a, type: 3}
-  - {fileID: 4900000, guid: 076dc31c02570184e8581644b95b0431, type: 3}
-  - {fileID: 4900000, guid: 6ad1d05ddc3c48144abf4c96102b8f70, type: 3}
-  - {fileID: 4900000, guid: 12cb20703baaf84499389ff9270d7436, type: 3}
-  - {fileID: 4900000, guid: c85a4f81c27b4644b8bc553a6da2934a, type: 3}
-  - {fileID: 4900000, guid: 9104b6894c8941542bb6f5ed3376d317, type: 3}
-  - {fileID: 4900000, guid: af57448008b637440828d33cf94e4220, type: 3}
-  - {fileID: 4900000, guid: 28094ceb154e24049aba10efafeb9aaa, type: 3}
-  - {fileID: 4900000, guid: af077c32cfc12724cbfea99a4002c5cd, type: 3}
-  - {fileID: 4900000, guid: eb4fc942e4b66804fb73f960abdba2fc, type: 3}
-  - {fileID: 4900000, guid: 706e29616e32eb94cbdf079efdb22ebd, type: 3}
-  - {fileID: 4900000, guid: fd791939ec9fe564483a7d581d3b2241, type: 3}
-  - {fileID: 4900000, guid: 392be4ae96310d646a4233409244c499, type: 3}
+  - {fileID: 4900000, guid: 782f905cf6295ed47be65a391187e7c2, type: 3}
 --- !u!114 &2070676744
 MonoBehaviour:
   m_ObjectHideFlags: 0

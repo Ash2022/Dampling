@@ -10,8 +10,10 @@ public class LevelEditorWindow : EditorWindow
 {
     public const int BELT_MAX = 28;
 
-    private int gridColumns = 6;
-    private int gridRows = 8;
+    private bool isOddColumnsWidth = false; // False = 8x8 Grid, True = 7x8 Grid
+    private int gridColumns => isOddColumnsWidth ? 7 : 8;
+    private int gridRows => 7; // Row sizing is now locked to 8 permanently
+
     private int queueCount = 4;
     private int colorCount = 4;
 
@@ -31,7 +33,6 @@ public class LevelEditorWindow : EditorWindow
         public int LockGroupId = 0;
         public int LinkGroupId = 0;
 
-        public int CrateDurability = 0; // Default: 0 (not a crate). -1 = solid wall. >0 = crate health
         public int IceLayers = 0;
     }
 
@@ -52,7 +53,6 @@ public class LevelEditorWindow : EditorWindow
 
     DamplingSimulationAgent botAgent;
     DamplingSimulationAgentSmart smartAgent;
-
     DamplingSimulationAgentGreedy greedyAgent;
 
     [MenuItem("Tools/Dampling Level Editor")]
@@ -65,8 +65,15 @@ public class LevelEditorWindow : EditorWindow
     {
         GUILayout.Label("Level Layout Configuration", EditorStyles.boldLabel);
 
-        gridColumns = EditorGUILayout.IntSlider("Grid Columns (X)", gridColumns, 1, 15);
-        gridRows = EditorGUILayout.IntSlider("Grid Rows (Y)", gridRows, 1, 20);
+        // --- DIMENSION CONTROLS TOGGLE ---
+        EditorGUI.BeginChangeCheck();
+        isOddColumnsWidth = EditorGUILayout.Toggle("Symmetry Mode (7x8 Odd)", isOddColumnsWidth);
+        if (EditorGUI.EndChangeCheck())
+        {
+            BuildCanvas(); 
+        }
+        EditorGUILayout.LabelField($"Active Workspace Dimensions: {gridColumns} Columns × {gridRows} Rows");
+
         queueCount = EditorGUILayout.IntSlider("Container Queues", queueCount, 1, 8);
         colorCount = EditorGUILayout.IntSlider("Number of Colors", colorCount, 2, 10);
 
@@ -96,7 +103,7 @@ public class LevelEditorWindow : EditorWindow
         if (GUILayout.Button("Run Smart Bot Simulation (1000)", GUILayout.Height(30)))
             RunEditorSimulationSmartAgent();
 
-        if (GUILayout.Button("Run Greedy Bot Simulation (1000)", GUILayout.Height(30)))
+        if (GUILayout.Button("Run Greedy Simulation (1000)", GUILayout.Height(30)))
             RunEditorSimulationGreedyAgent();
         
         GUILayout.EndHorizontal();
@@ -117,7 +124,7 @@ public class LevelEditorWindow : EditorWindow
         {
             for (int x = 0; x < gridColumns; x++)
             {
-                editorMatrix[new Vector2Int(x, y)] = new EditorCell();
+                editorMatrix[new Vector2Int(x, y)] = new EditorCell { Behavior = CellBehavior.Blocker };
             }
         }
 
@@ -142,6 +149,8 @@ public class LevelEditorWindow : EditorWindow
             cell.KeyGroupId = 0;
             cell.LockGroupId = 0;
             cell.LinkGroupId = 0;
+            cell.IceLayers = 0;
+            cell.PipeEmittedColorIds.Clear();
         }
 
         foreach (var q in generatedQueues) q.Clear();
@@ -182,7 +191,6 @@ public class LevelEditorWindow : EditorWindow
             {
                 cell.PipeEmittedColorIds.Clear();
 
-                // Loop through each emission slot this pipe has and assign a unique color
                 for (int e = 0; e < cell.PipeEmissions; e++)
                 {
                     if (assignedCount < unitColorAssignments.Count)
@@ -191,7 +199,6 @@ public class LevelEditorWindow : EditorWindow
                     }
                 }
 
-                // Backward compatibility fallback for primary UI color tracking
                 cell.AssignedColorId = cell.PipeEmittedColorIds.Count > 0 ? cell.PipeEmittedColorIds[0] : "";
             }
             else
@@ -201,7 +208,6 @@ public class LevelEditorWindow : EditorWindow
             }
         }
 
-        // Generate exact matching demand containers matching the exact colors generated on screen
         List<GameLevelSchema.ContainerData> globalContainerPool = new List<GameLevelSchema.ContainerData>();
         foreach (var color in unitColorAssignments)
         {
@@ -250,13 +256,12 @@ public class LevelEditorWindow : EditorWindow
                 Vector2Int belowCoord = new Vector2Int(x, y + 1);
                 bool isTargetedByPipeBelow = editorMatrix.ContainsKey(belowCoord) && editorMatrix[belowCoord].Behavior == CellBehavior.Pipe;
 
-                // COLOR FEEDBACK: Change blocker color if it's a destructible crate vs permanent hole
                 Color displayColor = cell.Behavior switch
                 {
-                    CellBehavior.Blocker => cell.CrateDurability > 0 ? new Color(0.45f, 0.35f, 0.25f) : new Color(0.25f, 0.25f, 0.25f),
+                    CellBehavior.Blocker => new Color(0.25f, 0.25f, 0.25f),
                     CellBehavior.Pipe => new Color(0.18f, 0.44f, 0.72f),
                     _ => isTargetedByPipeBelow ? new Color(0.25f, 0.55f, 0.85f, 0.4f) :
-                         cell.IceLayers > 0 ? new Color(0.6f, 0.85f, 0.95f) : // Light icy blue color tint
+                         cell.IceLayers > 0 ? new Color(0.6f, 0.85f, 0.95f) : 
                          !string.IsNullOrEmpty(cell.AssignedColorId) ? GetColorValue(cell.AssignedColorId) :
                          new Color(0.85f, 0.85f, 0.85f)
                 };
@@ -272,7 +277,6 @@ public class LevelEditorWindow : EditorWindow
                     string contentLabel = hasColor ? $"({x},{y}){pipeTargetLabel}\n{cell.AssignedColorId}" : $"({x},{y}){pipeTargetLabel}\nUnit";
                     GUI.Label(cellRect, contentLabel, textStyle);
 
-                    // Dynamic Tag Text Overlays for Relations Layouts
                     string relationOverlay = "";
                     if (cell.KeyGroupId > 0) relationOverlay += $"[KEY_{cell.KeyGroupId}] ";
                     if (cell.LockGroupId > 0) relationOverlay += $"[LOCK_{cell.LockGroupId}] ";
@@ -280,12 +284,11 @@ public class LevelEditorWindow : EditorWindow
 
                     if (!string.IsNullOrEmpty(relationOverlay))
                     {
-                        Rect tagRect = new Rect(cellRect.x + 2, cellRect.y + 20, cellRect.width - 4, 16f);
+                        Rect tagRect = new Rect(tagRect = new Rect(cellRect.x + 2, cellRect.y + 20, cellRect.width - 4, 16f));
                         EditorGUI.DrawRect(tagRect, new Color(0.1f, 0.1f, 0.1f, 0.85f));
                         GUI.Label(tagRect, relationOverlay, EditorStyles.whiteMiniLabel);
                     }
 
-                    // ICE BOX EDITOR FIELD: If unit has ice layers, show numeric field modifier
                     if (cell.IceLayers > 0)
                     {
                         Rect iceRect = new Rect(cellRect.x + 2, cellRect.y + cellRect.height - 36, cellRect.width - 4, 16f);
@@ -303,12 +306,7 @@ public class LevelEditorWindow : EditorWindow
                 }
                 else if (cell.Behavior == CellBehavior.Blocker)
                 {
-                    string labelText = cell.CrateDurability > 0 ? "CRATE" : "WALL BLOCK";
-                    GUI.Label(new Rect(cellRect.x + 4, cellRect.y + 4, cellRect.width - 8, 16), labelText, EditorStyles.whiteMiniLabel);
-
-                    // CRATE DURABILITY INPUT FIELD: Always editable right on the tile
-                    Rect crateInputRect = new Rect(cellRect.x + 6, cellRect.y + 26, cellRect.width - 12, 18f);
-                    cell.CrateDurability = EditorGUI.IntField(crateInputRect, cell.CrateDurability);
+                    GUI.Label(new Rect(cellRect.x + 4, cellRect.y + 28, cellRect.width - 8, 16), "BLOCKER", EditorStyles.whiteMiniLabel);
                 }
                 else if (cell.Behavior == CellBehavior.Pipe)
                 {
@@ -320,6 +318,27 @@ public class LevelEditorWindow : EditorWindow
                     cell.PipeEmissions = EditorGUI.IntField(inputRect, cell.PipeEmissions);
                 }
 
+                // --- INSTANT MIDDLE-CLICK PAINTING ENGINE ---
+                if (cellRect.Contains(e.mousePosition) && e.type == EventType.MouseDown && e.button == 2)
+                {
+                    if (cell.Behavior == CellBehavior.Blocker)
+                    {
+                        cell.Behavior = CellBehavior.Standard;
+                    }
+                    else
+                    {
+                        ResetRelations(cell);
+                        cell.Behavior = CellBehavior.Blocker;
+                        cell.AssignedColorId = "";
+                        cell.StartHidden = false;
+                        cell.IceLayers = 0;
+                        cell.PipeEmittedColorIds.Clear();
+                    }
+                    
+                    e.Use(); 
+                    Repaint();
+                }
+
                 // Interactive Context Configuration Processing (Right-Click Controls)
                 if (cellRect.Contains(e.mousePosition) && e.type == EventType.ContextClick)
                 {
@@ -327,7 +346,6 @@ public class LevelEditorWindow : EditorWindow
 
                     if (cell.Behavior == CellBehavior.Standard)
                     {
-                        // Ice Layer Menu Interactions
                         menu.AddItem(new GUIContent("Environment/Add Ice Layer"), cell.IceLayers > 0, () => { if (cell.IceLayers == 0) cell.IceLayers = 1; Repaint(); });
                         menu.AddItem(new GUIContent("Environment/Thaw Ice Completely"), cell.IceLayers == 0, () => { cell.IceLayers = 0; Repaint(); });
                         menu.AddSeparator("Environment/");
@@ -364,16 +382,15 @@ public class LevelEditorWindow : EditorWindow
 
                             menu.AddItem(new GUIContent("Relations/Clear All Links & Chains"), false, () => { cell.KeyGroupId = 0; cell.LockGroupId = 0; cell.LinkGroupId = 0; Repaint(); });
                             menu.AddSeparator("");
-                            menu.AddItem(new GUIContent("Convert Cell/To Blocker (Hole)"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Blocker; cell.CrateDurability = -1; cell.AssignedColorId = ""; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
+                            menu.AddItem(new GUIContent("Convert Cell/To Blocker (Hole)"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Blocker; cell.AssignedColorId = ""; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
                             menu.AddItem(new GUIContent("Convert Cell/To Pipe Generator"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Pipe; cell.AssignedColorId = ""; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
                         }
                     }
                     else
                     {
-                        menu.AddItem(new GUIContent("Set Standard Unit"), cell.Behavior == CellBehavior.Standard, () => { cell.Behavior = CellBehavior.Standard; cell.CrateDurability = 0; cell.AssignedColorId = ""; cell.StartHidden = false; Repaint(); });
-                        menu.AddItem(new GUIContent("Set Blocker (Hole)"), cell.Behavior == CellBehavior.Blocker && cell.CrateDurability == -1, () => { cell.Behavior = CellBehavior.Blocker; cell.CrateDurability = -1; cell.StartHidden = false; Repaint(); });
-                        menu.AddItem(new GUIContent("Set Destructible Crate"), cell.Behavior == CellBehavior.Blocker && cell.CrateDurability > 0, () => { cell.Behavior = CellBehavior.Blocker; cell.CrateDurability = 1; cell.StartHidden = false; Repaint(); });
-                        menu.AddItem(new GUIContent("Set Pipe Generator"), cell.Behavior == CellBehavior.Pipe, () => { cell.Behavior = CellBehavior.Pipe; cell.CrateDurability = 0; cell.StartHidden = false; Repaint(); });
+                        menu.AddItem(new GUIContent("Set Standard Unit"), cell.Behavior == CellBehavior.Standard, () => { cell.Behavior = CellBehavior.Standard; cell.AssignedColorId = ""; cell.StartHidden = false; Repaint(); });
+                        menu.AddItem(new GUIContent("Set Blocker (Hole)"), cell.Behavior == CellBehavior.Blocker, () => { cell.Behavior = CellBehavior.Blocker; cell.StartHidden = false; Repaint(); });
+                        menu.AddItem(new GUIContent("Set Pipe Generator"), cell.Behavior == CellBehavior.Pipe, () => { cell.Behavior = CellBehavior.Pipe; cell.StartHidden = false; Repaint(); });
                     }
 
                     menu.ShowAsContext();
@@ -464,10 +481,6 @@ public class LevelEditorWindow : EditorWindow
         };
     }
 
-    // =========================================================================
-    // PERSISTENCE ENGINE: DETERMINISTIC COORDINATE-TO-GUID CONVERSIONS
-    // =========================================================================
-
     private void SaveLevelJson()
     {
         string path = EditorUtility.SaveFilePanel("Save Dampling Level", "", "NewLevel.json", "json");
@@ -496,8 +509,9 @@ public class LevelEditorWindow : EditorWindow
         var levelData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameLevelSchema>(json);
         if (levelData == null) return;
 
-        gridColumns = levelData.Grid.Columns;
-        gridRows = levelData.Grid.Rows;
+        int loadedCols = levelData.Grid.Columns;
+        isOddColumnsWidth = (loadedCols == 7);
+
         queueCount = levelData.ResolutionQueues.Count;
 
         BuildCanvas();
@@ -522,17 +536,10 @@ public class LevelEditorWindow : EditorWindow
 
             EditorCell cell = editorMatrix[key];
 
-            // Read Crate and Path definitions safely
-            cell.CrateDurability = cellNode.CrateDurability;
-
-            if (!cellNode.IsPlayablePath && cell.CrateDurability == 0)
-            {
-                cell.CrateDurability = -1; // Force backward safety for raw solid blocks
-            }
-
-            if (cell.CrateDurability == -1 || cell.CrateDurability > 0)
+            if (!cellNode.IsPlayablePath)
             {
                 cell.Behavior = CellBehavior.Blocker;
+                cell.AssignedColorId = "";
                 cell.IceLayers = 0;
             }
             else if (cellNode.ContinuousPipe != null)
@@ -540,22 +547,16 @@ public class LevelEditorWindow : EditorWindow
                 cell.Behavior = CellBehavior.Pipe;
                 cell.PipeEmissions = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
                 cell.IceLayers = 0;
-
-                // Clear any leftover runtime junk before loading fresh data
                 cell.PipeEmittedColorIds.Clear();
 
-                // Loop through EVERY unit inside the saved pipe reservoir queue
                 if (cellNode.ContinuousPipe.ReservoirQueue != null)
                 {
                     foreach (var unit in cellNode.ContinuousPipe.ReservoirQueue)
                     {
-                        // Extract the color profile for this specific unit
                         string unitColor = unit.InteriorContents.FirstOrDefault()?.ColorId ?? "Color_0";
                         cell.PipeEmittedColorIds.Add(unitColor);
                     }
                 }
-
-                // Maintain backwards compatibility tracking for the primary UI cell field
                 var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
                 cell.AssignedColorId = firstUnit?.InteriorContents.FirstOrDefault()?.ColorId ?? "";
             }
@@ -565,8 +566,6 @@ public class LevelEditorWindow : EditorWindow
                 var firstItem = cellNode.OccupyingUnit?.InteriorContents.FirstOrDefault();
                 cell.AssignedColorId = firstItem?.ColorId ?? "";
                 cell.StartHidden = cellNode.OccupyingUnit?.IsHiddenUntilUnblocked ?? false;
-
-                // Re-map structural Ice parameters natively
                 cell.IceLayers = cellNode.OccupyingUnit?.IceLayers ?? 0;
 
                 if (cellNode.OccupyingUnit != null)
@@ -618,8 +617,7 @@ public class LevelEditorWindow : EditorWindow
                     {
                         if (container != null)
                         {
-                            container.Id = nextContainerId;
-                            nextContainerId++;
+                            container.Id = nextContainerId++;
                         }
                     }
                 }
@@ -647,8 +645,7 @@ public class LevelEditorWindow : EditorWindow
         {
             if (kvp.Value.Behavior != CellBehavior.Blocker)
             {
-                positionToIdMap[kvp.Key] = nextUnitId;
-                nextUnitId++;
+                positionToIdMap[kvp.Key] = nextUnitId++;
             }
             else
             {
@@ -661,22 +658,15 @@ public class LevelEditorWindow : EditorWindow
             var coord = new GameLevelSchema.Coordinate(kvp.Key.x, kvp.Key.y);
             var node = new GameLevelSchema.CellNode { Position = coord };
 
-            // Export Crate Durability properties explicitly
-            node.CrateDurability = kvp.Value.CrateDurability;
-
             if (kvp.Value.Behavior == CellBehavior.Blocker)
             {
-                // If it's a permanent wall, it's not a playable path. If it's a crate (>0), it IS a playable path!
-                node.IsPlayablePath = kvp.Value.CrateDurability > 0;
-                if (kvp.Value.CrateDurability == 0) node.CrateDurability = -1; // Fallback defense for standard solid walls
+                node.IsPlayablePath = false;
             }
             else if (kvp.Value.Behavior == CellBehavior.Pipe)
             {
                 node.IsPlayablePath = true;
-                node.CrateDurability = 0;
                 node.ContinuousPipe = new GameLevelSchema.PipeGenerator { MaxTotalEmissions = kvp.Value.PipeEmissions };
 
-                // Ensure the reservoir queue list is instantiated
                 if (node.ContinuousPipe.ReservoirQueue == null)
                 {
                     node.ContinuousPipe.ReservoirQueue = new List<GameLevelSchema.GridUnit>();
@@ -684,9 +674,6 @@ public class LevelEditorWindow : EditorWindow
 
                 for (int i = 0; i < kvp.Value.PipeEmissions; i++)
                 {
-                    // 1. UNIQUE ID GENERATION
-                    // Mix the position-based ID with the index 'i' so every unit gets a unique ID, 
-                    // or replace this with your own incrementing global tracking integer variable.
                     int uniqueUnitId = (positionToIdMap[kvp.Key] * 100) + i;
 
                     var unit = new GameLevelSchema.GridUnit
@@ -698,8 +685,6 @@ public class LevelEditorWindow : EditorWindow
                         IsHiddenUntilUnblocked = false
                     };
 
-                    // 2. UNIQUE COLOR SELECTION
-                    // Pull the specific color assigned to this emission index from our new list.
                     string color = "Color_0";
                     if (kvp.Value.PipeEmittedColorIds != null && i < kvp.Value.PipeEmittedColorIds.Count)
                     {
@@ -707,10 +692,9 @@ public class LevelEditorWindow : EditorWindow
                     }
                     else if (!string.IsNullOrEmpty(kvp.Value.AssignedColorId))
                     {
-                        color = kvp.Value.AssignedColorId; // Fallback to primary if list isn't populated
+                        color = kvp.Value.AssignedColorId;
                     }
 
-                    // 3. FILL INTERIOR
                     for (int d = 0; d < 9; d++)
                     {
                         unit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = color });
@@ -722,14 +706,13 @@ public class LevelEditorWindow : EditorWindow
             else if (kvp.Value.Behavior == CellBehavior.Standard)
             {
                 node.IsPlayablePath = true;
-                node.CrateDurability = 0;
 
                 if (!string.IsNullOrEmpty(kvp.Value.AssignedColorId))
                 {
                     node.OccupyingUnit = new GameLevelSchema.GridUnit
                     {
                         UnitId = positionToIdMap[kvp.Key],
-                        IceLayers = kvp.Value.IceLayers // Export custom ice layers into unit payload
+                        IceLayers = kvp.Value.IceLayers
                     };
                     node.OccupyingUnit.IsHiddenUntilUnblocked = kvp.Value.StartHidden;
 
@@ -769,111 +752,47 @@ public class LevelEditorWindow : EditorWindow
     private void RunEditorSimulation()
     {
         GameLevelSchema level = AssembleActiveEditorStateToSchema();
+        if (level == null) return;
 
-        if (level == null)
-        {
-            Debug.LogError("No level loaded to simulate!");
-            return;
-        }
-
-        // Ensure agent is initialized
         if (botAgent == null) botAgent = new DamplingSimulationAgent();
-
-        Debug.Log($"<color=blue>Simulating Level {level.LevelId}...</color>");
-
-        // 1. Run the 500 iterations
         var report = botAgent.RunBatchSimulation(level, 1000);
-
-        // 2. Pass the report into the bot's summary method to fill the SummaryLog list
         botAgent.GenerateTextSummary(report);
-
-        // 3. Combine the list elements into a single formatted string block
         string reportSummary = string.Join("\n", report.SummaryLog);
-
-        // 4. Print to console for clear, scannable logs
-        Debug.Log($"--- Simulation Results for Level {level.LevelId} ---\n{reportSummary}");
-
-        // 5. Pop-up window displaying the stitched text block
         EditorUtility.DisplayDialog($"Simulation Results: Level {level.LevelId}", reportSummary, "Close");
     }
 
     private void RunEditorSimulationSmartAgent()
     {
         GameLevelSchema level = AssembleActiveEditorStateToSchema();
+        if (level == null) return;
 
-        if (level == null)
-        {
-            Debug.LogError("No level loaded to simulate!");
-            return;
-        }
-
-        // Ensure agent is initialized
         if (smartAgent == null) smartAgent = new DamplingSimulationAgentSmart();
-
-        Debug.Log($"<color=blue>Simulating Level {level.LevelId}...</color>");
-
-        // 1. Run the 500 iterations
         var report = smartAgent.RunBatchSimulation(level, 1000);
-
-        // 2. Pass the report into the bot's summary method to fill the SummaryLog list
         smartAgent.GenerateTextSummary(report);
-
-        // 3. Combine the list elements into a single formatted string block
         string reportSummary = string.Join("\n", report.SummaryLog);
-
-        // 4. Print to console for clear, scannable logs
-        Debug.Log($"--- SMART Simulation Results for Level {level.LevelId} ---\n{reportSummary}");
-
-        // 5. Pop-up window displaying the stitched text block
         EditorUtility.DisplayDialog($"Simulation Results: Level {level.LevelId}", reportSummary, "Close");
     }
 
     private void RunEditorSimulationGreedyAgent()
     {
         GameLevelSchema level = AssembleActiveEditorStateToSchema();
+        if (level == null) return;
 
-        if (level == null)
-        {
-            Debug.LogError("No level loaded to simulate!");
-            return;
-        }
-
-        // Ensure agent is initialized
         if (greedyAgent == null) greedyAgent = new DamplingSimulationAgentGreedy();
-
-        Debug.Log($"<color=blue>Simulating Level {level.LevelId}...</color>");
-
-        // 1. Run the 500 iterations
         var report = greedyAgent.RunBatchSimulation(level, 1000);
-
-        // 2. Pass the report into the bot's summary method to fill the SummaryLog list
         greedyAgent.GenerateTextSummary(report);
-
-        // 3. Combine the list elements into a single formatted string block
         string reportSummary = string.Join("\n", report.SummaryLog);
-
-        // 4. Print to console for clear, scannable logs
-        Debug.Log($"--- SMART Simulation Results for Level {level.LevelId} ---\n{reportSummary}");
-
-        // 5. Pop-up window displaying the stitched text block
         EditorUtility.DisplayDialog($"Simulation Results: Level {level.LevelId}", reportSummary, "Close");
     }
 
     private bool ValidateSupplyAndDemand()
     {
         GameLevelSchema level = AssembleActiveEditorStateToSchema();
-        if (level == null)
-        {
-            Debug.LogError("Validation Failed: No level schema could be assembled.");
-            return false;
-        }
+        if (level == null) return false;
 
-        // 1. Tally up Supply (All Dumplings on the board + inside pipes)
         Dictionary<string, int> supplyCounts = new Dictionary<string, int>();
-
         foreach (var node in level.Grid.Matrix)
         {
-            // Check normal unit contents
             if (node.OccupyingUnit != null && node.OccupyingUnit.InteriorContents != null)
             {
                 foreach (var item in node.OccupyingUnit.InteriorContents)
@@ -883,7 +802,6 @@ public class LevelEditorWindow : EditorWindow
                 }
             }
 
-            // Check pipe reservoirs
             if (node.ContinuousPipe != null && node.ContinuousPipe.ReservoirQueue != null)
             {
                 foreach (var queuedUnit in node.ContinuousPipe.ReservoirQueue)
@@ -900,7 +818,6 @@ public class LevelEditorWindow : EditorWindow
             }
         }
 
-        // 2. Tally up Demand (All Container Capacities in the Resolution Queues)
         Dictionary<string, int> demandCounts = new Dictionary<string, int>();
         if (level.ResolutionQueues != null)
         {
@@ -914,7 +831,6 @@ public class LevelEditorWindow : EditorWindow
             }
         }
 
-        // 3. Compare Both Maps
         HashSet<string> allColors = new HashSet<string>(supplyCounts.Keys.Concat(demandCounts.Keys));
         List<string> errors = new List<string>();
 
@@ -922,25 +838,17 @@ public class LevelEditorWindow : EditorWindow
         {
             int supply = supplyCounts.ContainsKey(color) ? supplyCounts[color] : 0;
             int demand = demandCounts.ContainsKey(color) ? demandCounts[color] : 0;
-
-            if (supply != demand)
-            {
-                errors.Add($"[{color}] Mismatch! Board Supply: {supply} total dumplings vs Queue Demand: {demand} container slots.");
-            }
+            if (supply != demand) errors.Add($"[{color}] Mismatch! Board Supply: {supply} vs Demand: {demand}.");
         }
 
-        // 4. Output Results
         if (errors.Count > 0)
         {
-            string errorLog = string.Join("\n", errors);
-            Debug.LogError($"<color=red><b>LEVEL VALIDATION FAILED!</b></color>\n{errorLog}");
-            EditorUtility.DisplayDialog("Validation Error", "Supply and demand do not match!\n\nCheck the Unity Console for full details.", "OK");
+            Debug.LogError($"<color=red><b>LEVEL VALIDATION FAILED!</b></color>\n{string.Join("\n", errors)}");
+            EditorUtility.DisplayDialog("Validation Error", "Supply and demand do not match!", "OK");
             return false;
         }
 
-        Debug.Log("<color=green><b>✓ LEVEL VALIDATION PASSED:</b> Supply matches Demand perfectly.</color>");
-        EditorUtility.DisplayDialog("Validation Success", "All dumplings on the board perfectly match the resolution container slots!", "Excellent");
+        EditorUtility.DisplayDialog("Validation Success", "All dumplings on the board match perfectly!", "Excellent");
         return true;
     }
-
 }
