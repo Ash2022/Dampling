@@ -11,7 +11,7 @@ public class LevelEditorWindow : EditorWindow
     public const int BELT_MAX = 28;
 
     private bool isOddColumnsWidth = false; // False = 8x8 Grid, True = 7x8 Grid
-    private int gridColumns => isOddColumnsWidth ? 7 : 8;
+    private int gridColumns => isOddColumnsWidth ? 7 : 6;
     private int gridRows => 7; // Row sizing is now locked to 8 permanently
 
     private int queueCount = 4;
@@ -70,7 +70,7 @@ public class LevelEditorWindow : EditorWindow
         isOddColumnsWidth = EditorGUILayout.Toggle("Symmetry Mode (7x8 Odd)", isOddColumnsWidth);
         if (EditorGUI.EndChangeCheck())
         {
-            BuildCanvas(); 
+            BuildCanvas();
         }
         EditorGUILayout.LabelField($"Active Workspace Dimensions: {gridColumns} Columns × {gridRows} Rows");
 
@@ -83,6 +83,7 @@ public class LevelEditorWindow : EditorWindow
         if (GUILayout.Button("1. Build Canvas Structure", GUILayout.Height(30))) { BuildCanvas(); }
         EditorGUI.BeginDisabledGroup(!isGridBuilt);
         if (GUILayout.Button("2. Populate Balance (Zero-Sum)", GUILayout.Height(30))) { PopulateLevelData(); }
+        if (GUILayout.Button("2. Randomize Containers Only", GUILayout.Height(30))) { PopulateLevelData(true); }
         if (GUILayout.Button("Reset / Clear Data", GUILayout.Height(30))) { ClearPopulatedData(); }
         EditorGUI.EndDisabledGroup();
         GUILayout.EndHorizontal();
@@ -93,10 +94,10 @@ public class LevelEditorWindow : EditorWindow
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
-        
+
         if (GUILayout.Button("Validate Level", GUILayout.Height(30)))
             ValidateSupplyAndDemand();
-                
+
         if (GUILayout.Button("Run Bot Simulation (1000)", GUILayout.Height(30)))
             RunEditorSimulation();
 
@@ -105,7 +106,7 @@ public class LevelEditorWindow : EditorWindow
 
         if (GUILayout.Button("Run Greedy Simulation (1000)", GUILayout.Height(30)))
             RunEditorSimulationGreedyAgent();
-        
+
         GUILayout.EndHorizontal();
         EditorGUILayout.Space();
 
@@ -160,62 +161,71 @@ public class LevelEditorWindow : EditorWindow
         Repaint();
     }
 
-    private void PopulateLevelData()
+    private void PopulateLevelData(bool keepUnits = false)
     {
-        int totalUnits = 0;
-        foreach (var cell in editorMatrix.Values)
+        // 1. Gather existing unit colors (only if keeping, otherwise we assign them)
+        List<string> currentUnitColors = new List<string>();
+
+        if (!keepUnits)
         {
-            if (cell.Behavior == CellBehavior.Standard) totalUnits += 1;
-            else if (cell.Behavior == CellBehavior.Pipe) totalUnits += cell.PipeEmissions;
-        }
-
-        if (totalUnits == 0) return;
-
-        List<string> colorPalette = new List<string>();
-        for (int i = 0; i < colorCount; i++) colorPalette.Add($"Color_{i}");
-
-        List<string> unitColorAssignments = new List<string>();
-        for (int i = 0; i < totalUnits; i++) unitColorAssignments.Add(colorPalette[i % colorPalette.Count]);
-
-        System.Random rnd = new System.Random();
-        unitColorAssignments = unitColorAssignments.OrderBy(x => rnd.Next()).ToList();
-
-        int assignedCount = 0;
-        foreach (var cell in editorMatrix.Values)
-        {
-            if (cell.Behavior == CellBehavior.Standard && assignedCount < unitColorAssignments.Count)
+            // ... (Your original logic to generate unitColorAssignments) ...
+            int totalUnits = 0;
+            foreach (var cell in editorMatrix.Values)
             {
-                cell.AssignedColorId = unitColorAssignments[assignedCount++];
+                if (cell.Behavior == CellBehavior.Standard) totalUnits += 1;
+                else if (cell.Behavior == CellBehavior.Pipe) totalUnits += cell.PipeEmissions;
             }
-            else if (cell.Behavior == CellBehavior.Pipe)
-            {
-                cell.PipeEmittedColorIds.Clear();
+            if (totalUnits == 0) return;
 
-                for (int e = 0; e < cell.PipeEmissions; e++)
+            List<string> colorPalette = new List<string>();
+            for (int i = 0; i < colorCount; i++) colorPalette.Add($"Color_{i}");
+
+            List<string> unitColorAssignments = new List<string>();
+            for (int i = 0; i < totalUnits; i++) unitColorAssignments.Add(colorPalette[i % colorPalette.Count]);
+
+            System.Random rnd = new System.Random();
+            unitColorAssignments = unitColorAssignments.OrderBy(x => rnd.Next()).ToList();
+
+            // Assign to cells
+            int assignedCount = 0;
+            foreach (var cell in editorMatrix.Values)
+            {
+                if (cell.Behavior == CellBehavior.Standard && assignedCount < unitColorAssignments.Count)
+                    cell.AssignedColorId = unitColorAssignments[assignedCount++];
+                else if (cell.Behavior == CellBehavior.Pipe)
                 {
-                    if (assignedCount < unitColorAssignments.Count)
-                    {
-                        cell.PipeEmittedColorIds.Add(unitColorAssignments[assignedCount++]);
-                    }
+                    cell.PipeEmittedColorIds.Clear();
+                    for (int e = 0; e < cell.PipeEmissions; e++)
+                        if (assignedCount < unitColorAssignments.Count) cell.PipeEmittedColorIds.Add(unitColorAssignments[assignedCount++]);
+                    cell.AssignedColorId = cell.PipeEmittedColorIds.Count > 0 ? cell.PipeEmittedColorIds[0] : "";
                 }
-
-                cell.AssignedColorId = cell.PipeEmittedColorIds.Count > 0 ? cell.PipeEmittedColorIds[0] : "";
+                else { cell.AssignedColorId = ""; cell.PipeEmittedColorIds.Clear(); }
             }
-            else
+            currentUnitColors = unitColorAssignments;
+        }
+        else
+        {
+            // Extract what is currently in the matrix
+            foreach (var cell in editorMatrix.Values)
             {
-                cell.AssignedColorId = "";
-                cell.PipeEmittedColorIds.Clear();
+                if (cell.Behavior == CellBehavior.Standard && !string.IsNullOrEmpty(cell.AssignedColorId))
+                    currentUnitColors.Add(cell.AssignedColorId);
+                else if (cell.Behavior == CellBehavior.Pipe)
+                    currentUnitColors.AddRange(cell.PipeEmittedColorIds);
             }
         }
 
+        // 2. Refresh Containers (This part runs regardless of keepUnits)
+        System.Random rndPool = new System.Random();
         List<GameLevelSchema.ContainerData> globalContainerPool = new List<GameLevelSchema.ContainerData>();
-        foreach (var color in unitColorAssignments)
+
+        foreach (var color in currentUnitColors)
         {
             globalContainerPool.Add(new GameLevelSchema.ContainerData { ColorId = color });
             globalContainerPool.Add(new GameLevelSchema.ContainerData { ColorId = color });
             globalContainerPool.Add(new GameLevelSchema.ContainerData { ColorId = color });
         }
-        globalContainerPool = globalContainerPool.OrderBy(x => rnd.Next()).ToList();
+        globalContainerPool = globalContainerPool.OrderBy(x => rndPool.Next()).ToList();
 
         foreach (var q in generatedQueues) q.Clear();
         for (int i = 0; i < globalContainerPool.Count; i++)
@@ -261,7 +271,7 @@ public class LevelEditorWindow : EditorWindow
                     CellBehavior.Blocker => new Color(0.25f, 0.25f, 0.25f),
                     CellBehavior.Pipe => new Color(0.18f, 0.44f, 0.72f),
                     _ => isTargetedByPipeBelow ? new Color(0.25f, 0.55f, 0.85f, 0.4f) :
-                         cell.IceLayers > 0 ? new Color(0.6f, 0.85f, 0.95f) : 
+                         cell.IceLayers > 0 ? new Color(0.6f, 0.85f, 0.95f) :
                          !string.IsNullOrEmpty(cell.AssignedColorId) ? GetColorValue(cell.AssignedColorId) :
                          new Color(0.85f, 0.85f, 0.85f)
                 };
@@ -334,10 +344,17 @@ public class LevelEditorWindow : EditorWindow
                         cell.IceLayers = 0;
                         cell.PipeEmittedColorIds.Clear();
                     }
-                    
-                    e.Use(); 
+
+                    e.Use();
                     Repaint();
                 }
+                else if (cellRect.Contains(e.mousePosition) && e.type == EventType.MouseDown && e.button == 0)
+                {
+                    cell.AssignedColorId = GetNextColorId(cell.AssignedColorId, colorCount);
+                    e.Use();
+                    Repaint();
+                }
+
 
                 // Interactive Context Configuration Processing (Right-Click Controls)
                 if (cellRect.Contains(e.mousePosition) && e.type == EventType.ContextClick)
@@ -428,6 +445,17 @@ public class LevelEditorWindow : EditorWindow
                 }
 
                 Rect containerRect = new Rect(qX, containerY, QueueWidth, QueueContainerHeight);
+
+                if (containerRect.Contains(e.mousePosition) && e.type == EventType.MouseDown && e.button == 0)
+                {
+                    // Cycle the color for this specific container in the queue
+                    string currentColor = generatedQueues[q][c].ColorId;
+                    generatedQueues[q][c].ColorId = GetNextColorId(currentColor, colorCount);
+
+                    e.Use();
+                    Repaint();
+                }
+
                 string colorStr = generatedQueues[q][c].ColorId;
 
                 EditorGUI.DrawRect(containerRect, GetColorValue(colorStr));
@@ -850,5 +878,25 @@ public class LevelEditorWindow : EditorWindow
 
         EditorUtility.DisplayDialog("Validation Success", "All dumplings on the board match perfectly!", "Excellent");
         return true;
+    }
+
+    private string GetNextColorId(string currentColorId, int colorCount)
+    {
+        // Safety check: if colorCount is 0 or less, stay on current or reset to 0
+        if (colorCount <= 0) return "Color_0";
+
+        int nextIndex = 0;
+
+        if (!string.IsNullOrEmpty(currentColorId))
+        {
+            string[] parts = currentColorId.Split('_');
+            if (parts.Length >= 2 && int.TryParse(parts[1], out int currentIndex))
+            {
+                // Calculate next index, wrapping based on the slider's colorCount
+                nextIndex = (currentIndex + 1) % colorCount;
+            }
+        }
+
+        return $"Color_{nextIndex}";
     }
 }
