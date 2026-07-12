@@ -128,6 +128,7 @@ public class GameManager : MonoBehaviour
         gameCore = new DamplingGameCore();
         gameCore.InitializeLevel(
             currentLevelData,
+            isLiveMode: true,
             HandleUnitUnblocked,
             HandleUnitIceChanged,
             HandleLockKeyCollected,

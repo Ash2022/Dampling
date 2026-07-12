@@ -14,6 +14,9 @@ public class DamplingGameCore
 
     public bool IsGameOver { get; private set; }
     public bool IsGameWon { get; private set; }
+    
+    // NEW: Determines if the Core is running in the visual game or in a headless simulation
+    public bool IsLiveMode { get; private set; } 
 
     // --- Optional View Notification Callbacks ---
     private Action<int> OnUnitUnblocked;                  // Param: UnitId
@@ -40,7 +43,7 @@ public class DamplingGameCore
     {
         public EngineEventType EventType { get; set; }
         public int TargetId { get; set; }
-        public int ColorIndex { get; set; } = -1;
+        public int ColorIndex { get; set; } = -1; // Updated to use int
         public int QueueIndex { get; set; }
         public object Payload { get; set; }
     }
@@ -48,12 +51,14 @@ public class DamplingGameCore
     // --- Core Engine Initializer ---
     public void InitializeLevel(
         GameLevelSchema levelData,
+        bool isLiveMode=false, // NEW: Defaults to true for normal gameplay
         Action<int> onUnitUnblocked = null,
         Action<int, int> onUnitIceChanged = null,
         Action<int, int> onLockKeyCollected = null,
         Action<int> onLinkedUnitPlayed = null)
     {
         ActiveLevelData = levelData;
+        IsLiveMode = isLiveMode;
         VirtualBelt = new List<GameLevelSchema.DumplingItem>();
         PlayedUnitIds = new HashSet<int>();
         IsGameOver = false;
@@ -80,7 +85,7 @@ public class DamplingGameCore
                 clonedQueue.Add(new GameLevelSchema.ContainerData
                 {
                     Id = container.Id,
-                    ColorIndex = container.ColorIndex,
+                    ColorIndex = container.ColorIndex, // Using int mapping
                     Capacity = container.Capacity
                 });
             }
@@ -130,12 +135,9 @@ public class DamplingGameCore
             }
         }
 
-        //UnityEngine.Debug.Log($"Clicked Unit {activeUnit.UnitId}. Total units in cluster to evaluate: {linkedCluster.Count}");
-
         // 2. ATOMIC TRANSACTION RULE: Verify blockers across cluster
         foreach (var clusterUnit in linkedCluster)
         {
-
             var unitCellNode = FindCellNodeByUnitId(clusterUnit.UnitId);
             if (IsUnitClusterBlocked(unitCellNode.Position, clusterUnit, visitedClusterIds))
             {
@@ -161,7 +163,6 @@ public class DamplingGameCore
             }
 
             // --- TRIGGER THE ACTIVATION SIGNAL TO GAME MANAGER ---
-            // This tells the visual layer exactly which member of the chain is playing
             OnLinkedUnitPlayed?.Invoke(currentUnit.UnitId);
 
             foreach (var dumpling in currentUnit.InteriorContents)
@@ -172,10 +173,17 @@ public class DamplingGameCore
 
         // 4. Run Downstream updates and process visual alerts
         ProcessAdjacentObstacleImpacts(clearedCoordinates, outputTransactionHistory);
-        ProcessBeltResolutionPipeline(outputTransactionHistory);
         ProcessPipeEmissions(outputTransactionHistory);
         EvaluateNewlyUnblockedUnits(outputTransactionHistory);
-        EvaluateGameStatusStates(outputTransactionHistory);
+
+        // 5. NEW ARCHITECTURE: Delegate Belt Logic if in Live Mode
+        if (!IsLiveMode)
+        {
+            // Only run synchronous simulation matching and Game Over evaluation 
+            // if we are running in headless simulation mode.
+            ProcessBeltResolutionPipeline(outputTransactionHistory);
+            EvaluateGameStatusStates(outputTransactionHistory);
+        }
 
         return outputTransactionHistory;
     }
@@ -202,7 +210,6 @@ public class DamplingGameCore
 
                 processedNeighbors.Add(targetCoord);
                 Vector2Int unityCoord = new Vector2Int(targetCoord.X, targetCoord.Y);
-
 
                 // B. Handle Frozen Ice Units
                 if (neighborCell.OccupyingUnit != null && neighborCell.OccupyingUnit.IceLayers > 0)
@@ -308,7 +315,6 @@ public class DamplingGameCore
                         {
                             EventType = EngineEventType.PipeEmittedUnit,
                             TargetId = nextUnit.UnitId,
-                            // Pack both coordinates: Item 1 = Spawn Target, Item 2 = Source Pipe
                             Payload = Tuple.Create(
                                 new Vector2Int(spaceAboveNode.Position.X, spaceAboveNode.Position.Y),
                                 new Vector2Int(cellNode.Position.X, cellNode.Position.Y)
@@ -328,7 +334,6 @@ public class DamplingGameCore
 
             if (!IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, new HashSet<int>()))
             {
-                // Fire optional view notification callback
                 OnUnitUnblocked?.Invoke(cellNode.OccupyingUnit.UnitId);
 
                 transactions.Add(new EngineEvent
@@ -391,7 +396,6 @@ public class DamplingGameCore
             }
         }
 
-        // FIX 1: The Top Unit needs to instantly pass. 
         if (coord.Y == 0)
             return false;
 
@@ -422,14 +426,12 @@ public class DamplingGameCore
                     if (neighborCell.ContinuousPipe != null && neighborCell.ContinuousPipe.ReservoirQueue.Count > 0) continue;
                     if (neighborCell.OccupyingUnit != null && neighborCell.OccupyingUnit.IceLayers > 0) continue;
 
-                    // FIX 2: The Bottom Unit needs to be allowed to pathfind *through* the Top Unit.
                     if (neighborCell.OccupyingUnit == null ||
                         PlayedUnitIds.Contains(neighborCell.OccupyingUnit.UnitId) ||
-                        currentClusterIds.Contains(neighborCell.OccupyingUnit.UnitId)) // <-- THIS IS THE MISSING KEY
+                        currentClusterIds.Contains(neighborCell.OccupyingUnit.UnitId)) 
                     {
                         if (neighborCoord.Y == 0)
                         {
-                            //UnityEngine.Debug.Log($"Unit {unit.UnitId} cheated and found an escape at X:{neighborCoord.X}, Y:{neighborCoord.Y}");
                             return false;
                         }
                         visited.Add(neighborCoord);
