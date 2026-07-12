@@ -223,7 +223,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             {
                ballView.MoveHigher();
             }));
-            resolveSequence.Insert(jumpDelay, ballTransform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack));
+            resolveSequence.Insert(jumpDelay, ballTransform.DOScale(Vector3.one*1.1f, 0.35f).SetEase(Ease.OutBack));
 
             // Switch Rigidbody2D back to Dynamic right as the jump animation lands
             resolveSequence.InsertCallback(jumpDelay + 0.35f, () =>

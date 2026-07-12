@@ -31,6 +31,8 @@ public class GameManager : MonoBehaviour
     // Persistent progression tracker
     public int CurrentLevelIndex = 0;
 
+    private float checkTimer = 0f;
+
     private BoardVisualReferences activeBoardReferences;
     public List<BallView> ballViews = new List<BallView>();
 
@@ -78,6 +80,15 @@ public class GameManager : MonoBehaviour
                 Debug.Log("Already at the first level.");
             }
         }
+
+        // Only check if we are in the playing state
+        checkTimer += Time.deltaTime;
+        if (checkTimer >= 0.5f) // Check twice a second
+        {
+            CheckForVisualDeadlock();
+            checkTimer = 0f;
+        }
+
     }
 
     /// <summary>
@@ -239,6 +250,7 @@ public class GameManager : MonoBehaviour
         if (gameCore.IsGameOver)
         {
             currentState = GameState.GameEnded;
+            Debug.Log(("Game Over! Belt Full"));
             return;
         }
 
@@ -336,7 +348,7 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    
+
     /// <summary>
     /// Core hook triggered when a targeted key is successfully collected by the player.
     /// </summary>
@@ -406,6 +418,14 @@ public class GameManager : MonoBehaviour
 
         beltGenerator.ResetSlots();
 
+        checkTimer = 0f;
     }
+
+    private void CheckForVisualDeadlock()
+    {
+        
+    }
+
+   
 
 }
