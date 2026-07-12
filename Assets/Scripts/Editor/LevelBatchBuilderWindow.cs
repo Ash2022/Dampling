@@ -26,7 +26,7 @@ public class LevelBatchBuilderWindow : EditorWindow
     private DamplingSimulationAgent botAgent;
     private System.Random rng;
 
-    private readonly int[] MasterColorPalette = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    private readonly int[] MasterColorPalette = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
     [MenuItem("Tools/Level Batch Builder")]
     public static void ShowWindow() { GetWindow<LevelBatchBuilderWindow>("Level Builder"); }

@@ -1,12 +1,13 @@
 using UnityEngine;
 using DG.Tweening;
+using System;
 
 public class BallView : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
 
-    private Rigidbody2D rb;
-    private Collider2D col;
+    [SerializeField]private Rigidbody2D rb;
+    [SerializeField]private Collider2D col;
     private bool isCaptured;
     private bool isAnimatingCapture;
     private Transform currentBeltSlot;
@@ -15,13 +16,7 @@ public class BallView : MonoBehaviour
     public int ColorIndex { get; private set; }
     public SpriteRenderer SR => spriteRenderer;
     public Collider2D Collider => col;
-
-
-    void Awake()
-    {
-        rb = GetComponent<Rigidbody2D>();
-        col = GetComponent<Collider2D>();
-    }
+    
 
     public void Initialize(int colorIndex)
     {
@@ -35,7 +30,9 @@ public class BallView : MonoBehaviour
             currentSlotView.Release();
         }
         currentSlotView = null;
-        spriteRenderer.color = DamplingGameUtils.GetColorByIndex(colorIndex);
+        
+        spriteRenderer.sprite = VisualsManager.Instance.GetBallSprite(colorIndex);
+        spriteRenderer.sortingOrder =30;
 
         if (rb != null)
         {
@@ -48,14 +45,15 @@ public class BallView : MonoBehaviour
         transform.DOKill();
 
         // Ensure the collider is re-enabled when the ball is pulled from the pool.
-        if (col != null) col.enabled = true;
+        col.enabled = false;
     }
 
     public void ActivatePhysicsSim()
     {
-        if (rb != null && !isCaptured)
+        if (!isCaptured)
         {
             rb.bodyType = RigidbodyType2D.Dynamic;
+            col.enabled = true;
         }
     }
 
@@ -121,7 +119,7 @@ public class BallView : MonoBehaviour
         isCaptured = false; // Stop following the slot in LateUpdate
 
         // CRITICAL: Disable the collider BEFORE the jump starts to prevent re-triggering other slots.
-        if (col != null) col.enabled = false;
+        col.enabled = false;
 
         Vector3 startPos = transform.position;
         transform.DOKill();
@@ -135,5 +133,10 @@ public class BallView : MonoBehaviour
             //transform.localPosition = Vector3.zero;
             targetContainer.OnBallAbsorbed(this);
         });
+    }
+
+    internal void MoveHigher()
+    {
+        spriteRenderer.sortingOrder =31;
     }
 }

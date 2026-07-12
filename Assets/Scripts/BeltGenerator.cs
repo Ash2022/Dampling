@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class BeltGenerator : MonoBehaviour
@@ -14,6 +15,8 @@ public class BeltGenerator : MonoBehaviour
     public int direction = 1; 
 
     public Transform[] slots;
+    private List<SlotView> slotViews = new List<SlotView>();
+
     private float perimeter;
     private float straightLength;
     private float curveLength;
@@ -43,6 +46,12 @@ public class BeltGenerator : MonoBehaviour
         beltActive = true;
     }
 
+    public void ResetSlots()
+    {
+        foreach (SlotView slot in slotViews)
+            slot.Release();
+    }
+
     void GenerateBelt()
     {
         slots = new Transform[slotCount];
@@ -67,6 +76,7 @@ public class BeltGenerator : MonoBehaviour
         {
             GameObject newSlot = Instantiate(slotPrefab, Vector3.zero, Quaternion.identity, transform);
             slots[i] = newSlot.transform;
+            slotViews.Add(newSlot.GetComponent<SlotView>());
         }
 
         UpdateSlotPositions();

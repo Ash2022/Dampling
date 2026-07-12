@@ -82,9 +82,9 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 30
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 4066846978655683014, guid: 9f711f656cb771d4fbb4ac22fe355096, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 9f711f656cb771d4fbb4ac22fe355096, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -170,3 +170,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BallView
   spriteRenderer: {fileID: 4129154265375366259}
+  rb: {fileID: -1970000133176562565}
+  col: {fileID: -4760122729199134375}

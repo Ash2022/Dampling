@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: c25b51aa500f4674b98248c5941ed47d
+guid: c4b2c7222c6731d4b955e5f409a04f1f
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: 2688425358528132449
-    second: Rectangle_box_orange_0
+      213: 5615352116734295069
+    second: BG_03_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -72,7 +72,7 @@ TextureImporter:
   platformSettings:
   - serializedVersion: 4
     buildTarget: DefaultTexturePlatform
-    maxTextureSize: 128
+    maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
     textureCompression: 1
@@ -139,13 +139,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Rectangle_box_orange_0
+      name: BG_03_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 223
-        height: 128
+        width: 1080
+        height: 2400
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -154,8 +154,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 165b834ae943f4520800000000000000
-      internalID: 2688425358528132449
+      spriteID: d1c7faeaffcbded40800000000000000
+      internalID: 5615352116734295069
       vertices: []
       indices: 
       edges: []
@@ -174,7 +174,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Rectangle_box_orange_0: 2688425358528132449
+      BG_03_0: 5615352116734295069
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

@@ -128,6 +128,11 @@ public class GameManager : MonoBehaviour
         currentState = GameState.ReadyToPlay;
     }
 
+    public bool IsGameOver()
+    {
+        return currentState == GameState.GameEnded;
+    }
+
     public bool IsUnitLockedAt(Vector2Int coordinate)
     {
         var cellNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == coordinate.x && c.Position.Y == coordinate.y);
@@ -150,6 +155,8 @@ public class GameManager : MonoBehaviour
         }
         return false;
     }
+
+
 
     public void OnUnitElementClicked(Vector2Int coordinate)
     {
@@ -241,7 +248,7 @@ public class GameManager : MonoBehaviour
     public void AdvanceContainerQueue(int queueIndex, ContainerView resolvedView)
     {
         // 1. Fixed spacing delta based directly on your layout rules
-        float containerSpacingY = 0.3f;
+        float containerSpacingY = 0.57f;
 
         // 2. Loop directly over your active references tracking dictionary values
         var remainingViewsInColumn = activeBoardReferences.ContainerViews.Values
@@ -316,7 +323,7 @@ public class GameManager : MonoBehaviour
         if (targetView != null)
         {
             // Accessing the local lowercase field from your script block
-            Color naturalColor = DamplingGameUtils.GetColorByIndex(targetView.unitColorIndex);
+            Color naturalColor = Color.white;// DamplingGameUtils.GetColorByIndex(targetView.unitColorIndex);
 
             if (remainingIceLayers > 0)
             {
@@ -396,6 +403,8 @@ public class GameManager : MonoBehaviour
             DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
 
         ballViews.Clear();
+
+        beltGenerator.ResetSlots();
 
     }
 

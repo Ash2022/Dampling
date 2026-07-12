@@ -23,7 +23,7 @@ public class ContainerView : MonoBehaviour
         reservedSlotsCount = dataModel.FilledSlotsCount; // Synchronize with data layer state
         QueueIndex = orgQueueIndex;
 
-        spriteRenderer.color = DamplingGameUtils.GetColorByIndex(containerData.ColorIndex);
+        spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(containerData.ColorIndex);
 
         // Reset visual alphas/scales back to normal defaults when pulled from pool
         spriteRenderer.DOComplete();

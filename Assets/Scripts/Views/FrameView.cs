@@ -5,7 +5,7 @@ public class FrameView : MonoBehaviour
 {
     // --- OFFSET CONFIGURATION ---
     // Change this single value to adjust how far the inner curves project into the path.
-    private const float AUX_OFFSET = 0.935f;
+    private const float AUX_OFFSET = 0.93f;
 
     [Header("Main Quadrants")]
     [SerializeField] SpriteRenderer TL;

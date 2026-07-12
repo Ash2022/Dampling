@@ -1,0 +1,1734 @@
+{
+  "LevelId": 1,
+  "LevelName": "LevelFull",
+  "ConveyorBeltMaxCapacity": 30,
+  "ResolutionQueues": [
+    [
+      {
+        "Id": 0,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 1,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 2,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 3,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 4,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 5,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 6,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 7,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 8,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 9,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 10,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 11,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 12,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 13,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 14,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 15,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 16,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 17,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ],
+    [
+      {
+        "Id": 18,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 19,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 20,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 21,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 22,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 23,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 24,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 25,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 26,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 27,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 28,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 29,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 30,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 31,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 32,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 33,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 34,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 35,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ],
+    [
+      {
+        "Id": 36,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 37,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 38,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 39,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 40,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 41,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 42,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 43,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 44,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 45,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 46,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 47,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 48,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 49,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 50,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 51,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 52,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 53,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ],
+    [
+      {
+        "Id": 54,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 55,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 56,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 57,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 58,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 59,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 60,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 61,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 62,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 63,
+        "ColorIndex": 2,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 64,
+        "ColorIndex": 1,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 65,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 66,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 67,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 68,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 69,
+        "ColorIndex": 0,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 70,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      },
+      {
+        "Id": 71,
+        "ColorIndex": 3,
+        "Capacity": 3,
+        "FilledSlotsCount": 0
+      }
+    ]
+  ],
+  "Grid": {
+    "Columns": 7,
+    "Rows": 7,
+    "Matrix": [
+      {
+        "Position": {
+          "X": 0,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 0,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 1,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 1,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 2,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 2,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 3,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 3,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 4,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 4,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 5,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 5,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 6,
+          "Y": 0
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 6,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 0,
+          "Y": 1
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 7,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 1,
+          "Y": 1
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 2,
+          "Y": 1
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 3,
+          "Y": 1
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 4,
+          "Y": 1
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 5,
+          "Y": 1
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 6,
+          "Y": 1
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 8,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 0,
+          "Y": 2
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 9,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 1,
+          "Y": 2
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 2,
+          "Y": 2
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 3,
+          "Y": 2
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 4,
+          "Y": 2
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 5,
+          "Y": 2
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 6,
+          "Y": 2
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 10,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 0,
+          "Y": 3
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 11,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 1,
+          "Y": 3
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 2,
+          "Y": 3
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 3,
+          "Y": 3
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 4,
+          "Y": 3
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 5,
+          "Y": 3
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 6,
+          "Y": 3
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 12,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            },
+            {
+              "ColorIndex": 3
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 0,
+          "Y": 4
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 13,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 1,
+          "Y": 4
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 2,
+          "Y": 4
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 3,
+          "Y": 4
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 4,
+          "Y": 4
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 5,
+          "Y": 4
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 6,
+          "Y": 4
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 14,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 0,
+          "Y": 5
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 15,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 1,
+          "Y": 5
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 2,
+          "Y": 5
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 3,
+          "Y": 5
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 4,
+          "Y": 5
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 5,
+          "Y": 5
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 6,
+          "Y": 5
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 16,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 0,
+          "Y": 6
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 17,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 1,
+          "Y": 6
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 18,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            },
+            {
+              "ColorIndex": 1
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 2,
+          "Y": 6
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 19,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 3,
+          "Y": 6
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 20,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 4,
+          "Y": 6
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 21,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            },
+            {
+              "ColorIndex": 0
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 5,
+          "Y": 6
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 22,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 6,
+          "Y": 6
+        },
+        "IsPlayablePath": true,
+        "OccupyingUnit": {
+          "UnitId": 23,
+          "IsHiddenUntilUnblocked": false,
+          "InteriorContents": [
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            },
+            {
+              "ColorIndex": 2
+            }
+          ],
+          "ExplicitlyBlockedByUnitIds": [],
+          "LinkedUnitIds": [],
+          "IceLayers": 0
+        },
+        "ContinuousPipe": null
+      }
+    ]
+  }
+}

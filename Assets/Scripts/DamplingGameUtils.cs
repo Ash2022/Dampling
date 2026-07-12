@@ -73,6 +73,7 @@ public static class DamplingGameUtils
         return copy;
     }
 
+/*
     public static Color GetColorByIndex(int colorIndex)
     {
         if (colorIndex < 0)
@@ -93,5 +94,5 @@ public static class DamplingGameUtils
             8 => new Color(0.88f, 0.12f, 0.56f), // Pink
             _ => new Color(0.58f, 0.63f, 0.67f)  // Slate
         };
-    }
+    }*/
 }

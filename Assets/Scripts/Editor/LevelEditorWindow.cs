@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 
 public class LevelEditorWindow : EditorWindow
 {
-    public const int BELT_MAX = 28;
+    public const int BELT_MAX = 30;
 
     private bool isOddColumnsWidth = false; // False = 8x8 Grid, True = 7x8 Grid
     private int gridColumns => isOddColumnsWidth ? 7 : 6;
@@ -75,7 +75,7 @@ public class LevelEditorWindow : EditorWindow
         EditorGUILayout.LabelField($"Active Workspace Dimensions: {gridColumns} Columns × {gridRows} Rows");
 
         queueCount = EditorGUILayout.IntSlider("Container Queues", queueCount, 1, 8);
-        colorCount = EditorGUILayout.IntSlider("Number of Colors", colorCount, 2, 10);
+        colorCount = EditorGUILayout.IntSlider("Number of Colors", colorCount, 2, 8);
 
         EditorGUILayout.Space();
 

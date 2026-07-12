@@ -37,7 +37,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         ReturnBallsToPool();
 
         // Reset relation overlays, lines, and text layers to safely handle recycling
-        disableButton= false;
+        disableButton = false;
         lockOverlayRenderer.gameObject.SetActive(false);
         keyIndicatorRenderer.gameObject.SetActive(false);
         iceOverlayRenderer.gameObject.SetActive(false);
@@ -51,12 +51,10 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
             var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
             unitColorIndex = firstUnit?.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1;
-            Color pipeColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
 
-            //override the PIPE color
-            spriteRenderer.color = Color.gray;
-            lidRenderer.color = Color.gray;
-            lidRenderer.gameObject.SetActive(true);
+            spriteRenderer.sprite = VisualsManager.Instance.GetPipeSprite();
+
+            lidRenderer.gameObject.SetActive(false);
 
             int emissionsLeft = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
             statusText.text = emissionsLeft > 0 ? emissionsLeft.ToString() : "";
@@ -74,9 +72,12 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
             unitColorIndex = isHidden ? -1 : (cellNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1);
 
-            Color unitColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
-            spriteRenderer.color = unitColor;
-            lidRenderer.color = unitColor;
+            //Color unitColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
+
+            spriteRenderer.sprite = VisualsManager.Instance.GetUnitSprite(unitColorIndex);
+            lidRenderer.sprite = VisualsManager.Instance.GetUnitLidSprite(unitColorIndex);
+
+            //lidRenderer.color = unitColor;
             lidRenderer.gameObject.SetActive(true);
 
             if (isHidden)
@@ -112,15 +113,19 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                     iceCountText.text = iceLayers.ToString();
                 }
 
-                spriteRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
-                lidRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
+                //spriteRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
+                //lidRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
             }
+
+            if(cellNode.Position.Y ==0)
+                RemoveLidCover();
+
         }
         // 3. Process Empty / Carved Out Boundary Gaps / Blocked Cells
         else
         {
             UnitId = -1;
-            spriteRenderer.color = DamplingGameUtils.GetColorByIndex(-1);
+            //spriteRenderer.color = DamplingGameUtils.GetColorByIndex(-1);
             lidRenderer.gameObject.SetActive(false);
         }
     }
@@ -135,7 +140,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     }
     private void SetupNestedInteriorBalls(List<GameLevelSchema.DumplingItem> contents)
     {
-        float radius = 0.1f;
+        float radius = 0.125f;
         Vector3 centerPos = transform.position; // Base world position of this unit box
 
         for (int i = 0; i < contents.Count && i < 9; i++)
@@ -147,21 +152,18 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                 // Calculate the 8-around-1 offsets directly in World Space coordinates
                 float angle = (i - 1) * (360f / 8f) * Mathf.Deg2Rad;
                 Vector3 worldOffset = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * radius;
-                targetWorldPos = centerPos + worldOffset;
+                targetWorldPos = centerPos + worldOffset + new Vector3(0, 0.02f, 0);
             }
 
             // Pull from pool cleanly at its absolute final world position—NO parenting needed
             GameObject ball = DamplingObjectPool.Instance.GetBall(targetWorldPos, Quaternion.identity);
-            ball.transform.localScale = Vector3.one * 0.4f;
+            ball.transform.localScale = Vector3.one * 0.45f;
 
             BallView bView = ball.GetComponent<BallView>();
             if (bView != null)
             {
                 bView.Initialize(contents[i].ColorIndex);
-                // CRITICAL FIX: Disable collider on pre-allocated balls to prevent them
-                // from interacting with the world while still inside the unit.
-                if (bView.Collider != null) bView.Collider.enabled = false;
-
+                
                 GameManager.Instance.ballViews.Add(bView);
             }
 
@@ -176,11 +178,21 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     public void OnViewClicked()
     {
-        if (GameManager.Instance.IsUnitLockedAt(gridCoordinate)) return;
+        if(GameManager.Instance.IsGameOver()) 
+        {
+            Debug.Log("Game is over");
+            return;
+        }
+        if (GameManager.Instance.IsUnitLockedAt(gridCoordinate))
+        {
+            Debug.Log("unit blocked");
+            return;
+        }
 
-        if(disableButton)
+        if (disableButton)
             return;
 
+        disableButton = true;
 
         GameManager.Instance.OnUnitElementClicked(gridCoordinate);
         ExecuteResolveTimeline();
@@ -196,34 +208,28 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         CleanUpActiveSequence();
         resolveSequence = DOTween.Sequence();
 
-        // 1. Pop the Lid off flying away dynamically
-        if (lidRenderer != null)
-        {
-            resolveSequence.Append(lidRenderer.transform.DOMove(transform.position + new Vector3(1.5f, 3.0f, 0f), 0.4f).SetEase(Ease.OutQuad));
-            resolveSequence.Join(lidRenderer.transform.DORotate(new Vector3(0f, 0f, 360f), 0.4f, RotateMode.FastBeyond360));
-            resolveSequence.Join(lidRenderer.DOFade(0f, 0.4f));
-        }
-
         // 2. Eject the 9 balls one by one sequentially
         float delayBetweenBalls = 0.05f;
+
         for (int i = 0; i < preAllocatedBallViews.Count; i++)
         {
-            BallView ballView = preAllocatedBallViews[i];
+            BallView ballView = preAllocatedBallViews[8-i];
             Transform ballTransform = ballView.transform;
             float jumpDelay = 0.1f + (i * delayBetweenBalls);
 
             // Jump arc outward while expanding up to native scale
             Vector3 jumpTarget = ballTransform.position + new Vector3(UnityEngine.Random.Range(-0.05f, 0.05f), 0.2f, 0f); // Target down toward funnel
-            resolveSequence.Insert(jumpDelay, ballTransform.DOJump(jumpTarget, 0.25f, 1, 0.35f).SetEase(Ease.OutQuad));
+            resolveSequence.Insert(jumpDelay, ballTransform.DOJump(jumpTarget, 0.25f, 1, 0.35f).SetEase(Ease.OutQuad).OnStart(()=>
+            {
+               ballView.MoveHigher();
+            }));
             resolveSequence.Insert(jumpDelay, ballTransform.DOScale(Vector3.one, 0.35f).SetEase(Ease.OutBack));
 
             // Switch Rigidbody2D back to Dynamic right as the jump animation lands
             resolveSequence.InsertCallback(jumpDelay + 0.35f, () =>
             {
                 if (ballView != null)
-                {
-                    // Re-enable the collider just before activating physics.
-                    if (ballView.Collider != null) ballView.Collider.enabled = true;
+                {   
                     ballView.ActivatePhysicsSim();
                 }
             });
@@ -262,7 +268,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     public void UpdatePipeCounter(int newPipeCount)
     {
-        statusText.text = newPipeCount > 0 ? newPipeCount.ToString() : "";        
+        statusText.text = newPipeCount > 0 ? newPipeCount.ToString() : "";
     }
 
     /// <summary>
@@ -304,6 +310,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         CleanUpActiveSequence();
     }
 
+
+
     internal void UnitBecameUnBlocked(GameLevelSchema.CellNode updatedNode)
     {
         // We only need to do a visual overhaul if the unit was hiding its true identity
@@ -314,28 +322,38 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
             // 1. Fetch the true color now that it is revealed
             unitColorIndex = updatedNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1;
-            Color realColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
+            //Color realColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
 
-            // 2. Apply color (respecting if it happens to still be covered in ice)
-            if (updatedNode.OccupyingUnit.IceLayers > 0)
-            {
-                spriteRenderer.color = Color.Lerp(realColor, new Color(0.5f, 0.8f, 1f), 0.6f);
-                lidRenderer.color = Color.Lerp(realColor, new Color(0.5f, 0.8f, 1f), 0.6f);
-            }
-            else
-            {
-                spriteRenderer.color = realColor;
-                lidRenderer.color = realColor;
-            }
+            spriteRenderer.sprite = VisualsManager.Instance.GetUnitSprite(unitColorIndex);
+            lidRenderer.sprite = VisualsManager.Instance.GetUnitLidSprite(unitColorIndex);
 
             // 3. Spawn the true contents inside it
             if (updatedNode.OccupyingUnit.InteriorContents.Count > 0)
             {
                 SetupNestedInteriorBalls(updatedNode.OccupyingUnit.InteriorContents);
             }
+
         }
 
         // If it wasn't hidden, we do nothing here! 
         // The lock turning off is handled safely by your HandleLockKeyCollected callback.
+
+        RemoveLidCover();
+
+    }
+
+    private void RemoveLidCover()
+    {
+        resolveSequence = DOTween.Sequence();
+
+        // 1. Pop the Lid off flying away dynamically
+        if (lidRenderer != null)
+        {
+            resolveSequence.Append(lidRenderer.transform.DOMove(transform.position + new Vector3(.5f, .5f, 0f), .75f).SetEase(Ease.OutQuad));
+            resolveSequence.Join(lidRenderer.transform.DORotate(new Vector3(0f, 0f, 360f), 0.75f, RotateMode.FastBeyond360));
+            resolveSequence.Join(lidRenderer.DOFade(0f, 0.75f));
+        }
+
+        resolveSequence.Play();
     }
 }

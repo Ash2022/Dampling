@@ -1,7 +1,7 @@
 {
   "LevelId": 1,
   "LevelName": "Level3",
-  "ConveyorBeltMaxCapacity": 28,
+  "ConveyorBeltMaxCapacity": 30,
   "ResolutionQueues": [
     [
       {

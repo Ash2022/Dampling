@@ -17,9 +17,7 @@ public enum UnlockableFeature
     Colors_7,
     Crates,
     Colors_8,
-    LocksAndKeys,
-    Colors_9,
-    Colors_10
+    LocksAndKeys
 }
 
 // 2. THE RULEBOOK
@@ -48,9 +46,7 @@ public class LevelGeneratorConfig
         UnlockableFeature.Colors_7,
         UnlockableFeature.Crates,
         UnlockableFeature.Colors_8,
-        UnlockableFeature.LocksAndKeys,
-        UnlockableFeature.Colors_9,
-        UnlockableFeature.Colors_10
+        UnlockableFeature.LocksAndKeys
     };
 
     public class LevelRuleset

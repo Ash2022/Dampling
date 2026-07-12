@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -10,6 +11,12 @@ public class VisualsManager : MonoBehaviour
     [SerializeField] List<Sprite> unitSprites;
     [SerializeField] List<Sprite> unitLidsSprites;
     
+    [SerializeField] Sprite unitHidden;
+    [SerializeField] Sprite unitLidHidden;
+
+    [SerializeField] Sprite containerHidden;
+
+    [SerializeField] Sprite Pipe;
     
 
     private void Awake()
@@ -41,7 +48,9 @@ public class VisualsManager : MonoBehaviour
         int targetedIndex = index % unitLidsSprites.Count;
         return unitLidsSprites[targetedIndex];
     }
-       
 
-
+    internal Sprite GetPipeSprite()
+    {
+        return Pipe;
+    }
 }
