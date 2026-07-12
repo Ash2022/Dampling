@@ -189,8 +189,7 @@ public class LevelVisualization : MonoBehaviour
 
     private void GenerateFramePass(GameLevelSchema levelData, Vector2 unitSize)
     {
-        int extraPadding = 2;
-
+        
         HashSet<Vector2Int> playableMap = new HashSet<Vector2Int>();
         int minX = int.MaxValue, maxX = int.MinValue, minY = 0, maxY = int.MinValue;
 
@@ -211,9 +210,9 @@ public class LevelVisualization : MonoBehaviour
         // NEW: Dictionary to keep track of the frames we spawn for the post-pass
         Dictionary<Vector2Int, FrameView> activeFrames = new Dictionary<Vector2Int, FrameView>();
 
-        for (int x = minX - extraPadding; x <= maxX + extraPadding; x++)
+        for (int x = -3; x < 10; x++)
         {
-            for (int y = minY; y <= maxY + extraPadding; y++)
+            for (int y = minY; y <= 9; y++)
             {
                 Vector2Int coord = new Vector2Int(x, y);
 
@@ -251,7 +250,7 @@ public class LevelVisualization : MonoBehaviour
         }
 
         // NEW: Run the post-pass fix
-        ApplyTopRowCaps(activeFrames, playableMap, minX, maxX, minY);
+        ApplyTopRowCaps(activeFrames, playableMap, -3, 11, minY);
     }
 
     private void ApplyTopRowCaps(Dictionary<Vector2Int, FrameView> activeFrames, HashSet<Vector2Int> playableMap, int minX, int maxX, int topY)

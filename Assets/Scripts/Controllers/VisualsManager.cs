@@ -1,0 +1,47 @@
+using System.Collections.Generic;
+using UnityEngine;
+
+public class VisualsManager : MonoBehaviour
+{
+    public static VisualsManager Instance { get; private set; }
+
+    [SerializeField] List<Sprite> ballSprites;
+    [SerializeField] List<Sprite> containerSprites;
+    [SerializeField] List<Sprite> unitSprites;
+    [SerializeField] List<Sprite> unitLidsSprites;
+    
+    
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+
+    public Sprite GetBallSprite(int index)
+    {
+        int targetedIndex = index % ballSprites.Count;
+        return ballSprites[targetedIndex];
+    }
+
+    public Sprite GetContainerSprite(int index)
+    {
+        int targetedIndex = index % containerSprites.Count;
+        return containerSprites[targetedIndex];
+    }
+
+    public Sprite GetUnitSprite(int index)
+    {
+        int targetedIndex = index % unitSprites.Count;
+        return unitSprites[targetedIndex];
+    }
+
+    public Sprite GetUnitLidSprite(int index)
+    {
+        int targetedIndex = index % unitLidsSprites.Count;
+        return unitLidsSprites[targetedIndex];
+    }
+       
+
+
+}

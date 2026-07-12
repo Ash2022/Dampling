@@ -9,7 +9,7 @@ using DG.Tweening;
 
 public class GameManager : MonoBehaviour
 {
-    const int BELT_CAPACITY = 28;
+    public const int BELT_CAPACITY = 30;
 
     public enum GameState
     {
