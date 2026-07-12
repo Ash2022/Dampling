@@ -23,7 +23,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     private Vector2Int gridCoordinate;
     private List<BallView> preAllocatedBallViews = new List<BallView>();
     private Sequence resolveSequence;
-    public string unitColorId;
+    public int unitColorIndex = -1;
 
     private bool wasInitiallyHidden = false;
 
@@ -50,8 +50,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             UnitId = -1; // Pipes are anchor locations, not standard unit structures
 
             var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
-            unitColorId = firstUnit?.InteriorContents.FirstOrDefault()?.ColorId ?? "";
-            Color pipeColor = DamplingGameUtils.GetColorById(unitColorId);
+            unitColorIndex = firstUnit?.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1;
+            Color pipeColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
 
             //override the PIPE color
             spriteRenderer.color = Color.gray;
@@ -72,9 +72,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             bool isHidden = cellNode.OccupyingUnit.IsHiddenUntilUnblocked;
             wasInitiallyHidden = isHidden; // Save the flag!
 
-            unitColorId = isHidden ? "Hidden" : (cellNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorId ?? "");
+            unitColorIndex = isHidden ? -1 : (cellNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1);
 
-            Color unitColor = DamplingGameUtils.GetColorById(unitColorId);
+            Color unitColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
             spriteRenderer.color = unitColor;
             lidRenderer.color = unitColor;
             lidRenderer.gameObject.SetActive(true);
@@ -120,7 +120,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         else
         {
             UnitId = -1;
-            spriteRenderer.color = DamplingGameUtils.GetColorById("");
+            spriteRenderer.color = DamplingGameUtils.GetColorByIndex(-1);
             lidRenderer.gameObject.SetActive(false);
         }
     }
@@ -157,7 +157,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             BallView bView = ball.GetComponent<BallView>();
             if (bView != null)
             {
-                bView.Initialize(contents[i].ColorId);
+                bView.Initialize(contents[i].ColorIndex);
                 // CRITICAL FIX: Disable collider on pre-allocated balls to prevent them
                 // from interacting with the world while still inside the unit.
                 if (bView.Collider != null) bView.Collider.enabled = false;
@@ -313,8 +313,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             statusText.text = ""; // Remove the "?"
 
             // 1. Fetch the true color now that it is revealed
-            unitColorId = updatedNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorId ?? "";
-            Color realColor = DamplingGameUtils.GetColorById(unitColorId);
+            unitColorIndex = updatedNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1;
+            Color realColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
 
             // 2. Apply color (respecting if it happens to still be covered in ice)
             if (updatedNode.OccupyingUnit.IceLayers > 0)

@@ -12,7 +12,7 @@ public class BallView : MonoBehaviour
     private Transform currentBeltSlot;
     private SlotView currentSlotView;
 
-    public string ColorId { get; private set; }
+    public int ColorIndex { get; private set; }
     public SpriteRenderer SR => spriteRenderer;
     public Collider2D Collider => col;
 
@@ -23,9 +23,9 @@ public class BallView : MonoBehaviour
         col = GetComponent<Collider2D>();
     }
 
-    public void Initialize(string colorId)
+    public void Initialize(int colorIndex)
     {
-        ColorId = colorId;
+        ColorIndex = colorIndex;
         isCaptured = false;
         isAnimatingCapture = false;
         currentBeltSlot = null;
@@ -35,7 +35,7 @@ public class BallView : MonoBehaviour
             currentSlotView.Release();
         }
         currentSlotView = null;
-        spriteRenderer.color = DamplingGameUtils.GetColorById(colorId);
+        spriteRenderer.color = DamplingGameUtils.GetColorByIndex(colorIndex);
 
         if (rb != null)
         {
@@ -98,7 +98,7 @@ public class BallView : MonoBehaviour
         if (isCaptured && other.CompareTag("Container"))
         {
             ContainerView container = other.GetComponent<ContainerView>();
-            if (container.CurrentRequiredColorId == ColorId)
+            if (container.CurrentRequiredColorIndex == ColorIndex)
             {
                 // Request slot target reservation space atomically
                 if (container.TryReserveTargetSlot(out Transform targetSlotTransform))

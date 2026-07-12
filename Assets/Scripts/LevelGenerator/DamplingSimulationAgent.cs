@@ -94,12 +94,13 @@ public class DamplingSimulationAgent
             else
             {
                 report.FatalLosses++;
-                string primaryChokeColor = dynamicEngineInstance.VirtualBelt.GroupBy(d => d.ColorId)
+                var primaryChokeColorIndex = dynamicEngineInstance.VirtualBelt.GroupBy(d => d.ColorIndex)
                     .OrderByDescending(g => g.Count())
-                    .Select(g => g.Key)
-                    .FirstOrDefault() ?? "Deadlock/Overflow";
+                    .Select(g => (int?)g.Key)
+                    .FirstOrDefault();
 
-                string failureReasonKey = $"Belt Jammed (Majority Color: {primaryChokeColor})";
+                string failureReason = primaryChokeColorIndex.HasValue ? $"Color: {primaryChokeColorIndex.Value}" : "Deadlock/Overflow";
+                string failureReasonKey = $"Belt Jammed (Majority {failureReason})";
                 if (!report.FailStateDistribution.ContainsKey(failureReasonKey))
                 {
                     report.FailStateDistribution[failureReasonKey] = 0;

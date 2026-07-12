@@ -26,7 +26,7 @@ public class GameLevelSchema
     public class ContainerData
     {
         public int Id { get; set; }
-        public string ColorId { get; set; }
+        public int ColorIndex { get; set; } = -1;
         public int Capacity { get; set; } = 3;
         public int FilledSlotsCount { get; set; } = 0;
     }
@@ -88,7 +88,7 @@ public class GameLevelSchema
 
     public class DumplingItem
     {
-        public string ColorId { get; set; }
+        public int ColorIndex { get; set; } = -1;
     }
 
     public class PipeGenerator

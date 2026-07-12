@@ -87,12 +87,13 @@ public class DamplingSimulationAgentGreedy
             else
             {
                 report.FatalLosses++;
-                string primaryChokeColor = dynamicEngineInstance.VirtualBelt.GroupBy(d => d.ColorId)
+                var primaryChokeColorIndex = dynamicEngineInstance.VirtualBelt.GroupBy(d => d.ColorIndex)
                     .OrderByDescending(g => g.Count())
-                    .Select(g => g.Key)
-                    .FirstOrDefault() ?? "Deadlock/Overflow";
+                    .Select(g => (int?)g.Key)
+                    .FirstOrDefault();
 
-                string failureReasonKey = $"Belt Jammed (Majority Color: {primaryChokeColor})";
+                string failureReason = primaryChokeColorIndex.HasValue ? $"Color: {primaryChokeColorIndex.Value}" : "Deadlock/Overflow";
+                string failureReasonKey = $"Belt Jammed (Majority {failureReason})";
                 if (!report.FailStateDistribution.ContainsKey(failureReasonKey))
                 {
                     report.FailStateDistribution[failureReasonKey] = 0;
@@ -118,7 +119,7 @@ public class DamplingSimulationAgentGreedy
         Dictionary<int, List<GameLevelSchema.Coordinate>> scoredMoveGroups = new Dictionary<int, List<GameLevelSchema.Coordinate>>();
 
         // Track empty spaces left in currently active target containers
-        Dictionary<string, int> activeContainerDemands = new Dictionary<string, int>();
+        Dictionary<int, int> activeContainerDemands = new Dictionary<int, int>();
         if (engine.ActiveLevelData.ResolutionQueues != null)
         {
             foreach (var queue in engine.ActiveLevelData.ResolutionQueues)
@@ -127,9 +128,9 @@ public class DamplingSimulationAgentGreedy
                 if (targetContainer != null)
                 {
                     int spacesLeft = targetContainer.Capacity - targetContainer.FilledSlotsCount;
-                    if (!activeContainerDemands.ContainsKey(targetContainer.ColorId))
-                        activeContainerDemands[targetContainer.ColorId] = 0;
-                    activeContainerDemands[targetContainer.ColorId] += spacesLeft;
+                    if (!activeContainerDemands.ContainsKey(targetContainer.ColorIndex))
+                        activeContainerDemands[targetContainer.ColorIndex] = 0;
+                    activeContainerDemands[targetContainer.ColorIndex] += spacesLeft;
                 }
             }
         }
@@ -142,7 +143,7 @@ public class DamplingSimulationAgentGreedy
             var items = cellNode.OccupyingUnit.InteriorContents;
             if (items == null || items.Count == 0) continue;
 
-            var colorGroups = items.GroupBy(i => i.ColorId);
+            var colorGroups = items.GroupBy(i => i.ColorIndex);
             int immediateClearanceScore = 0;
 
             foreach (var group in colorGroups)
@@ -178,11 +179,11 @@ public class DamplingSimulationAgentGreedy
             var items = cellNode.OccupyingUnit.InteriorContents;
 
             // Group by color to run micro-sim checks
-            var primaryGroup = items.GroupBy(i => i.ColorId).OrderByDescending(g => g.Count()).First();
-            string dominantColor = primaryGroup.Key;
+            var primaryGroup = items.GroupBy(i => i.ColorIndex).OrderByDescending(g => g.Count()).First();
+            int dominantColor = primaryGroup.Key;
 
             // Clone active container demands to calculate real changes per sub-burst
-            var virtualDemands = new Dictionary<string, int>(activeContainerDemands);
+            var virtualDemands = new Dictionary<int, int>(activeContainerDemands);
 
             // --- THE 3-BALL BATCH LOOK-AHEAD INTEGRATION ---
             int simulatedBeltSpace = currentBeltCount;

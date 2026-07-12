@@ -1944,7 +1944,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ModelManager
   levelTextAssets:
-  - {fileID: 4900000, guid: 782f905cf6295ed47be65a391187e7c2, type: 3}
+  - {fileID: 4900000, guid: 87d88da18b0a6784dae0edf5e1ad5946, type: 3}
   - {fileID: 4900000, guid: 7c6bba601fde54449895a13f0b577ff5, type: 3}
   - {fileID: 4900000, guid: d9ade8cbaa48ba04bb5ccb6b43b5c382, type: 3}
 --- !u!114 &2070676744

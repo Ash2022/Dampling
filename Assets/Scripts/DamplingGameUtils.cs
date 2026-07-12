@@ -21,7 +21,7 @@ public static class DamplingGameUtils
             ResolutionQueues = source.ResolutionQueues.Select(q => q.Select(c => new GameLevelSchema.ContainerData 
             { 
                 Id = c.Id, 
-                ColorId = c.ColorId, 
+                ColorIndex = c.ColorIndex,
                 Capacity = c.Capacity 
             }).ToList()).ToList()
         };
@@ -48,7 +48,7 @@ public static class DamplingGameUtils
                     {
                         UnitId = u.UnitId,
                         IsHiddenUntilUnblocked = u.IsHiddenUntilUnblocked,
-                        InteriorContents = u.InteriorContents.Select(d => new GameLevelSchema.DumplingItem { ColorId = d.ColorId }).ToList()
+                        InteriorContents = u.InteriorContents.Select(d => new GameLevelSchema.DumplingItem { ColorIndex = d.ColorIndex }).ToList()
                     }).ToList()
                 };
             }
@@ -60,7 +60,7 @@ public static class DamplingGameUtils
                 {
                     UnitId = sourceNode.OccupyingUnit.UnitId,
                     IsHiddenUntilUnblocked = sourceNode.OccupyingUnit.IsHiddenUntilUnblocked,
-                    InteriorContents = sourceNode.OccupyingUnit.InteriorContents.Select(d => new GameLevelSchema.DumplingItem { ColorId = d.ColorId }).ToList(),
+                    InteriorContents = sourceNode.OccupyingUnit.InteriorContents.Select(d => new GameLevelSchema.DumplingItem { ColorIndex = d.ColorIndex }).ToList(),
                     ExplicitlyBlockedByUnitIds = sourceNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.ToList(),
                     LinkedUnitIds = sourceNode.OccupyingUnit.LinkedUnitIds.ToList()
                 };
@@ -73,20 +73,14 @@ public static class DamplingGameUtils
         return copy;
     }
 
-    public static Color GetColorById(string colorId)
+    public static Color GetColorByIndex(int colorIndex)
     {
-        if (string.IsNullOrEmpty(colorId))
+        if (colorIndex < 0)
         {
             return new Color(0.85f, 0.85f, 0.85f, 1f); // Empty fallback gray
         }
 
-        string[] parts = colorId.Split('_');
-        if (parts.Length < 2 || !int.TryParse(parts[1], out int index))
-        {
-            return Color.gray;
-        }
-
-        return index switch
+        return colorIndex switch
         {
             0 => new Color(0.85f, 0.23f, 0.23f), // Vivid Red
             1 => new Color(0.18f, 0.67f, 0.18f), // Vivid Green

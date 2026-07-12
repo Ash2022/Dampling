@@ -89,12 +89,13 @@ public class DamplingSimulationAgentSmart
             else
             {
                 report.FatalLosses++;
-                string primaryChokeColor = dynamicEngineInstance.VirtualBelt.GroupBy(d => d.ColorId)
+                var primaryChokeColorIndex = dynamicEngineInstance.VirtualBelt.GroupBy(d => d.ColorIndex)
                     .OrderByDescending(g => g.Count())
-                    .Select(g => g.Key)
-                    .FirstOrDefault() ?? "Deadlock/Overflow";
+                    .Select(g => (int?)g.Key)
+                    .FirstOrDefault();
 
-                string failureReasonKey = $"Belt Jammed (Majority Color: {primaryChokeColor})";
+                string failureReason = primaryChokeColorIndex.HasValue ? $"Color: {primaryChokeColorIndex.Value}" : "Deadlock/Overflow";
+                string failureReasonKey = $"Belt Jammed (Majority {failureReason})";
                 if (!report.FailStateDistribution.ContainsKey(failureReasonKey))
                 {
                     report.FailStateDistribution[failureReasonKey] = 0;
@@ -126,7 +127,7 @@ public class DamplingSimulationAgentSmart
         int maxBeltCapacity = 28; // Standard buffer ceiling
 
         // Fetch targets currently waiting at the front of resolution queues
-        var activeTargetColors = new HashSet<string>();
+        var activeTargetColors = new HashSet<int>();
         if (engine.ActiveLevelData.ResolutionQueues != null)
         {
             foreach (var queue in engine.ActiveLevelData.ResolutionQueues)
@@ -134,7 +135,7 @@ public class DamplingSimulationAgentSmart
                 var firstActiveContainer = queue.FirstOrDefault(c => c.FilledSlotsCount < c.Capacity);
                 if (firstActiveContainer != null)
                 {
-                    activeTargetColors.Add(firstActiveContainer.ColorId);
+                    activeTargetColors.Add(firstActiveContainer.ColorIndex);
                 }
             }
         }
@@ -148,8 +149,8 @@ public class DamplingSimulationAgentSmart
             if (items == null || items.Count == 0) continue;
 
             // Group contents by color to look for high concentrations
-            var primaryColorGroup = items.GroupBy(i => i.ColorId).OrderByDescending(g => g.Count()).First();
-            string dominantColor = primaryColorGroup.Key;
+            var primaryColorGroup = items.GroupBy(i => i.ColorIndex).OrderByDescending(g => g.Count()).First();
+            int dominantColor = primaryColorGroup.Key;
 
             // --- THE VIRTUAL 3-BALL BATCH LOOK-AHEAD ---
             // Simulate how the belt handles items dynamically in sets of 3

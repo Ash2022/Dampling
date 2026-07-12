@@ -23,9 +23,9 @@ public class LevelEditorWindow : EditorWindow
     {
         public CellBehavior Behavior = CellBehavior.Standard;
         public int PipeEmissions = 3;
-        public string AssignedColorId = "";
+        public int AssignedColorIndex = -1;
 
-        public List<string> PipeEmittedColorIds = new List<string>();
+        public List<int> PipeEmittedColorIndexes = new List<int>();
         public bool StartHidden = false;
 
         // Relationship Feature Group IDs (0 means unassigned)
@@ -145,13 +145,13 @@ public class LevelEditorWindow : EditorWindow
         {
             cell.Behavior = CellBehavior.Standard;
             cell.PipeEmissions = 3;
-            cell.AssignedColorId = "";
+            cell.AssignedColorIndex = -1;
             cell.StartHidden = false;
             cell.KeyGroupId = 0;
             cell.LockGroupId = 0;
             cell.LinkGroupId = 0;
             cell.IceLayers = 0;
-            cell.PipeEmittedColorIds.Clear();
+            cell.PipeEmittedColorIndexes.Clear();
         }
 
         foreach (var q in generatedQueues) q.Clear();
@@ -164,7 +164,7 @@ public class LevelEditorWindow : EditorWindow
     private void PopulateLevelData(bool keepUnits = false)
     {
         // 1. Gather existing unit colors (only if keeping, otherwise we assign them)
-        List<string> currentUnitColors = new List<string>();
+        List<int> currentUnitColors = new List<int>();
 
         if (!keepUnits)
         {
@@ -177,10 +177,10 @@ public class LevelEditorWindow : EditorWindow
             }
             if (totalUnits == 0) return;
 
-            List<string> colorPalette = new List<string>();
-            for (int i = 0; i < colorCount; i++) colorPalette.Add($"Color_{i}");
+            List<int> colorPalette = new List<int>();
+            for (int i = 0; i < colorCount; i++) colorPalette.Add(i);
 
-            List<string> unitColorAssignments = new List<string>();
+            List<int> unitColorAssignments = new List<int>();
             for (int i = 0; i < totalUnits; i++) unitColorAssignments.Add(colorPalette[i % colorPalette.Count]);
 
             System.Random rnd = new System.Random();
@@ -191,15 +191,15 @@ public class LevelEditorWindow : EditorWindow
             foreach (var cell in editorMatrix.Values)
             {
                 if (cell.Behavior == CellBehavior.Standard && assignedCount < unitColorAssignments.Count)
-                    cell.AssignedColorId = unitColorAssignments[assignedCount++];
+                    cell.AssignedColorIndex = unitColorAssignments[assignedCount++];
                 else if (cell.Behavior == CellBehavior.Pipe)
                 {
-                    cell.PipeEmittedColorIds.Clear();
+                    cell.PipeEmittedColorIndexes.Clear();
                     for (int e = 0; e < cell.PipeEmissions; e++)
-                        if (assignedCount < unitColorAssignments.Count) cell.PipeEmittedColorIds.Add(unitColorAssignments[assignedCount++]);
-                    cell.AssignedColorId = cell.PipeEmittedColorIds.Count > 0 ? cell.PipeEmittedColorIds[0] : "";
+                        if (assignedCount < unitColorAssignments.Count) cell.PipeEmittedColorIndexes.Add(unitColorAssignments[assignedCount++]);
+                    cell.AssignedColorIndex = cell.PipeEmittedColorIndexes.Count > 0 ? cell.PipeEmittedColorIndexes[0] : -1;
                 }
-                else { cell.AssignedColorId = ""; cell.PipeEmittedColorIds.Clear(); }
+                else { cell.AssignedColorIndex = -1; cell.PipeEmittedColorIndexes.Clear(); }
             }
             currentUnitColors = unitColorAssignments;
         }
@@ -208,10 +208,10 @@ public class LevelEditorWindow : EditorWindow
             // Extract what is currently in the matrix
             foreach (var cell in editorMatrix.Values)
             {
-                if (cell.Behavior == CellBehavior.Standard && !string.IsNullOrEmpty(cell.AssignedColorId))
-                    currentUnitColors.Add(cell.AssignedColorId);
+                if (cell.Behavior == CellBehavior.Standard && cell.AssignedColorIndex != -1)
+                    currentUnitColors.Add(cell.AssignedColorIndex);
                 else if (cell.Behavior == CellBehavior.Pipe)
-                    currentUnitColors.AddRange(cell.PipeEmittedColorIds);
+                    currentUnitColors.AddRange(cell.PipeEmittedColorIndexes);
             }
         }
 
@@ -221,9 +221,9 @@ public class LevelEditorWindow : EditorWindow
 
         foreach (var color in currentUnitColors)
         {
-            globalContainerPool.Add(new GameLevelSchema.ContainerData { ColorId = color });
-            globalContainerPool.Add(new GameLevelSchema.ContainerData { ColorId = color });
-            globalContainerPool.Add(new GameLevelSchema.ContainerData { ColorId = color });
+            globalContainerPool.Add(new GameLevelSchema.ContainerData { ColorIndex = color });
+            globalContainerPool.Add(new GameLevelSchema.ContainerData { ColorIndex = color });
+            globalContainerPool.Add(new GameLevelSchema.ContainerData { ColorIndex = color });
         }
         globalContainerPool = globalContainerPool.OrderBy(x => rndPool.Next()).ToList();
 
@@ -272,19 +272,19 @@ public class LevelEditorWindow : EditorWindow
                     CellBehavior.Pipe => new Color(0.18f, 0.44f, 0.72f),
                     _ => isTargetedByPipeBelow ? new Color(0.25f, 0.55f, 0.85f, 0.4f) :
                          cell.IceLayers > 0 ? new Color(0.6f, 0.85f, 0.95f) :
-                         !string.IsNullOrEmpty(cell.AssignedColorId) ? GetColorValue(cell.AssignedColorId) :
+                         cell.AssignedColorIndex != -1 ? GetColorValue(cell.AssignedColorIndex) :
                          new Color(0.85f, 0.85f, 0.85f)
                 };
 
                 EditorGUI.DrawRect(cellRect, displayColor);
 
-                bool hasColor = !string.IsNullOrEmpty(cell.AssignedColorId) && cell.Behavior != CellBehavior.Blocker;
+                bool hasColor = cell.AssignedColorIndex != -1 && cell.Behavior != CellBehavior.Blocker;
                 GUIStyle textStyle = hasColor ? EditorStyles.whiteMiniLabel : EditorStyles.centeredGreyMiniLabel;
 
                 if (cell.Behavior == CellBehavior.Standard)
                 {
                     string pipeTargetLabel = isTargetedByPipeBelow ? " [Outlet]" : "";
-                    string contentLabel = hasColor ? $"({x},{y}){pipeTargetLabel}\n{cell.AssignedColorId}" : $"({x},{y}){pipeTargetLabel}\nUnit";
+                    string contentLabel = hasColor ? $"({x},{y}){pipeTargetLabel}\nColor_{cell.AssignedColorIndex}" : $"({x},{y}){pipeTargetLabel}\nUnit";
                     GUI.Label(cellRect, contentLabel, textStyle);
 
                     string relationOverlay = "";
@@ -321,7 +321,7 @@ public class LevelEditorWindow : EditorWindow
                 else if (cell.Behavior == CellBehavior.Pipe)
                 {
                     Rect labelRect = new Rect(cellRect.x, cellRect.y + 2, cellRect.width, 16f);
-                    string pipeLabelText = hasColor ? $"Pipe:{cell.AssignedColorId}" : "Pipe Anchor";
+                    string pipeLabelText = hasColor ? $"Pipe: Color_{cell.AssignedColorIndex}" : "Pipe Anchor";
                     GUI.Label(labelRect, pipeLabelText, EditorStyles.whiteMiniLabel);
 
                     Rect inputRect = new Rect(cellRect.x + 6, cellRect.y + 32, cellRect.width - 12, 18f);
@@ -339,10 +339,10 @@ public class LevelEditorWindow : EditorWindow
                     {
                         ResetRelations(cell);
                         cell.Behavior = CellBehavior.Blocker;
-                        cell.AssignedColorId = "";
+                        cell.AssignedColorIndex = -1;
                         cell.StartHidden = false;
                         cell.IceLayers = 0;
-                        cell.PipeEmittedColorIds.Clear();
+                        cell.PipeEmittedColorIndexes.Clear();
                     }
 
                     e.Use();
@@ -350,7 +350,7 @@ public class LevelEditorWindow : EditorWindow
                 }
                 else if (cellRect.Contains(e.mousePosition) && e.type == EventType.MouseDown && e.button == 0)
                 {
-                    cell.AssignedColorId = GetNextColorId(cell.AssignedColorId, colorCount);
+                    cell.AssignedColorIndex = GetNextColorIndex(cell.AssignedColorIndex, colorCount);
                     e.Use();
                     Repaint();
                 }
@@ -367,7 +367,7 @@ public class LevelEditorWindow : EditorWindow
                         menu.AddItem(new GUIContent("Environment/Thaw Ice Completely"), cell.IceLayers == 0, () => { cell.IceLayers = 0; Repaint(); });
                         menu.AddSeparator("Environment/");
 
-                        if (!string.IsNullOrEmpty(cell.AssignedColorId))
+                        if (cell.AssignedColorIndex != -1)
                         {
                             menu.AddItem(new GUIContent("Unit/Start Revealed"), !cell.StartHidden, () => { cell.StartHidden = false; Repaint(); });
                             menu.AddItem(new GUIContent("Unit/Start Hidden"), cell.StartHidden, () => { cell.StartHidden = true; Repaint(); });
@@ -399,13 +399,13 @@ public class LevelEditorWindow : EditorWindow
 
                             menu.AddItem(new GUIContent("Relations/Clear All Links & Chains"), false, () => { cell.KeyGroupId = 0; cell.LockGroupId = 0; cell.LinkGroupId = 0; Repaint(); });
                             menu.AddSeparator("");
-                            menu.AddItem(new GUIContent("Convert Cell/To Blocker (Hole)"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Blocker; cell.AssignedColorId = ""; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
-                            menu.AddItem(new GUIContent("Convert Cell/To Pipe Generator"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Pipe; cell.AssignedColorId = ""; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
+                            menu.AddItem(new GUIContent("Convert Cell/To Blocker (Hole)"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Blocker; cell.AssignedColorIndex = -1; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
+                            menu.AddItem(new GUIContent("Convert Cell/To Pipe Generator"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Pipe; cell.AssignedColorIndex = -1; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
                         }
                     }
                     else
                     {
-                        menu.AddItem(new GUIContent("Set Standard Unit"), cell.Behavior == CellBehavior.Standard, () => { cell.Behavior = CellBehavior.Standard; cell.AssignedColorId = ""; cell.StartHidden = false; Repaint(); });
+                        menu.AddItem(new GUIContent("Set Standard Unit"), cell.Behavior == CellBehavior.Standard, () => { cell.Behavior = CellBehavior.Standard; cell.AssignedColorIndex = -1; cell.StartHidden = false; Repaint(); });
                         menu.AddItem(new GUIContent("Set Blocker (Hole)"), cell.Behavior == CellBehavior.Blocker, () => { cell.Behavior = CellBehavior.Blocker; cell.StartHidden = false; Repaint(); });
                         menu.AddItem(new GUIContent("Set Pipe Generator"), cell.Behavior == CellBehavior.Pipe, () => { cell.Behavior = CellBehavior.Pipe; cell.StartHidden = false; Repaint(); });
                     }
@@ -449,18 +449,18 @@ public class LevelEditorWindow : EditorWindow
                 if (containerRect.Contains(e.mousePosition) && e.type == EventType.MouseDown && e.button == 0)
                 {
                     // Cycle the color for this specific container in the queue
-                    string currentColor = generatedQueues[q][c].ColorId;
-                    generatedQueues[q][c].ColorId = GetNextColorId(currentColor, colorCount);
+                    int currentIndex = generatedQueues[q][c].ColorIndex;
+                    generatedQueues[q][c].ColorIndex = GetNextColorIndex(currentIndex, colorCount);
 
                     e.Use();
                     Repaint();
                 }
 
-                string colorStr = generatedQueues[q][c].ColorId;
+                int colorIndex = generatedQueues[q][c].ColorIndex;
 
-                EditorGUI.DrawRect(containerRect, GetColorValue(colorStr));
+                EditorGUI.DrawRect(containerRect, GetColorValue(colorIndex));
                 GUIStyle labelOverride = new GUIStyle(EditorStyles.whiteBoldLabel) { fontSize = 10, alignment = TextAnchor.MiddleCenter };
-                EditorGUI.LabelField(containerRect, colorStr.ToUpper(), labelOverride);
+                EditorGUI.LabelField(containerRect, $"COLOR_{colorIndex}", labelOverride);
             }
         }
         GUILayout.EndVertical();
@@ -488,12 +488,11 @@ public class LevelEditorWindow : EditorWindow
         cell.LinkGroupId = 0;
     }
 
-    private Color GetColorValue(string colorId)
+    private Color GetColorValue(int colorIndex)
     {
-        if (string.IsNullOrEmpty(colorId)) return Color.white;
-        string[] parts = colorId.Split('_');
-        if (parts.Length < 2 || !int.TryParse(parts[1], out int index)) return Color.gray;
+        if (colorIndex < 0) return Color.white;
 
+        int index = colorIndex;
         return index switch
         {
             0 => new Color(0.85f, 0.23f, 0.23f),
@@ -567,7 +566,7 @@ public class LevelEditorWindow : EditorWindow
             if (!cellNode.IsPlayablePath)
             {
                 cell.Behavior = CellBehavior.Blocker;
-                cell.AssignedColorId = "";
+                cell.AssignedColorIndex = -1;
                 cell.IceLayers = 0;
             }
             else if (cellNode.ContinuousPipe != null)
@@ -575,24 +574,26 @@ public class LevelEditorWindow : EditorWindow
                 cell.Behavior = CellBehavior.Pipe;
                 cell.PipeEmissions = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
                 cell.IceLayers = 0;
-                cell.PipeEmittedColorIds.Clear();
+                cell.PipeEmittedColorIndexes.Clear();
 
                 if (cellNode.ContinuousPipe.ReservoirQueue != null)
                 {
                     foreach (var unit in cellNode.ContinuousPipe.ReservoirQueue)
                     {
-                        string unitColor = unit.InteriorContents.FirstOrDefault()?.ColorId ?? "Color_0";
-                        cell.PipeEmittedColorIds.Add(unitColor);
+                        int unitColorIndex = unit.InteriorContents.FirstOrDefault()?.ColorIndex ?? 0;
+                        cell.PipeEmittedColorIndexes.Add(unitColorIndex);
                     }
                 }
                 var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
-                cell.AssignedColorId = firstUnit?.InteriorContents.FirstOrDefault()?.ColorId ?? "";
+                cell.AssignedColorIndex = firstUnit?.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1;
             }
             else
             {
                 cell.Behavior = CellBehavior.Standard;
                 var firstItem = cellNode.OccupyingUnit?.InteriorContents.FirstOrDefault();
-                cell.AssignedColorId = firstItem?.ColorId ?? "";
+                // This handles loading old JSONs with string ColorId
+                var colorIdString = firstItem?.ColorIndex;
+                cell.AssignedColorIndex = firstItem?.ColorIndex ?? -1;
                 cell.StartHidden = cellNode.OccupyingUnit?.IsHiddenUntilUnblocked ?? false;
                 cell.IceLayers = cellNode.OccupyingUnit?.IceLayers ?? 0;
 
@@ -713,19 +714,19 @@ public class LevelEditorWindow : EditorWindow
                         IsHiddenUntilUnblocked = false
                     };
 
-                    string color = "Color_0";
-                    if (kvp.Value.PipeEmittedColorIds != null && i < kvp.Value.PipeEmittedColorIds.Count)
+                    int colorIndex = 0;
+                    if (kvp.Value.PipeEmittedColorIndexes != null && i < kvp.Value.PipeEmittedColorIndexes.Count)
                     {
-                        color = kvp.Value.PipeEmittedColorIds[i];
+                        colorIndex = kvp.Value.PipeEmittedColorIndexes[i];
                     }
-                    else if (!string.IsNullOrEmpty(kvp.Value.AssignedColorId))
+                    else if (kvp.Value.AssignedColorIndex != -1)
                     {
-                        color = kvp.Value.AssignedColorId;
+                        colorIndex = kvp.Value.AssignedColorIndex;
                     }
 
                     for (int d = 0; d < 9; d++)
                     {
-                        unit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = color });
+                        unit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = colorIndex });
                     }
 
                     node.ContinuousPipe.ReservoirQueue.Add(unit);
@@ -735,7 +736,7 @@ public class LevelEditorWindow : EditorWindow
             {
                 node.IsPlayablePath = true;
 
-                if (!string.IsNullOrEmpty(kvp.Value.AssignedColorId))
+                if (kvp.Value.AssignedColorIndex != -1)
                 {
                     node.OccupyingUnit = new GameLevelSchema.GridUnit
                     {
@@ -746,7 +747,7 @@ public class LevelEditorWindow : EditorWindow
 
                     for (int d = 0; d < 9; d++)
                     {
-                        node.OccupyingUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = kvp.Value.AssignedColorId });
+                        node.OccupyingUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = kvp.Value.AssignedColorIndex });
                     }
 
                     if (kvp.Value.LockGroupId > 0)
@@ -818,15 +819,15 @@ public class LevelEditorWindow : EditorWindow
         GameLevelSchema level = AssembleActiveEditorStateToSchema();
         if (level == null) return false;
 
-        Dictionary<string, int> supplyCounts = new Dictionary<string, int>();
+        Dictionary<int, int> supplyCounts = new Dictionary<int, int>();
         foreach (var node in level.Grid.Matrix)
         {
             if (node.OccupyingUnit != null && node.OccupyingUnit.InteriorContents != null)
             {
                 foreach (var item in node.OccupyingUnit.InteriorContents)
                 {
-                    if (!supplyCounts.ContainsKey(item.ColorId)) supplyCounts[item.ColorId] = 0;
-                    supplyCounts[item.ColorId]++;
+                    if (!supplyCounts.ContainsKey(item.ColorIndex)) supplyCounts[item.ColorIndex] = 0;
+                    supplyCounts[item.ColorIndex]++;
                 }
             }
 
@@ -838,28 +839,28 @@ public class LevelEditorWindow : EditorWindow
                     {
                         foreach (var item in queuedUnit.InteriorContents)
                         {
-                            if (!supplyCounts.ContainsKey(item.ColorId)) supplyCounts[item.ColorId] = 0;
-                            supplyCounts[item.ColorId]++;
+                            if (!supplyCounts.ContainsKey(item.ColorIndex)) supplyCounts[item.ColorIndex] = 0;
+                            supplyCounts[item.ColorIndex]++;
                         }
                     }
                 }
             }
         }
 
-        Dictionary<string, int> demandCounts = new Dictionary<string, int>();
+        Dictionary<int, int> demandCounts = new Dictionary<int, int>();
         if (level.ResolutionQueues != null)
         {
             foreach (var queue in level.ResolutionQueues)
             {
                 foreach (var container in queue)
                 {
-                    if (!demandCounts.ContainsKey(container.ColorId)) demandCounts[container.ColorId] = 0;
-                    demandCounts[container.ColorId] += container.Capacity;
+                    if (!demandCounts.ContainsKey(container.ColorIndex)) demandCounts[container.ColorIndex] = 0;
+                    demandCounts[container.ColorIndex] += container.Capacity;
                 }
             }
         }
 
-        HashSet<string> allColors = new HashSet<string>(supplyCounts.Keys.Concat(demandCounts.Keys));
+        HashSet<int> allColors = new HashSet<int>(supplyCounts.Keys.Concat(demandCounts.Keys));
         List<string> errors = new List<string>();
 
         foreach (var color in allColors)
@@ -880,23 +881,13 @@ public class LevelEditorWindow : EditorWindow
         return true;
     }
 
-    private string GetNextColorId(string currentColorId, int colorCount)
+    private int GetNextColorIndex(int currentIndex, int colorCount)
     {
-        // Safety check: if colorCount is 0 or less, stay on current or reset to 0
-        if (colorCount <= 0) return "Color_0";
+        if (colorCount <= 0) return 0;
 
-        int nextIndex = 0;
+        // If current is -1 (unassigned), start at 0. Otherwise, increment and wrap.
+        int nextIndex = (currentIndex == -1) ? 0 : (currentIndex + 1) % colorCount;
 
-        if (!string.IsNullOrEmpty(currentColorId))
-        {
-            string[] parts = currentColorId.Split('_');
-            if (parts.Length >= 2 && int.TryParse(parts[1], out int currentIndex))
-            {
-                // Calculate next index, wrapping based on the slider's colorCount
-                nextIndex = (currentIndex + 1) % colorCount;
-            }
-        }
-
-        return $"Color_{nextIndex}";
+        return nextIndex;
     }
 }

@@ -50,7 +50,7 @@ public class LevelVisualization : MonoBehaviour
                 ContainerView containerView = containerInstance.GetComponent<ContainerView>();
                 containerView.Initialize(activeQueueList[c], q);
 
-                containerInstance.name = $"Container_Q{q}_Idx{c}_{activeQueueList[c].ColorId}";
+                containerInstance.name = $"Container_Q{q}_Idx{c}_{activeQueueList[c].ColorIndex}";
 
                 // Map reference by unique ID for instant event resolution
                 references.ContainerViews.Add(activeQueueList[c].Id, containerView);

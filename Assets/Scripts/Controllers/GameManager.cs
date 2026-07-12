@@ -316,7 +316,7 @@ public class GameManager : MonoBehaviour
         if (targetView != null)
         {
             // Accessing the local lowercase field from your script block
-            Color naturalColor = DamplingGameUtils.GetColorById(targetView.unitColorId);
+            Color naturalColor = DamplingGameUtils.GetColorByIndex(targetView.unitColorIndex);
 
             if (remainingIceLayers > 0)
             {

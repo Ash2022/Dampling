@@ -26,10 +26,7 @@ public class LevelBatchBuilderWindow : EditorWindow
     private DamplingSimulationAgent botAgent;
     private System.Random rng;
 
-    private readonly string[] MasterColorPalette = {
-        "Color_0", "Color_1", "Color_2", "Color_3", "Color_4",
-        "Color_5", "Color_6", "Color_7", "Color_8", "Color_9"
-    };
+    private readonly int[] MasterColorPalette = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
 
     [MenuItem("Tools/Level Batch Builder")]
     public static void ShowWindow() { GetWindow<LevelBatchBuilderWindow>("Level Builder"); }
@@ -191,8 +188,8 @@ public class LevelBatchBuilderWindow : EditorWindow
             ResolutionQueues = new List<List<GameLevelSchema.ContainerData>>()
         };
 
-        List<string> activeColors = MasterColorPalette.Take(rules.MaxColors).ToList();
-        Dictionary<string, int> totalUnitColorCounts = new Dictionary<string, int>();
+        List<int> activeColors = MasterColorPalette.Take(rules.MaxColors).ToList();
+        Dictionary<int, int> totalUnitColorCounts = new Dictionary<int, int>();
         foreach (var c in activeColors) totalUnitColorCounts[c] = 0;
 
         int globalUnitIdCounter = 0;
@@ -216,7 +213,7 @@ public class LevelBatchBuilderWindow : EditorWindow
                 }
                 else
                 {
-                    string randomColor = activeColors[rng.Next(activeColors.Count)];
+                    int randomColor = activeColors[rng.Next(activeColors.Count)];
                     var newUnit = new GameLevelSchema.GridUnit
                     {
                         UnitId = globalUnitIdCounter++,
@@ -225,7 +222,7 @@ public class LevelBatchBuilderWindow : EditorWindow
                     };
 
                     for (int d = 0; d < DUMPLINGS_PER_UNIT; d++)
-                        newUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = randomColor });
+                        newUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = randomColor });
 
                     node.OccupyingUnit = newUnit;
                     totalUnitColorCounts[randomColor]++;
@@ -241,7 +238,7 @@ public class LevelBatchBuilderWindow : EditorWindow
         return level;
     }
 
-    private void ApplyMechanics(GameLevelSchema level, LevelGeneratorConfig.LevelRuleset rules, List<string> activeColors, Dictionary<string, int> colorTracker, int width, int height, ref int unitIdCounter, int levelIndex)
+    private void ApplyMechanics(GameLevelSchema level, LevelGeneratorConfig.LevelRuleset rules, List<int> activeColors, Dictionary<int, int> colorTracker, int width, int height, ref int unitIdCounter, int levelIndex)
     {
         // Helper function for the "Debut Guarantee & Probability Ramp"
         bool ShouldApply(UnlockableFeature feature)
@@ -276,7 +273,7 @@ public class LevelBatchBuilderWindow : EditorWindow
                     if (pipeNode.OccupyingUnit != null && pipeNode.OccupyingUnit.InteriorContents.Count > 0)
                     {
                         // Grab the color id of the dumpling inside the unit we are about to erase
-                        string colorToDeduct = pipeNode.OccupyingUnit.InteriorContents[0].ColorId;
+                        int colorToDeduct = pipeNode.OccupyingUnit.InteriorContents[0].ColorIndex;
                         if (colorTracker.ContainsKey(colorToDeduct))
                         {
                             colorTracker[colorToDeduct]--;
@@ -294,7 +291,7 @@ public class LevelBatchBuilderWindow : EditorWindow
 
                     for (int e = 0; e < emissionCount; e++)
                     {
-                        string randomColor = activeColors[rng.Next(activeColors.Count)];
+                        int randomColor = activeColors[rng.Next(activeColors.Count)];
                         var queuedUnit = new GameLevelSchema.GridUnit
                         {
                             UnitId = unitIdCounter++,
@@ -303,7 +300,7 @@ public class LevelBatchBuilderWindow : EditorWindow
                         };
 
                         for (int d = 0; d < DUMPLINGS_PER_UNIT; d++)
-                            queuedUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorId = randomColor });
+                            queuedUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = randomColor });
 
                         pipeNode.ContinuousPipe.ReservoirQueue.Add(queuedUnit);
                         colorTracker[randomColor]++;
@@ -361,13 +358,13 @@ public class LevelBatchBuilderWindow : EditorWindow
         }
     }
 
-    private void GenerateResolutionQueues(GameLevelSchema level, Dictionary<string, int> totalUnitColorCounts)
+    private void GenerateResolutionQueues(GameLevelSchema level, Dictionary<int, int> totalUnitColorCounts)
     {
         var flatContainersList = new List<GameLevelSchema.ContainerData>();
 
         foreach (var kvp in totalUnitColorCounts)
         {
-            string color = kvp.Key;
+            int color = kvp.Key;
             int totalDumplingsOfColor = kvp.Value * DUMPLINGS_PER_UNIT;
 
             while (totalDumplingsOfColor > 0)
@@ -375,7 +372,7 @@ public class LevelBatchBuilderWindow : EditorWindow
                 int capacity = Math.Min(totalDumplingsOfColor, 3);
                 flatContainersList.Add(new GameLevelSchema.ContainerData
                 {
-                    ColorId = color,
+                    ColorIndex = color,
                     Capacity = capacity,
                     FilledSlotsCount = 0
                 });

@@ -40,7 +40,7 @@ public class DamplingGameCore
     {
         public EngineEventType EventType { get; set; }
         public int TargetId { get; set; }
-        public string ColorValue { get; set; }
+        public int ColorIndex { get; set; } = -1;
         public int QueueIndex { get; set; }
         public object Payload { get; set; }
     }
@@ -80,7 +80,7 @@ public class DamplingGameCore
                 clonedQueue.Add(new GameLevelSchema.ContainerData
                 {
                     Id = container.Id,
-                    ColorId = container.ColorId,
+                    ColorIndex = container.ColorIndex,
                     Capacity = container.Capacity
                 });
             }
@@ -258,7 +258,7 @@ public class DamplingGameCore
                     if (DynamicQueues[q].Count == 0) continue;
 
                     var activeContainer = DynamicQueues[q][0];
-                    if (activeContainer.ColorId == dumpling.ColorId && activeContainer.Capacity > 0)
+                    if (activeContainer.ColorIndex == dumpling.ColorIndex && activeContainer.Capacity > 0)
                     {
                         activeContainer.Capacity--;
                         VirtualBelt.RemoveAt(i);
@@ -267,7 +267,7 @@ public class DamplingGameCore
                         {
                             EventType = EngineEventType.DumplingMovedToContainer,
                             TargetId = activeContainer.Id,
-                            ColorValue = dumpling.ColorId,
+                            ColorIndex = dumpling.ColorIndex,
                             QueueIndex = q
                         });
 
@@ -360,7 +360,7 @@ public class DamplingGameCore
                 for (int q = 0; q < DynamicQueues.Count; q++)
                 {
                     if (DynamicQueues[q].Count == 0) continue;
-                    if (DynamicQueues[q][0].ColorId == dumpling.ColorId)
+                    if (DynamicQueues[q][0].ColorIndex == dumpling.ColorIndex)
                     {
                         matchPossible = true;
                         break;

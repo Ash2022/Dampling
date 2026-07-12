@@ -14,7 +14,7 @@ public class ContainerView : MonoBehaviour
     private ContainerData dataModel;
     private int reservedSlotsCount = 0; // Guard variable to prevent double-claiming on the same frame
 
-    public string CurrentRequiredColorId => dataModel != null ? dataModel.ColorId : string.Empty;
+    public int CurrentRequiredColorIndex => dataModel != null ? dataModel.ColorIndex : -1;
     public ContainerData Model => dataModel;
 
     public void Initialize(ContainerData containerData,int orgQueueIndex)
@@ -23,8 +23,7 @@ public class ContainerView : MonoBehaviour
         reservedSlotsCount = dataModel.FilledSlotsCount; // Synchronize with data layer state
         QueueIndex = orgQueueIndex;
 
-        string colorId = containerData.ColorId;
-        spriteRenderer.color = DamplingGameUtils.GetColorById(colorId);
+        spriteRenderer.color = DamplingGameUtils.GetColorByIndex(containerData.ColorIndex);
 
         // Reset visual alphas/scales back to normal defaults when pulled from pool
         spriteRenderer.DOComplete();

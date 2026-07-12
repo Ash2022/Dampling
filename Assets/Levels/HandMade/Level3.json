@@ -6,43 +6,43 @@
     [
       {
         "Id": 0,
-        "ColorId": "Color_1",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 1,
-        "ColorId": "Color_1",
+        "ColorIndex": 0,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 2,
-        "ColorId": "Color_2",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 3,
-        "ColorId": "Color_0",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 4,
-        "ColorId": "Color_1",
+        "ColorIndex": 3,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 5,
-        "ColorId": "Color_1",
+        "ColorIndex": 3,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 6,
-        "ColorId": "Color_0",
+        "ColorIndex": 2,
         "Capacity": 3,
         "FilledSlotsCount": 0
       }
@@ -50,43 +50,43 @@
     [
       {
         "Id": 7,
-        "ColorId": "Color_1",
+        "ColorIndex": 0,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 8,
-        "ColorId": "Color_1",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 9,
-        "ColorId": "Color_3",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 10,
-        "ColorId": "Color_3",
+        "ColorIndex": 0,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 11,
-        "ColorId": "Color_1",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 12,
-        "ColorId": "Color_1",
+        "ColorIndex": 2,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 13,
-        "ColorId": "Color_3",
+        "ColorIndex": 0,
         "Capacity": 3,
         "FilledSlotsCount": 0
       }
@@ -94,43 +94,43 @@
     [
       {
         "Id": 14,
-        "ColorId": "Color_2",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 15,
-        "ColorId": "Color_0",
+        "ColorIndex": 0,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 16,
-        "ColorId": "Color_1",
+        "ColorIndex": 3,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 17,
-        "ColorId": "Color_3",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 18,
-        "ColorId": "Color_1",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 19,
-        "ColorId": "Color_3",
+        "ColorIndex": 0,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 20,
-        "ColorId": "Color_0",
+        "ColorIndex": 3,
         "Capacity": 3,
         "FilledSlotsCount": 0
       }
@@ -138,37 +138,37 @@
     [
       {
         "Id": 21,
-        "ColorId": "Color_1",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 22,
-        "ColorId": "Color_0",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 23,
-        "ColorId": "Color_1",
+        "ColorIndex": 3,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 24,
-        "ColorId": "Color_0",
+        "ColorIndex": 3,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 25,
-        "ColorId": "Color_3",
+        "ColorIndex": 1,
         "Capacity": 3,
         "FilledSlotsCount": 0
       },
       {
         "Id": 26,
-        "ColorId": "Color_2",
+        "ColorIndex": 2,
         "Capacity": 3,
         "FilledSlotsCount": 0
       }
@@ -207,31 +207,31 @@
           "IsHiddenUntilUnblocked": false,
           "InteriorContents": [
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             }
           ],
           "ExplicitlyBlockedByUnitIds": [],
@@ -251,31 +251,31 @@
           "IsHiddenUntilUnblocked": false,
           "InteriorContents": [
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             }
           ],
           "ExplicitlyBlockedByUnitIds": [],
@@ -295,31 +295,31 @@
           "IsHiddenUntilUnblocked": false,
           "InteriorContents": [
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             }
           ],
           "ExplicitlyBlockedByUnitIds": [],
@@ -375,31 +375,31 @@
           "IsHiddenUntilUnblocked": false,
           "InteriorContents": [
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             }
           ],
           "ExplicitlyBlockedByUnitIds": [],
@@ -419,31 +419,31 @@
           "IsHiddenUntilUnblocked": false,
           "InteriorContents": [
             {
-              "ColorId": "Color_2"
+              "ColorIndex": 2
             },
             {
-              "ColorId": "Color_2"
+              "ColorIndex": 2
             },
             {
-              "ColorId": "Color_2"
+              "ColorIndex": 2
             },
             {
-              "ColorId": "Color_2"
+              "ColorIndex": 2
             },
             {
-              "ColorId": "Color_2"
+              "ColorIndex": 2
             },
             {
-              "ColorId": "Color_2"
+              "ColorIndex": 2
             },
             {
-              "ColorId": "Color_2"
+              "ColorIndex": 2
             },
             {
-              "ColorId": "Color_2"
+              "ColorIndex": 2
             },
             {
-              "ColorId": "Color_2"
+              "ColorIndex": 2
             }
           ],
           "ExplicitlyBlockedByUnitIds": [],
@@ -463,31 +463,31 @@
           "IsHiddenUntilUnblocked": false,
           "InteriorContents": [
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             },
             {
-              "ColorId": "Color_3"
+              "ColorIndex": 3
             }
           ],
           "ExplicitlyBlockedByUnitIds": [],
@@ -543,31 +543,31 @@
           "IsHiddenUntilUnblocked": false,
           "InteriorContents": [
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             }
           ],
           "ExplicitlyBlockedByUnitIds": [],
@@ -587,31 +587,31 @@
           "IsHiddenUntilUnblocked": false,
           "InteriorContents": [
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             },
             {
-              "ColorId": "Color_0"
+              "ColorIndex": 0
             }
           ],
           "ExplicitlyBlockedByUnitIds": [],
@@ -631,31 +631,31 @@
           "IsHiddenUntilUnblocked": false,
           "InteriorContents": [
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             },
             {
-              "ColorId": "Color_1"
+              "ColorIndex": 1
             }
           ],
           "ExplicitlyBlockedByUnitIds": [],
