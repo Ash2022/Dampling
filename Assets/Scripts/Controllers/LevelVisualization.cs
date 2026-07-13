@@ -24,8 +24,6 @@ public class LevelVisualization : MonoBehaviour
         // Instantiate the packet to return tracking data straight to GameManager
         BoardVisualReferences references = new BoardVisualReferences();
 
-        
-
         Vector2 unitSize = GetPrefabSize(UnitPrefab)*ScaleFactor;
         Vector2 containerSize = GetPrefabSize(ContainerPrefab);
 

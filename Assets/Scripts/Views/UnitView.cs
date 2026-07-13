@@ -118,7 +118,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                 //lidRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
             }
 
-            if(cellNode.Position.Y ==0)
+            if(cellNode.Position.Y <=0)
                 RemoveLidCover();
 
         }
@@ -217,9 +217,11 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         // 2. Eject the 9 balls one by one sequentially
         float delayBetweenBalls = 0.05f;
 
+        int totalBalls = preAllocatedBallViews.Count-1;
+
         for (int i = 0; i < preAllocatedBallViews.Count; i++)
         {
-            BallView ballView = preAllocatedBallViews[8-i];
+            BallView ballView = preAllocatedBallViews[totalBalls-i];
             Transform ballTransform = ballView.transform;
             float jumpDelay = 0.1f + (i * delayBetweenBalls);
 

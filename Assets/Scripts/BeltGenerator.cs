@@ -173,4 +173,9 @@ public class BeltGenerator : MonoBehaviour
             }
         }
     }
+
+    internal void ResumeBelt()
+    {
+        beltActive = true;
+    }
 }

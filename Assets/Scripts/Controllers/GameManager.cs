@@ -720,7 +720,7 @@ public class GameManager : MonoBehaviour
         if (topColors.Count == 0) return; // Safety check
 
         // The coordinates you requested for the new units (Row -1, Col 0 and 1)
-        Vector2Int[] spawnCoords = { new Vector2Int(0, -1), new Vector2Int(1, -1) };
+        Vector2Int[] spawnCoords = { new Vector2Int(3, -1), new Vector2Int(4, -1) };
 
         for (int i = 0; i < topColors.Count; i++)
         {
@@ -736,14 +736,8 @@ public class GameManager : MonoBehaviour
 
             // 5. Calculate physical Unity spawn position
             // We look at Row 0 to figure out where Row -1 should visually sit.
-            Vector3 spawnPosition = Vector3.zero;
-            if (activeBoardReferences.UnitViews.TryGetValue(new Vector2Int(spawnCoords[i].x, 0), out var viewBelow))
-            {
-                // Assuming your grid is built top-down, row -1 is ABOVE row 0. 
-                // Adjust the 1.0f (or whatever your CellSizeY is) to match your visual grid spacing.
-                spawnPosition = viewBelow.transform.position + new Vector3(0f, 1.0f, 0f);
-            }
-
+            Vector3 spawnPosition = i == 0 ? new Vector2(-0.3f,-0.424f):new Vector2(0.3f,-0.424f);
+            
             // 6. Spawn the visual unit
             GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
             UnitView newUnitView = unitInstance.GetComponent<UnitView>();
@@ -761,6 +755,8 @@ public class GameManager : MonoBehaviour
         // beltGenerator.ResumeBelt(); 
 
         Debug.Log("Revive Executed! New units spawned at Row -1.");
+
+        beltGenerator.ResumeBelt();
     }
 
     public void SkipClicked()
