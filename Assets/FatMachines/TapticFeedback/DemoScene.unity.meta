@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: f719c28a65856e94f8bbce54d43dfe7a
+DefaultImporter:
+  externalObjects: {}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 139512
+  packageName: Haptic(Taptic) Feedback Engine for Vibrations on iOS/Android
+  packageVersion: 1.2.5
+  assetPath: Assets/FatMachines/TapticFeedback/DemoScene.unity
+  uploadId: 481879

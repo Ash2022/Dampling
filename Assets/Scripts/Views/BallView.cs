@@ -89,6 +89,8 @@ public class BallView : MonoBehaviour
                 {
                     if (currentBeltSlot) transform.position = Vector3.Lerp(startPos, currentBeltSlot.position, t);
                 }).SetEase(Ease.OutQuad).OnComplete(() => isAnimatingCapture = false);
+
+                GameManager.Instance.BallEnteredSlot(this);
             }
         }
 

@@ -77,6 +77,11 @@ public class ContainerView : MonoBehaviour
         }
     }
 
+    public bool HasRoomLeft()
+    {
+        return dataModel != null && dataModel.FilledSlotsCount < dataModel.Capacity;
+    }
+
     private void ExecuteFulfillmentSequence()
     {
         Sequence clearSeq = DOTween.Sequence();

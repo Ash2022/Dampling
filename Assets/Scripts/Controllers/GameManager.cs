@@ -6,6 +6,7 @@ using System;
 using System.Linq;
 using UnityEngine.InputSystem;
 using DG.Tweening;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -16,7 +17,10 @@ public class GameManager : MonoBehaviour
         Initializing,
         ReadyToPlay,
         ProcessingInput,
-        GameEnded
+        BeltJammed,
+
+        GameEnded,
+        ShowingEndScreen
     }
 
     public static GameManager Instance { get; private set; }
@@ -28,14 +32,25 @@ public class GameManager : MonoBehaviour
     private GameLevelSchema currentLevelData;
     private GameState currentState;
 
+    [SerializeField] private UIManager uiManager;          // assign in scene
+    [SerializeField] private GameOverView gameOverView;    // assign in scene
+    [SerializeField] private GameObject splashScreen;
+    [SerializeField] private TMP_Text splashText;
+    [SerializeField] private ReviveView reviveView;
+
     // Persistent progression tracker
     public int CurrentLevelIndex = 0;
 
     private float checkTimer = 0f;
+    public int BallsInStagingArea { get; private set; }
 
     private BoardVisualReferences activeBoardReferences;
     public List<BallView> ballViews = new List<BallView>();
 
+    internal void AddToBalanceVisual(int amount) => uiManager.AddToBalanceVisual(amount);
+    internal Vector3 GetBalanceRect() => uiManager.GetBalancePosition();
+    public void MoveBalanceUp() => uiManager.MoveBalanceUpOnSort();
+    internal void SetUIToBalance() => uiManager.SetBalanceToModel();
 
     private void Awake()
     {
@@ -45,13 +60,56 @@ public class GameManager : MonoBehaviour
 
     private async Task Start()
     {
+        Application.targetFrameRate = 60;
+
+        // Safe camera sizing
+        float baselineAspect = 9f / 16f;
+        float baselineOrthoSize = 5f;
+        float targetAspect = Camera.main.aspect;
+        if (targetAspect < baselineAspect)
+        {
+            float adjustedOrthoSize = baselineOrthoSize * (baselineAspect / targetAspect);
+            Camera.main.orthographicSize = adjustedOrthoSize;
+        }
+
+
+        splashScreen.SetActive(true);
+
         await InitializeGame();
 
+        if (CurrentLevelIndex == -1)
+        {
+            CurrentLevelIndex = ModelManager.Instance.GetLastPlayedLevel();
+            CurrentLevelIndex++;
+        }
+
+        if (CurrentLevelIndex == 0)
+        {
+            splashScreen.SetActive(false);
+            StartLevel(CurrentLevelIndex);
+        }
+        else
+        {
+            splashText.text = "CLICK TO CONTINUE";
+        }
+
+        //StartLevel(CurrentLevelIndex);
+    }
+
+    public void SplashClicked()
+    {
+        splashScreen.SetActive(false);
         StartLevel(CurrentLevelIndex);
     }
 
     private void Update()
     {
+
+        if(currentState == GameState.GameEnded || currentState == GameState.ShowingEndScreen ||
+            currentState == GameState.BeltJammed)
+            return;
+            
+
         // Cheats for level switching using the new Input System.
         if (Keyboard.current == null) return; // Input system not ready.
 
@@ -85,7 +143,31 @@ public class GameManager : MonoBehaviour
         checkTimer += Time.deltaTime;
         if (checkTimer >= 0.5f) // Check twice a second
         {
-            CheckForVisualDeadlock();
+            if (CheckForVisualDeadlock())
+            {
+                currentState = GameState.BeltJammed;
+                beltGenerator.StopBeltMovement();
+
+                //offer the revive
+                reviveView.ShowRevive((answerBack) =>
+                {
+                    if (answerBack)
+                    {
+                        SoundsManager.Instance.PlayRevive();
+                        //revive requested
+                        ExecuteRevive();                        
+                        ModelManager.Instance.AddToBalanceAndSave(-ModelManager.REVIVE_COST);
+                        uiManager.SetBalanceToModelAnimate();
+                    }
+                    else
+                    {
+                        //no revive
+                        ResumeGameOver(false);
+                    }
+                });
+
+            }
+
             checkTimer = 0f;
         }
 
@@ -120,6 +202,8 @@ public class GameManager : MonoBehaviour
         currentLevelData = ModelManager.Instance.GetLevelByIndex(CurrentLevelIndex);
 
         ClearActiveBoard();
+
+        uiManager.InitLevel(CurrentLevelIndex, ModelManager.Instance.GetBalance());
 
         // Step 3: Wipe past scene instances and render the fresh board layout array mapping setup
         activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData);
@@ -248,18 +332,66 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        /*
         if (gameCore.IsGameOver)
         {
-            currentState = GameState.GameEnded;
-            Debug.Log(("Game Over! Belt Full"));
-            return;
+            //currentState = GameState.GameEnded;
+            //Debug.Log(("Game Over! Belt Full"));
+            //return;
         }
+        */
 
         currentState = GameState.ReadyToPlay;
     }
 
+    private void ResumeGameOver(bool isWin)
+    {
+        if(currentState == GameState.GameEnded)
+            return;
+
+        uiManager.GameOver();
+        currentState = GameState.GameEnded;
+        StopAllCoroutines();
+
+
+        if (isWin)
+            ModelManager.Instance.AddToBalanceAndSave(ModelManager.GOLD_PER_WIN);
+
+        gameOverView.InitEndScreen(isWin, CurrentLevelIndex, () =>
+        {
+            if (isWin)
+            {
+                ModelManager.Instance.SetLastPlayedLevel(CurrentLevelIndex);
+                CurrentLevelIndex++;
+            }
+
+            /*
+                        int unlockIndex = ModelManager.Instance.GetUnlock(CurrentLevelIndex);
+
+                        if (unlockIndex != -1)
+                            uiManager.ShowTutorialImage(true, unlockIndex + 1);
+                        else
+                        {*/
+            StartLevel(CurrentLevelIndex);
+            //}
+        });
+    }
+
+
     public void AdvanceContainerQueue(int queueIndex, ContainerView resolvedView)
     {
+        //a container was resolved - we can check for game over win
+        if (CheckForVisualWin())
+        {
+            Debug.Log("VISUAL WIN! All containers resolved. Loading next level...");
+            ResumeGameOver(true);
+            // Advance progression tracking systematically
+            //CurrentLevelIndex++;
+            //StartLevel(CurrentLevelIndex);
+            return;
+        }
+
+
         // 1. Fixed spacing delta based directly on your layout rules
         float containerSpacingY = 0.57f;
 
@@ -420,13 +552,220 @@ public class GameManager : MonoBehaviour
         beltGenerator.ResetSlots();
 
         checkTimer = 0f;
+        BallsInStagingArea = 0;
     }
 
-    private void CheckForVisualDeadlock()
+    private bool CheckForVisualDeadlock()
     {
+        // 1. Is the visual belt completely jammed?
+        bool slotsFull = beltGenerator.AllSlotsFull();
+        if (!slotsFull) return false;
+
+        // 2. What colors are physically stuck on the belt right now?
+        List<int> beltColors = beltGenerator.GetBeltsColors();
+
+        // 3. What colors are physically waiting at the front of the queues right now?
+        List<int> activeContainerColors = GetVisualAvailableContainerColors();
+
+        // 4. Can ANY ball on the belt go into ANY open container?
+        bool matchPossible = beltColors.Any(color => activeContainerColors.Contains(color));
+
+        if (!matchPossible)
+        {
+            return true;
+            //currentState = GameState.GameEnded;
+            Debug.Log("Visual Deadlock! The belt is full and no items match the active containers.");
+            // TODO: Trigger Visual Game Over UI / Defeat sequence here
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Scans the actual UI elements to find which containers are currently at the front of the line.
+    /// </summary>
+    private List<int> GetVisualAvailableContainerColors()
+    {
+        List<int> resolvableColors = new List<int>();
+
+        if (activeBoardReferences == null || activeBoardReferences.ContainerViews == null)
+            return resolvableColors;
+
+        // 1. Grab all active, unresolved containers from the board references
+        // (Assuming your ContainerView has a way to check if it's already full, like 'Capacity > 0' or '!IsResolved')
+        var unresolvedContainers = activeBoardReferences.ContainerViews.Values
+            .Where(v => v != null && v.gameObject.activeInHierarchy && v.HasRoomLeft());
+
+        // 2. Group them visually by their Queue column
+        var visualQueues = unresolvedContainers.GroupBy(v => v.QueueIndex);
+
+        foreach (var queueGroup in visualQueues)
+        {
+            // 3. FIND THE VISUAL HEAD:
+            // Since your AdvanceContainerQueue moves containers DOWN (-Y), 
+            // the one with the lowest Y position is physically at the front of the line.
+            var headContainer = queueGroup.OrderBy(v => v.transform.position.y).FirstOrDefault();
+
+            if (headContainer != null)
+            {
+                resolvableColors.Add(headContainer.Model.ColorIndex);
+            }
+        }
+
+        return resolvableColors.Distinct().ToList();
+    }
+
+    /// <summary>
+    /// Detects if the puzzle is mathematically solved based on active visual elements and staging limits.
+    /// </summary>
+    private bool CheckForLogicalWin()
+    {
+        if (activeBoardReferences == null || activeBoardReferences.UnitViews == null) return false;
+
+        // 1. Are there any active, unplayed units left on the board?
+        foreach (var unit in activeBoardReferences.UnitViews.Values)
+        {
+            // Assuming your UnitView disables its gameObject when it finishes firing,
+            // or has a property like 'HasReleasedContents'. Update this check to match your logic!
+            if (unit != null && unit.gameObject.activeInHierarchy)
+            {
+                return false; // Units are still on the board, game is not won yet.
+            }
+        }
+
+        // 2. All units are played! Now, calculate available space.
+        // Assuming GetBeltsColors() returns the list of balls currently occupying a slot on the belt.
+        int currentBallsOnBelt = beltGenerator.GetBeltsColors().Count;
+        int emptyBeltSlots = BELT_CAPACITY - currentBallsOnBelt;
+
+        // 3. The Final Equation
+        // If the flying balls fit in the remaining belt slots, it's a guaranteed win.
+        if (BallsInStagingArea <= emptyBeltSlots)
+        {
+            return true;
+        }
+
+        return false; // The staging area has more balls than the belt can hold -> Impending Jam / Loss
+    }
+
+    /// <summary>
+    /// Detects if every container on the screen has been fully resolved (Capacity reached 0).
+    /// This means all animations are done and the level is visually complete.
+    /// </summary>
+    private bool CheckForVisualWin()
+    {
+        if (activeBoardReferences == null || activeBoardReferences.ContainerViews == null) return false;
+
+        // Scan all physical container views. If ANY container is still active and hungry, no win yet.
+        foreach (var container in activeBoardReferences.ContainerViews.Values)
+        {
+            if (container != null && container.gameObject.activeInHierarchy && container.HasRoomLeft())
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public void RegisterBallEnteredStaging()
+    {
+        BallsInStagingArea++;
+        //Debug.Log($"[Staging Tracker] Ball Airborne! Total in Staging: {BallsInStagingArea}");
+    }
+
+    public void RegisterBallLandedOnBelt()
+    {
+        BallsInStagingArea--;
+        //Debug.Log($"[Staging Tracker] Ball Landed! Total in Staging: {BallsInStagingArea}");
+    }
+
+    public void BallLinked(BallView ballView)
+    {
+        ballViews.Add(ballView);
         
     }
 
-   
+    public void BallEmittedToStage(BallView ballView)
+    {
+        RegisterBallEnteredStaging();
+    }
 
+    internal void BallEnteredSlot(BallView ballView)
+    {
+        RegisterBallLandedOnBelt();
+
+        if (CheckForLogicalWin())
+        {
+            Debug.Log("LOGICAL WIN! All units played. Waiting for animations to finish...");
+            // TODO: Fire off early confetti, change background music, or disable a pause menu here.
+            uiManager.ShowHideSkipButton(true);
+        }
+    }
+
+    public void ExecuteRevive()
+    {
+        if (currentState != GameState.GameEnded && currentState != GameState.BeltJammed) return;
+
+        // 1. Get the current colors on the belt
+        List<int> beltColors = beltGenerator.GetBeltsColors();
+
+        // 2. Group by color, sort by frequency (highest first), and take the top 2
+        var topColors = beltColors.GroupBy(c => c)
+                                  .OrderByDescending(g => g.Count())
+                                  .Select(g => new { ColorIndex = g.Key, Count = g.Count() })
+                                  .Take(2)
+                                  .ToList();
+
+        if (topColors.Count == 0) return; // Safety check
+
+        // The coordinates you requested for the new units (Row -1, Col 0 and 1)
+        Vector2Int[] spawnCoords = { new Vector2Int(0, -1), new Vector2Int(1, -1) };
+
+        for (int i = 0; i < topColors.Count; i++)
+        {
+            int color = topColors[i].ColorIndex;
+            // Cap the extraction at 9 balls max
+            int ballsToExtract = Mathf.Min(9, topColors[i].Count);
+
+            // 3. Physically remove the balls from the belt (See Step 2 below for this method)
+            beltGenerator.ExtractBallsByColor(color, ballsToExtract);
+
+            // 4. Create the raw Data Node for the Core (See Step 3 below for this method)
+            var newNode = gameCore.InjectReviveUnit(spawnCoords[i].x, spawnCoords[i].y, color, ballsToExtract);
+
+            // 5. Calculate physical Unity spawn position
+            // We look at Row 0 to figure out where Row -1 should visually sit.
+            Vector3 spawnPosition = Vector3.zero;
+            if (activeBoardReferences.UnitViews.TryGetValue(new Vector2Int(spawnCoords[i].x, 0), out var viewBelow))
+            {
+                // Assuming your grid is built top-down, row -1 is ABOVE row 0. 
+                // Adjust the 1.0f (or whatever your CellSizeY is) to match your visual grid spacing.
+                spawnPosition = viewBelow.transform.position + new Vector3(0f, 1.0f, 0f);
+            }
+
+            // 6. Spawn the visual unit
+            GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
+            UnitView newUnitView = unitInstance.GetComponent<UnitView>();
+
+            newUnitView.Initialize(newNode);
+            activeBoardReferences.UnitViews[spawnCoords[i]] = newUnitView;
+        }
+
+        // 7. Fix the staging math (since we ripped balls out of the ecosystem)
+        // Recalculate or explicitly reset staging math if necessary here.
+
+        // 8. Resume the game
+        currentState = GameState.ReadyToPlay;
+        // Assuming you have a method to resume belt visuals
+        // beltGenerator.ResumeBelt(); 
+
+        Debug.Log("Revive Executed! New units spawned at Row -1.");
+    }
+
+    public void SkipClicked()
+    {
+        ResumeGameOver(true);
+    }
+    
 }

@@ -14,9 +14,9 @@ public class DamplingGameCore
 
     public bool IsGameOver { get; private set; }
     public bool IsGameWon { get; private set; }
-    
+
     // NEW: Determines if the Core is running in the visual game or in a headless simulation
-    public bool IsLiveMode { get; private set; } 
+    public bool IsLiveMode { get; private set; }
 
     // --- Optional View Notification Callbacks ---
     private Action<int> OnUnitUnblocked;                  // Param: UnitId
@@ -51,7 +51,7 @@ public class DamplingGameCore
     // --- Core Engine Initializer ---
     public void InitializeLevel(
         GameLevelSchema levelData,
-        bool isLiveMode=false, // NEW: Defaults to true for normal gameplay
+        bool isLiveMode = false, // NEW: Defaults to true for normal gameplay
         Action<int> onUnitUnblocked = null,
         Action<int, int> onUnitIceChanged = null,
         Action<int, int> onLockKeyCollected = null,
@@ -162,9 +162,10 @@ public class DamplingGameCore
                 node.OccupyingUnit = null;
             }
 
-            // --- TRIGGER THE ACTIVATION SIGNAL TO GAME MANAGER ---
-            OnLinkedUnitPlayed?.Invoke(currentUnit.UnitId);
-
+            // --- THE FIX: ONLY TRIGGER FOR THE ACTUAL LINKED UNITS ---
+            if (currentUnit.UnitId != activeUnit.UnitId)
+                OnLinkedUnitPlayed?.Invoke(currentUnit.UnitId);
+            
             foreach (var dumpling in currentUnit.InteriorContents)
             {
                 VirtualBelt.Add(dumpling);
@@ -304,7 +305,7 @@ public class DamplingGameCore
 
                 if (gridMatrix.TryGetValue(spaceAboveCoord, out var spaceAboveNode))
                 {
-                    if (spaceAboveNode.IsPlayablePath  && spaceAboveNode.OccupyingUnit == null)
+                    if (spaceAboveNode.IsPlayablePath && spaceAboveNode.OccupyingUnit == null)
                     {
                         var nextUnit = cellNode.ContinuousPipe.ReservoirQueue[0];
                         cellNode.ContinuousPipe.ReservoirQueue.RemoveAt(0);
@@ -428,7 +429,7 @@ public class DamplingGameCore
 
                     if (neighborCell.OccupyingUnit == null ||
                         PlayedUnitIds.Contains(neighborCell.OccupyingUnit.UnitId) ||
-                        currentClusterIds.Contains(neighborCell.OccupyingUnit.UnitId)) 
+                        currentClusterIds.Contains(neighborCell.OccupyingUnit.UnitId))
                     {
                         if (neighborCoord.Y == 0)
                         {
@@ -483,5 +484,40 @@ public class DamplingGameCore
             }
         }
         return cluster;
+    }
+
+    public GameLevelSchema.CellNode InjectReviveUnit(int x, int y, int colorIndex, int ballCount)
+    {
+        var coord = new GameLevelSchema.Coordinate(x, y);
+
+        // Create a new unique Unit ID (just grab a high number or max + 1)
+        int newUnitId = (gridMatrix.Values.Max(n => n.OccupyingUnit?.UnitId ?? 0)) + 1;
+
+        var newUnit = new GameLevelSchema.GridUnit
+        {
+            UnitId = newUnitId,
+            IceLayers = 0, // Unblocked
+            ExplicitlyBlockedByUnitIds = new List<int>(), // Unblocked
+            LinkedUnitIds = new List<int>(),
+            InteriorContents = new List<GameLevelSchema.DumplingItem>()
+        };
+
+        // Fill the unit with the exact balls we took from the belt
+        for (int i = 0; i < ballCount; i++)
+        {
+            newUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = colorIndex });
+        }
+
+        var newNode = new GameLevelSchema.CellNode
+        {
+            Position = coord,
+            IsPlayablePath = true,
+            OccupyingUnit = newUnit
+        };
+
+        // Add it to the core's live matrix
+        gridMatrix[coord] = newNode;
+
+        return newNode;
     }
 }

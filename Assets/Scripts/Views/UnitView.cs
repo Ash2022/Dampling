@@ -23,6 +23,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     private Vector2Int gridCoordinate;
     private List<BallView> preAllocatedBallViews = new List<BallView>();
     private Sequence resolveSequence;
+    private Sequence openLidSequence;
     public int unitColorIndex = -1;
 
     private bool wasInitiallyHidden = false;
@@ -164,7 +165,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             {
                 bView.Initialize(contents[i].ColorIndex);
                 
-                GameManager.Instance.ballViews.Add(bView);
+                GameManager.Instance.BallLinked(bView);
+                
             }
 
             preAllocatedBallViews.Add(bView);
@@ -205,7 +207,11 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     private void ExecuteResolveTimeline()
     {
-        CleanUpActiveSequence();
+        Debug.Log("Unit " + gameObject.name);
+
+        if (resolveSequence != null && resolveSequence.IsActive())
+            resolveSequence.Kill();
+        
         resolveSequence = DOTween.Sequence();
 
         // 2. Eject the 9 balls one by one sequentially
@@ -233,6 +239,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                     ballView.ActivatePhysicsSim();
                 }
             });
+
+            GameManager.Instance.BallEmittedToStage(ballView);
         }
 
         // 3. Fade out the main round box container base right after the final ball exits
@@ -261,9 +269,11 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     private void CleanUpActiveSequence()
     {
         if (resolveSequence != null && resolveSequence.IsActive())
-        {
             resolveSequence.Kill();
-        }
+        
+        if (openLidSequence != null && openLidSequence.IsActive())
+            openLidSequence.Kill();
+        
     }
 
     public void UpdatePipeCounter(int newPipeCount)
@@ -344,16 +354,19 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     private void RemoveLidCover()
     {
-        resolveSequence = DOTween.Sequence();
+        if (openLidSequence != null && openLidSequence.IsActive())
+            openLidSequence.Kill();
+        
+        openLidSequence = DOTween.Sequence();
 
         // 1. Pop the Lid off flying away dynamically
         if (lidRenderer != null)
         {
-            resolveSequence.Append(lidRenderer.transform.DOMove(transform.position + new Vector3(.5f, .5f, 0f), .75f).SetEase(Ease.OutQuad));
-            resolveSequence.Join(lidRenderer.transform.DORotate(new Vector3(0f, 0f, 360f), 0.75f, RotateMode.FastBeyond360));
-            resolveSequence.Join(lidRenderer.DOFade(0f, 0.75f));
+            openLidSequence.Append(lidRenderer.transform.DOMove(transform.position + new Vector3(.5f, .5f, 0f), .75f).SetEase(Ease.OutQuad));
+            openLidSequence.Join(lidRenderer.transform.DORotate(new Vector3(0f, 0f, 360f), 0.75f, RotateMode.FastBeyond360));
+            openLidSequence.Join(lidRenderer.DOFade(0f, 0.75f));
         }
 
-        resolveSequence.Play();
+        openLidSequence.Play();
     }
 }
