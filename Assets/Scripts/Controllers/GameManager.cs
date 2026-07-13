@@ -116,6 +116,7 @@ public class GameManager : MonoBehaviour
 
         activeBoardReferences.logicalContainerPositions.Clear();
         activeBoardReferences.ContainerViews.Clear();
+        
         foreach (var ball in ballViews)
             DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
 

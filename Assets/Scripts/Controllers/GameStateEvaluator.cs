@@ -72,7 +72,7 @@ public class GameStateEvaluator
             return false; // Units are still on the board, game is not won yet.
         }
 
-        Debug.Log("CheckLogicalWin");
+        //Debug.Log("Check Logic Win");
 
         int currentBallsOnBelt = beltGenerator.GetBeltsColors().Count;
         int emptyBeltSlots = GameManager.BELT_CAPACITY - currentBallsOnBelt;
