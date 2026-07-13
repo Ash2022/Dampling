@@ -51,6 +51,7 @@ public class GameManager : MonoBehaviour
     private void Awake()
     {
         Instance = this;
+        currentState = GameState.Initializing;
         DontDestroyOnLoad(gameObject);
     }
 
@@ -135,7 +136,7 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         if (currentState == GameState.GameEnded || currentState == GameState.ShowingEndScreen ||
-            currentState == GameState.BeltJammed)
+            currentState == GameState.BeltJammed || currentState == GameState.Initializing)
             return;
 
         // Cheats for level switching using the new Input System.
@@ -490,8 +491,6 @@ public class GameManager : MonoBehaviour
             }
         }
     }
-
-    
 
     internal void BallEnteredSlot(BallView ballView)
     {
