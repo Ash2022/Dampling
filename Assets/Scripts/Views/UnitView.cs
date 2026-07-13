@@ -165,7 +165,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             {
                 bView.Initialize(contents[i].ColorIndex);
 
-                GameManager.Instance.BallLinked(bView);
+                GameManager.Instance.BallsInStagingArea++;
 
             }
 
@@ -188,7 +188,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         if (GameManager.Instance.IsMagnet())
         {
-            GameManager.Instance.ExecuteMagnet(this);
+            GameManager.Instance.UseMagnetBooster(this);
             disableButton = true;
             return;
         }
@@ -254,7 +254,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                 }
             });
 
-            GameManager.Instance.BallEmittedToStage(ballView);
+            GameManager.Instance.BallsInStagingArea++;
         }
 
         // 3. Fade out the main round box container base right after the final ball exits

@@ -19,7 +19,6 @@ public class DamplingGameCore
     public bool IsLiveMode { get; private set; }
 
     // --- Optional View Notification Callbacks ---
-    private Action<int> OnUnitUnblocked;                  // Param: UnitId
     private Action<int, int> OnUnitIceChanged;             // Params: UnitId, RemainingIceLayers
     private Action<int, int> OnLockKeyCollected;
     private Action<int> OnLinkedUnitPlayed;         // Params: LockedUnitId, CollectedKeyUnitId
@@ -52,7 +51,6 @@ public class DamplingGameCore
     public void InitializeLevel(
         GameLevelSchema levelData,
         bool isLiveMode = false, // NEW: Defaults to true for normal gameplay
-        Action<int> onUnitUnblocked = null,
         Action<int, int> onUnitIceChanged = null,
         Action<int, int> onLockKeyCollected = null,
         Action<int> onLinkedUnitPlayed = null)
@@ -65,7 +63,6 @@ public class DamplingGameCore
         IsGameWon = false;
 
         // Assign optional callbacks
-        OnUnitUnblocked = onUnitUnblocked;
         OnUnitIceChanged = onUnitIceChanged;
         OnLockKeyCollected = onLockKeyCollected;
         OnLinkedUnitPlayed = onLinkedUnitPlayed;
@@ -335,8 +332,6 @@ public class DamplingGameCore
 
             if (!IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, new HashSet<int>()))
             {
-                OnUnitUnblocked?.Invoke(cellNode.OccupyingUnit.UnitId);
-
                 transactions.Add(new EngineEvent
                 {
                     EventType = EngineEventType.UnitUnblocked,

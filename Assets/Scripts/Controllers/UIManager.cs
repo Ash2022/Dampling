@@ -152,6 +152,7 @@ public class UIManager : MonoBehaviour
         skipButton.SetActive(showButton);
     }
 
+    //called from the scene
     public void SkipButtonClicked()
     {
         GameManager.Instance.SkipClicked();
