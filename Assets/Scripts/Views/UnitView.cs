@@ -164,7 +164,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             if (bView != null)
             {
                 bView.Initialize(contents[i].ColorIndex);
-
+                GameManager.Instance.ballViews.Add(bView);
                 GameManager.Instance.BallsInStagingArea++;
 
             }
