@@ -106,6 +106,7 @@ public class GameLevelSchema
     {
         public Dictionary<Vector2Int, UnitView> UnitViews { get; set; } = new Dictionary<Vector2Int, UnitView>();
         public Dictionary<int, ContainerView> ContainerViews { get; set; } = new Dictionary<int, ContainerView>();
-    
+
+        public Dictionary<ContainerView, Vector3> logicalContainerPositions = new Dictionary<ContainerView, Vector3>();
     }
 }

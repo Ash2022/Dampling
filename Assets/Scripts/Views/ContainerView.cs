@@ -8,20 +8,26 @@ public class ContainerView : MonoBehaviour
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private Transform[] localBallTargetSlots; // Assign 3 local attachment transforms in inspector
 
+    [SerializeField] private Collider2D contCollider;
+
+
     public int QueueIndex { get; set; }
 
     private List<BallView> absorbedBallViews = new List<BallView>();
     private ContainerData dataModel;
     private int reservedSlotsCount = 0; // Guard variable to prevent double-claiming on the same frame
 
+
+
     public int CurrentRequiredColorIndex => dataModel != null ? dataModel.ColorIndex : -1;
     public ContainerData Model => dataModel;
 
-    public void Initialize(ContainerData containerData,int orgQueueIndex)
+    public void Initialize(ContainerData containerData, int orgQueueIndex)
     {
         dataModel = containerData;
         reservedSlotsCount = dataModel.FilledSlotsCount; // Synchronize with data layer state
         QueueIndex = orgQueueIndex;
+        absorbedBallViews.Clear();
 
         spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(containerData.ColorIndex);
 
@@ -77,6 +83,11 @@ public class ContainerView : MonoBehaviour
         }
     }
 
+    public bool IsContainerFullyBooked()
+    {
+        return reservedSlotsCount >= dataModel.Capacity;
+    }
+
     public bool HasRoomLeft()
     {
         return dataModel != null && dataModel.FilledSlotsCount < dataModel.Capacity;
@@ -113,5 +124,25 @@ public class ContainerView : MonoBehaviour
             DamplingObjectPool.Instance.ReturnContainer(gameObject);
         });
         clearSeq.Play();
+    }
+
+    public void DisableEnableCollider(bool colState)
+    {
+        contCollider.enabled = colState;
+    }
+
+
+
+    // This forces the unparented balls to perfectly stick to the container's slots
+    public void SyncSeatedBalls()
+    {
+        for (int i = 0; i < absorbedBallViews.Count; i++)
+        {
+            // Ensure the ball exists and we have a corresponding target slot
+            if (absorbedBallViews[i] != null && localBallTargetSlots != null && i < localBallTargetSlots.Length)
+            {
+                absorbedBallViews[i].transform.position = localBallTargetSlots[i].position;
+            }
+        }
     }
 }

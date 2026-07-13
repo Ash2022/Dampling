@@ -52,6 +52,7 @@ public class LevelVisualization : MonoBehaviour
 
                 // Map reference by unique ID for instant event resolution
                 references.ContainerViews.Add(activeQueueList[c].Id, containerView);
+                references.logicalContainerPositions.Add(containerView, containerInstance.transform.position);
             }
         }
 

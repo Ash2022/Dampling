@@ -31,3 +31,9 @@ and also - in the start where we show the win rate - show it as actual_target.
 
 
 pipe cell should not be clickable\playable.
+
+make magnet - this let's you select any unit that is still closed - and it is resolving the first containers 
+possible to resolve.
+
+shuffle - takes the second row and switches with the items of the first row.
+

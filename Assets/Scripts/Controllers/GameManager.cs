@@ -20,7 +20,8 @@ public class GameManager : MonoBehaviour
         BeltJammed,
 
         GameEnded,
-        ShowingEndScreen
+        ShowingEndScreen,
+        Magnet
     }
 
     public static GameManager Instance { get; private set; }
@@ -42,6 +43,7 @@ public class GameManager : MonoBehaviour
     public int CurrentLevelIndex = 0;
 
     private float checkTimer = 0f;
+
     public int BallsInStagingArea { get; private set; }
 
     private BoardVisualReferences activeBoardReferences;
@@ -105,10 +107,10 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
 
-        if(currentState == GameState.GameEnded || currentState == GameState.ShowingEndScreen ||
+        if (currentState == GameState.GameEnded || currentState == GameState.ShowingEndScreen ||
             currentState == GameState.BeltJammed)
             return;
-            
+
 
         // Cheats for level switching using the new Input System.
         if (Keyboard.current == null) return; // Input system not ready.
@@ -139,6 +141,18 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        if (Keyboard.current.mKey.wasPressedThisFrame)
+        {
+            currentState = GameState.Magnet;
+            return;
+        }
+
+        if (Keyboard.current.sKey.wasPressedThisFrame)
+        {
+            ExecuteShuffle();
+            return;
+        }
+
         // Only check if we are in the playing state
         checkTimer += Time.deltaTime;
         if (checkTimer >= 0.5f) // Check twice a second
@@ -155,7 +169,7 @@ public class GameManager : MonoBehaviour
                     {
                         SoundsManager.Instance.PlayRevive();
                         //revive requested
-                        ExecuteRevive();                        
+                        ExecuteRevive();
                         ModelManager.Instance.AddToBalanceAndSave(-ModelManager.REVIVE_COST);
                         uiManager.SetBalanceToModelAnimate();
                     }
@@ -346,7 +360,7 @@ public class GameManager : MonoBehaviour
 
     private void ResumeGameOver(bool isWin)
     {
-        if(currentState == GameState.GameEnded)
+        if (currentState == GameState.GameEnded)
             return;
 
         uiManager.GameOver();
@@ -379,6 +393,56 @@ public class GameManager : MonoBehaviour
 
 
     public void AdvanceContainerQueue(int queueIndex, ContainerView resolvedView)
+    {
+        // Check for game over win
+        if (CheckForVisualWin())
+        {
+            Debug.Log("VISUAL WIN! All containers resolved. Loading next level...");
+            ResumeGameOver(true);
+            return;
+        }
+
+        float containerSpacingY = 0.57f;
+
+        // 1. Ensure the resolved container's position is tracked before we use it
+        if (!activeBoardReferences.logicalContainerPositions.ContainsKey(resolvedView))
+        {
+            activeBoardReferences.logicalContainerPositions[resolvedView] = resolvedView.transform.position;
+        }
+
+        // Get the mathematical Y position this container was sitting at
+        float resolvedLogicalY = activeBoardReferences.logicalContainerPositions[resolvedView].y;
+
+        // 2. Find ALL active containers in this queue, regardless of where they physically are right now
+        var containersInQueue = activeBoardReferences.ContainerViews.Values
+            .Where(v => v != null && v.QueueIndex == queueIndex && v != resolvedView && v.gameObject.activeInHierarchy)
+            .ToList();
+
+        foreach (var container in containersInQueue)
+        {
+            // 3. Register any container that hasn't moved yet
+            if (!activeBoardReferences.logicalContainerPositions.ContainsKey(container))
+            {
+                activeBoardReferences.logicalContainerPositions[container] = container.transform.position;
+            }
+
+            // 4. Compare their LOGICAL positions to see if they are sitting behind the resolved container
+            if (activeBoardReferences.logicalContainerPositions[container].y > resolvedLogicalY + 0.1f)
+            {
+                // Calculate the absolute new position they need to end up at
+                Vector3 newTargetPos = activeBoardReferences.logicalContainerPositions[container] - new Vector3(0f, containerSpacingY, 0f);
+
+                // Save this new intended target so subsequent Magnet loops in the same frame know about it
+                activeBoardReferences.logicalContainerPositions[container] = newTargetPos;
+
+                // Safely kill the old tween and smoothly glide to the new target
+                container.transform.DOKill();
+                container.transform.DOMove(newTargetPos, 0.3f).SetEase(Ease.OutBack);
+            }
+        }
+    }
+
+    public void AdvanceContainerQueueORG(int queueIndex, ContainerView resolvedView)
     {
         //a container was resolved - we can check for game over win
         if (CheckForVisualWin())
@@ -544,6 +608,8 @@ public class GameManager : MonoBehaviour
         }
         activeBoardReferences.UnitViews.Clear();
 
+        activeBoardReferences.logicalContainerPositions.Clear();
+        activeBoardReferences.ContainerViews.Clear();
         foreach (var ball in ballViews)
             DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
 
@@ -683,7 +749,7 @@ public class GameManager : MonoBehaviour
     public void BallLinked(BallView ballView)
     {
         ballViews.Add(ballView);
-        
+
     }
 
     public void BallEmittedToStage(BallView ballView)
@@ -736,8 +802,8 @@ public class GameManager : MonoBehaviour
 
             // 5. Calculate physical Unity spawn position
             // We look at Row 0 to figure out where Row -1 should visually sit.
-            Vector3 spawnPosition = i == 0 ? new Vector2(-0.3f,-0.424f):new Vector2(0.3f,-0.424f);
-            
+            Vector3 spawnPosition = i == 0 ? new Vector2(-0.3f, -0.424f) : new Vector2(0.3f, -0.424f);
+
             // 6. Spawn the visual unit
             GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
             UnitView newUnitView = unitInstance.GetComponent<UnitView>();
@@ -763,5 +829,183 @@ public class GameManager : MonoBehaviour
     {
         ResumeGameOver(true);
     }
-    
+
+    public void ExecuteMagnet(UnitView targetedUnitView)
+    {
+        if (targetedUnitView == null || activeBoardReferences == null) return;
+
+        var unitData = gameCore.FindUnitById(targetedUnitView.UnitId);
+        if (unitData == null || gameCore.PlayedUnitIds.Contains(unitData.UnitId)) return;
+
+
+        // 2. Officially clear the unit from the Core's board logic
+        gameCore.PlayedUnitIds.Add(unitData.UnitId);
+        var node = gameCore.FindCellNodeByUnitId(unitData.UnitId);
+        if (node != null) node.OccupyingUnit = null;
+
+        // Return to normal play state immediately
+        currentState = GameState.ReadyToPlay;
+
+        int ballsSent = 0;
+        int totalBalls = unitData.InteriorContents.Count;
+
+        // 3. Process the balls
+        foreach (var dumpling in unitData.InteriorContents)
+        {
+            int targetColor = dumpling.ColorIndex;
+
+            // Find containers that need this color, ordered by front-most (Lowest Y)
+            var matchingContainers = activeBoardReferences.ContainerViews.Values
+                .Where(v => v != null && v.gameObject.activeInHierarchy && v.CurrentRequiredColorIndex == targetColor)
+                .OrderBy(v => v.transform.position.y);
+
+            foreach (var container in matchingContainers)
+            {
+                // This safely checks capacity, assigns the transform, and increments reservedSlotsCount internally!
+                if (container.TryReserveTargetSlot(out Transform targetSlot))
+                {
+
+                    // You might need a small helper property on ContainerView like `public bool IsFullyReserved => reservedSlotsCount >= dataModel.Capacity;`
+                    // to know if THIS ball was the one that filled it up. Let's assume you added it:
+                    bool isContainerNowFull = container.IsContainerFullyBooked();
+
+                    // Tell the UnitView to fly its existing ball to this reserved slot
+                    targetedUnitView.FlyBallToTarget(targetSlot, () =>
+                    {
+                        ballsSent++;
+
+                        // If this specific ball brought the container's reservation to max, resolve it visually
+                        if (isContainerNowFull)
+                        {
+                            container.gameObject.SetActive(false);
+                            AdvanceContainerQueue(container.QueueIndex, container);
+                        }
+
+                        // If this was the last ball in the unit, clean up the unit itself
+                        if (ballsSent == totalBalls)
+                        {
+                            targetedUnitView.gameObject.SetActive(false);
+                            EvaluateLogicalWinState();
+                        }
+                    });
+                    break; // We found a home for this dumpling, move to the next one!
+                }
+            }
+
+        }
+    }
+
+    private void EvaluateLogicalWinState()
+    {
+        if (CheckForVisualWin())
+        {
+            Debug.Log("VISUAL WIN! All containers resolved. Loading next level...");
+            // Assume ResumeGameOver is your local method
+            ResumeGameOver(true);
+        }
+    }
+
+    internal bool IsMagnet()
+    {
+        return currentState == GameState.Magnet;
+    }
+
+    public void ExecuteShuffle()
+    {
+        if (activeBoardReferences == null || activeBoardReferences.ContainerViews == null) return;
+
+        // 1. Gather all active containers, grouped by their Queue/Column
+        var activeQueues = activeBoardReferences.ContainerViews.Values
+            .Where(v => v != null && v.gameObject.activeInHierarchy)
+            .GroupBy(v => v.QueueIndex)
+            .ToList();
+
+        List<ContainerView> row1 = new List<ContainerView>();
+        List<ContainerView> row2 = new List<ContainerView>();
+
+        // 2. Identify Row 1 (Front) and Row 2 (Behind)
+        foreach (var queue in activeQueues)
+        {
+            // Order by Y position. The lowest Y is the front of the line (Row 1)
+            var orderedColumn = queue.OrderBy(v => v.transform.position.y).ToList();
+
+            if (orderedColumn.Count > 0) row1.Add(orderedColumn[0]);
+            if (orderedColumn.Count > 1) row2.Add(orderedColumn[1]);
+        }
+
+        // 3. SIMPLE VALIDATION: Do we have matching, full rows to swap?
+        if (row1.Count == 0 || row1.Count != row2.Count)
+        {
+            Debug.Log("Shuffle Aborted: The amount of containers in Row 1 and Row 2 do not match.");
+            return;
+        }
+
+        // 4. EXECUTE THE SWAP
+        for (int i = 0; i < row1.Count; i++)
+        {
+            var r1Container = row1[i];
+            var r2Container = row2[i];
+
+            // Disable colliders so falling balls don't trigger anything during the animation
+            ToggleColliders(r1Container, false);
+            ToggleColliders(r2Container, false);
+
+            // Get Logical Positions safely from the activeBoardReferences dictionary
+            Vector3 r1LogicalPos = activeBoardReferences.logicalContainerPositions.ContainsKey(r1Container)
+                ? activeBoardReferences.logicalContainerPositions[r1Container]
+                : r1Container.transform.position;
+
+            Vector3 r2LogicalPos = activeBoardReferences.logicalContainerPositions.ContainsKey(r2Container)
+                ? activeBoardReferences.logicalContainerPositions[r2Container]
+                : r2Container.transform.position;
+
+            // Instantly swap the logical dictionary targets so any incoming balls know the new truth
+            activeBoardReferences.logicalContainerPositions[r1Container] = r2LogicalPos;
+            activeBoardReferences.logicalContainerPositions[r2Container] = r1LogicalPos;
+
+            // Kill any existing queue-advance animations
+            r1Container.transform.DOKill();
+            r2Container.transform.DOKill();
+
+            // --- THE 3-STEP ANIMATION SEQUENCE ---
+            Sequence swapSequence = DOTween.Sequence();
+
+            // Step 1: Row 1 moves UP slightly
+            Vector3 liftPosition = r1LogicalPos + new Vector3(0, 0.5f, 0);
+            swapSequence.Append(r1Container.transform.DOMove(liftPosition, 0.15f)
+                .SetEase(Ease.OutQuad)
+                .OnUpdate(r1Container.SyncSeatedBalls)); // <--- ADDS SYNC
+
+            // Step 2: Row 2 slides into Row 1's old position
+            swapSequence.Append(r2Container.transform.DOMove(r1LogicalPos, 0.25f)
+                .SetEase(Ease.InOutSine)
+                .OnUpdate(r2Container.SyncSeatedBalls)); // <--- ADDS SYNC
+
+            // Step 3: Row 1 drops into Row 2's old position
+            swapSequence.Append(r1Container.transform.DOMove(r2LogicalPos, 0.2f)
+                .SetEase(Ease.InQuad)
+                .OnUpdate(r1Container.SyncSeatedBalls)); // <--- ADDS SYNC
+
+            // On Complete: Re-enable the colliders
+            swapSequence.OnComplete(() =>
+            {
+                ToggleColliders(r1Container, true);
+                ToggleColliders(r2Container, true);
+
+                // Do one final sync just to guarantee they perfectly settled
+                r1Container.SyncSeatedBalls();
+                r2Container.SyncSeatedBalls();
+            });
+        }
+
+        Debug.Log("Shuffle Executed! Front two rows matched and swapped.");
+    }
+
+    private void ToggleColliders(ContainerView containerView, bool state)
+    {
+        if (containerView != null)
+        {
+            containerView.DisableEnableCollider(state);
+        }
+    }
 }

@@ -175,6 +175,7 @@ MonoBehaviour:
   - {fileID: 5207400343221529970}
   - {fileID: 2530092020795950245}
   - {fileID: 3846614082641306565}
+  contCollider: {fileID: 1228463302196231528}
 --- !u!61 &1228463302196231528
 BoxCollider2D:
   m_ObjectHideFlags: 0

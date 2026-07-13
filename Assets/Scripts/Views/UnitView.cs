@@ -118,7 +118,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                 //lidRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
             }
 
-            if(cellNode.Position.Y <=0)
+            if (cellNode.Position.Y <= 0)
                 RemoveLidCover();
 
         }
@@ -164,9 +164,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             if (bView != null)
             {
                 bView.Initialize(contents[i].ColorIndex);
-                
+
                 GameManager.Instance.BallLinked(bView);
-                
+
             }
 
             preAllocatedBallViews.Add(bView);
@@ -180,11 +180,19 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     public void OnViewClicked()
     {
-        if(GameManager.Instance.IsGameOver()) 
+        if (GameManager.Instance.IsGameOver())
         {
             Debug.Log("Game is over");
             return;
         }
+
+        if (GameManager.Instance.IsMagnet())
+        {
+            GameManager.Instance.ExecuteMagnet(this);
+            disableButton = true;
+            return;
+        }
+
         if (GameManager.Instance.IsUnitLockedAt(gridCoordinate))
         {
             Debug.Log("unit blocked");
@@ -196,8 +204,12 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         disableButton = true;
 
+        //check if we are in magnet mode - 
+        
+        
         GameManager.Instance.OnUnitElementClicked(gridCoordinate);
         ExecuteResolveTimeline();
+        
     }
 
     public void LinkedUnitPlayed()
@@ -211,33 +223,33 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         if (resolveSequence != null && resolveSequence.IsActive())
             resolveSequence.Kill();
-        
+
         resolveSequence = DOTween.Sequence();
 
         // 2. Eject the 9 balls one by one sequentially
         float delayBetweenBalls = 0.05f;
 
-        int totalBalls = preAllocatedBallViews.Count-1;
+        int totalBalls = preAllocatedBallViews.Count - 1;
 
         for (int i = 0; i < preAllocatedBallViews.Count; i++)
         {
-            BallView ballView = preAllocatedBallViews[totalBalls-i];
+            BallView ballView = preAllocatedBallViews[totalBalls - i];
             Transform ballTransform = ballView.transform;
             float jumpDelay = 0.1f + (i * delayBetweenBalls);
 
             // Jump arc outward while expanding up to native scale
             Vector3 jumpTarget = ballTransform.position + new Vector3(UnityEngine.Random.Range(-0.05f, 0.05f), 0.2f, 0f); // Target down toward funnel
-            resolveSequence.Insert(jumpDelay, ballTransform.DOJump(jumpTarget, 0.25f, 1, 0.35f).SetEase(Ease.OutQuad).OnStart(()=>
+            resolveSequence.Insert(jumpDelay, ballTransform.DOJump(jumpTarget, 0.25f, 1, 0.35f).SetEase(Ease.OutQuad).OnStart(() =>
             {
-               ballView.MoveHigher();
+                ballView.MoveHigher();
             }));
-            resolveSequence.Insert(jumpDelay, ballTransform.DOScale(Vector3.one*1.1f, 0.35f).SetEase(Ease.OutBack));
+            resolveSequence.Insert(jumpDelay, ballTransform.DOScale(Vector3.one * 1.1f, 0.35f).SetEase(Ease.OutBack));
 
             // Switch Rigidbody2D back to Dynamic right as the jump animation lands
             resolveSequence.InsertCallback(jumpDelay + 0.35f, () =>
             {
                 if (ballView != null)
-                {   
+                {
                     ballView.ActivatePhysicsSim();
                 }
             });
@@ -272,10 +284,10 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     {
         if (resolveSequence != null && resolveSequence.IsActive())
             resolveSequence.Kill();
-        
+
         if (openLidSequence != null && openLidSequence.IsActive())
             openLidSequence.Kill();
-        
+
     }
 
     public void UpdatePipeCounter(int newPipeCount)
@@ -358,7 +370,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     {
         if (openLidSequence != null && openLidSequence.IsActive())
             openLidSequence.Kill();
-        
+
         openLidSequence = DOTween.Sequence();
 
         // 1. Pop the Lid off flying away dynamically
@@ -371,4 +383,36 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         openLidSequence.Play();
     }
+
+    public void FlyBallToTarget(Transform targetSlot, Action onComplete)
+    {
+        // Assuming GetFirstBall() returns the actual BallView or GameObject
+        var ball = preAllocatedBallViews[0];
+
+        if (ball != null)
+        {
+            // Detach it from the UnitView so it flies freely in world space
+            ball.transform.SetParent(null);
+
+            // Fly directly to the reserved slot
+            ball.transform.DOMove(targetSlot.position, 0.6f)
+                .SetEase(Ease.InBack)
+                .OnComplete(() =>
+                {
+                    // Return the ball to the pool once it visually enters the container
+                    DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
+
+                    // Fire the callback to tell GameManager the ball arrived
+                    onComplete?.Invoke();
+                });
+        }
+        else
+        {
+            onComplete?.Invoke();
+        }
+
+        preAllocatedBallViews.RemoveAt(0);
+    }
+
+
 }
