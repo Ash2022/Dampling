@@ -499,7 +499,7 @@ public class GameManager : MonoBehaviour
 
         if (gameStateEvaluator.CheckForLogicalWin())
         {
-            Debug.Log("LOGICAL WIN! All units played. Waiting for animations to finish...");
+            //Debug.Log("LOGICAL WIN! All units played. Waiting for animations to finish...");
             // TODO: Fire off early confetti, change background music, or disable a pause menu here.
             uiManager.ShowHideSkipButton(true);
         }

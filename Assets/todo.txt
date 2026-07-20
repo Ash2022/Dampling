@@ -37,3 +37,34 @@ possible to resolve.
 
 shuffle - takes the second row and switches with the items of the first row.
 
+
+
+
+1. refine release animation - with random for big guy pop
+2. haptics.
+3. sfx
+4. fix the magnet animation.
+5. fix the shuffle animation.
+6. check visuals for ice - and breaking ice effect - consider making all the ice single crack
+7. fix the pipe animation and pipe number indication - maybe canvas
+8. refine the end screen flow with the unlocks.
+9. check the link feature visually.
+10. levels
+11. loop end game
+12. resolve container animation
+13. revive screen - Nina
+14. splash screen - Nina
+15. open lid animation
+16. belt almost full indication
+17. tutorial
+18. hard level indication support
+19. decide what to do with skip - now it keeps playing in the BG and not really skipping
+20. visuals for lock and key and their animations.
+21. consider store
+22. consider lives screen with counter.
+23. consider lobby.
+24. make the belt indications in 2 colors - sets of 3
+25. add a wink option to the ball views.
+26. consider making the balls without a face when they enter the belt
+
+

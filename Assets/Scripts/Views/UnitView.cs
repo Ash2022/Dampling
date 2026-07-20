@@ -22,7 +22,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     private Vector2Int gridCoordinate;
     private List<BallView> preAllocatedBallViews = new List<BallView>();
-    private Sequence resolveSequence;
+    private Sequence releaseSequence;
     private Sequence openLidSequence;
     public int unitColorIndex = -1;
 
@@ -139,33 +139,38 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         linkLineRenderer.SetPosition(0, this.transform.position);
         linkLineRenderer.SetPosition(1, partnerView.transform.position);
     }
+
+
     private void SetupNestedInteriorBalls(List<GameLevelSchema.DumplingItem> contents)
     {
         float radius = 0.125f;
-        Vector3 centerPos = transform.position; // Base world position of this unit box
+        Vector3 centerPos = transform.position;
 
+        // 1. PRE-PROCESS STAGE: Compute original mathematical positions accurately
+        Vector3[] rawMathPositions = new Vector3[9];
+        rawMathPositions[0] = centerPos;
+        for (int i = 1; i < 9; i++)
+        {
+            float angle = (i - 1) * (360f / 8f) * Mathf.Deg2Rad;
+            Vector3 worldOffset = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * radius;
+            rawMathPositions[i] = centerPos + worldOffset + new Vector3(0f, 0.02f, 0f);
+        }
+
+        // 2. REVERSED MAPPING STAGE: Exactly inverted to flip the visual layering order
+        int[] visualToMathMap = new int[] { 6, 7, 8, 5, 0, 1, 4, 3, 2 };
+
+        // 3. CREATION & DATA STAGE: Sequential instantiation builds reversed hierarchy depth
         for (int i = 0; i < contents.Count && i < 9; i++)
         {
-            Vector3 targetWorldPos = centerPos;
+            int mathIndex = visualToMathMap[i];
+            Vector3 targetWorldPos = rawMathPositions[mathIndex];
 
-            if (i > 0)
-            {
-                // Calculate the 8-around-1 offsets directly in World Space coordinates
-                float angle = (i - 1) * (360f / 8f) * Mathf.Deg2Rad;
-                Vector3 worldOffset = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0f) * radius;
-                targetWorldPos = centerPos + worldOffset + new Vector3(0, 0.02f, 0);
-            }
-
-            // Pull from pool cleanly at its absolute final world position—NO parenting needed
             GameObject ball = DamplingObjectPool.Instance.GetBall(targetWorldPos, Quaternion.identity);
             ball.transform.localScale = Vector3.one * 0.45f;
 
             BallView bView = ball.GetComponent<BallView>();
-            if (bView != null)
-            {
-                bView.Initialize(contents[i].ColorIndex);
-                GameManager.Instance.ballViews.Add(bView);
-            }
+            bView.Initialize(contents[i].ColorIndex);
+            GameManager.Instance.ballViews.Add(bView);
 
             preAllocatedBallViews.Add(bView);
         }
@@ -203,70 +208,87 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         disableButton = true;
 
         //check if we are in magnet mode - 
-        
-        
+
+
         GameManager.Instance.OnUnitElementClicked(gridCoordinate);
-        ExecuteResolveTimeline();
-        
+        ExecuteReleaseUnitContents();
+
     }
 
     public void LinkedUnitPlayed()
     {
-        ExecuteResolveTimeline();
+        ExecuteReleaseUnitContents();
     }
 
-    private void ExecuteResolveTimeline()
+    private void ExecuteReleaseUnitContents()
     {
-        Debug.Log("Unit " + gameObject.name);
+        if (releaseSequence != null && releaseSequence.IsActive())
+            releaseSequence.Kill();
 
-        if (resolveSequence != null && resolveSequence.IsActive())
-            resolveSequence.Kill();
+        float uniformFinalScale = 1f;
+        float giantOvershootMultiplier = 4.5f;
+        float normalOvershootMultiplier = 1.1f;
+        float giantChance = 0.05f;
+        float blastDelayStagger = 0.05f;
 
-        resolveSequence = DOTween.Sequence();
+        // Tweens only control the elastic scale phase now
+        float scaleAnimDuration = 0.2f;
+        float scaleUpDuration = scaleAnimDuration * 0.3f;
+        float scaleDownDuration = scaleAnimDuration * 0.7f;
 
-        // 2. Eject the 9 balls one by one sequentially
-        float delayBetweenBalls = 0.05f;
-
+        releaseSequence = DOTween.Sequence();
         int totalBalls = preAllocatedBallViews.Count - 1;
 
         for (int i = 0; i < preAllocatedBallViews.Count; i++)
         {
             BallView ballView = preAllocatedBallViews[totalBalls - i];
             Transform ballTransform = ballView.transform;
-            float jumpDelay = 0.1f + (i * delayBetweenBalls);
 
-            // Jump arc outward while expanding up to native scale
-            Vector3 jumpTarget = ballTransform.position + new Vector3(UnityEngine.Random.Range(-0.05f, 0.05f), 0.2f, 0f); // Target down toward funnel
-            resolveSequence.Insert(jumpDelay, ballTransform.DOJump(jumpTarget, 0.25f, 1, 0.35f).SetEase(Ease.OutQuad).OnStart(() =>
+            float jumpDelay = i * blastDelayStagger;
+
+            bool isGiantPop = UnityEngine.Random.value < giantChance;
+            float chosenMultiplier = isGiantPop ? giantOvershootMultiplier : normalOvershootMultiplier;
+
+            Vector3 peakOvershootScale = Vector3.one * (uniformFinalScale * chosenMultiplier);
+            Vector3 settledFinalScale = Vector3.one * uniformFinalScale;
+
+            // 1. Instantly hand off to physics at the start of this ball's timeline
+            releaseSequence.InsertCallback(jumpDelay, () =>
             {
                 ballView.MoveHigher();
-            }));
-            resolveSequence.Insert(jumpDelay, ballTransform.DOScale(Vector3.one * 1.1f, 0.35f).SetEase(Ease.OutBack));
+                if (isGiantPop) ballView.ExecuteWinkVisual();
 
-            // Switch Rigidbody2D back to Dynamic right as the jump animation lands
-            resolveSequence.InsertCallback(jumpDelay + 0.35f, () =>
-            {
-                if (ballView != null)
-                {
-                    ballView.ActivatePhysicsSim();
-                }
+                ballView.ActivatePhysicsSim();
+
+                Rigidbody2D rb = ballView.GetComponent<Rigidbody2D>();
+                float horizontalSpread = UnityEngine.Random.Range(-0.04f, 0.04f);
+
+                // Adjust this multiplier based on your Rigidbody2D mass gravity scale
+                float upwardForce = UnityEngine.Random.Range(0.5f, 0.65f);
+                rb.AddForce(new Vector2(horizontalSpread, upwardForce), ForceMode2D.Impulse);
             });
+
+            float activeScaleUp = isGiantPop ? scaleUpDuration*7f : scaleUpDuration;
+            float activeScaleDown = isGiantPop ? scaleDownDuration*7f : scaleDownDuration;
+
+            // 2. Run the visual scale tween on top of the physics trajectory
+            releaseSequence.Insert(jumpDelay, ballTransform.DOScale(peakOvershootScale, activeScaleUp).SetEase(Ease.OutQuad));
+            releaseSequence.Insert(jumpDelay + scaleUpDuration, ballTransform.DOScale(settledFinalScale, activeScaleDown).SetEase(Ease.InOutSine));
 
             GameManager.Instance.BallsInStagingArea++;
         }
 
-        // 3. Fade out the main round box container base right after the final ball exits
-        float fadeOutStart = 0.1f + (preAllocatedBallViews.Count * delayBetweenBalls) + 0.15f;
-        resolveSequence.Insert(fadeOutStart, spriteRenderer.DOFade(0f, 0.3f));
+        float finalBallPopTime = totalBalls * blastDelayStagger;
+        float fadeOutStart = finalBallPopTime + 0.3f;
+        releaseSequence.Insert(fadeOutStart, spriteRenderer.DOFade(0f, 0.5f));
 
-        // 4. Return this unit safely to the pool once completely empty and hidden
-        resolveSequence.OnComplete(() =>
+        releaseSequence.OnComplete(() =>
         {
-            preAllocatedBallViews.Clear(); // The actual ball instances are now loose processing on the belt
+            preAllocatedBallViews.Clear();
             DamplingObjectPool.Instance.ReturnUnit(gameObject);
         });
 
-        resolveSequence.Play();
+        releaseSequence.Play();
     }
 
     private void ReturnBallsToPool()
@@ -280,8 +302,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     private void CleanUpActiveSequence()
     {
-        if (resolveSequence != null && resolveSequence.IsActive())
-            resolveSequence.Kill();
+        if (releaseSequence != null && releaseSequence.IsActive())
+            releaseSequence.Kill();
 
         if (openLidSequence != null && openLidSequence.IsActive())
             openLidSequence.Kill();

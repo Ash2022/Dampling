@@ -10,25 +10,24 @@ public class DamplingObjectPool : MonoBehaviour
     [SerializeField] private GameObject unitPrefab;
     [SerializeField] private GameObject containerPrefab;
     [SerializeField] private GameObject ballPrefab;
-    
+    [SerializeField] private GameObject containerResolveEffectPrefab;
 
     private Queue<GameObject> unitPool = new Queue<GameObject>();
     private Queue<GameObject> containerPool = new Queue<GameObject>();
     private Queue<GameObject> ballPool = new Queue<GameObject>();
+    private Queue<GameObject> effectPool = new Queue<GameObject>();
 
     private Transform unitRoot;
     private Transform containerRoot;
     private Transform ballRoot;
-    private Transform CellBlockerRoot;
+    private Transform cellBlockerRoot;
+    private Transform effectRoot;
 
     private void Awake()
     {
         Instance = this;
     }
 
-    /// <summary>
-    /// Staggers object instantiation across multiple execution blocks to guarantee zero main-thread hitching.
-    /// </summary>
     public async Task InitializePoolsAsync()
     {
         unitRoot = new GameObject("UnitPool_Root").transform;
@@ -40,14 +39,16 @@ public class DamplingObjectPool : MonoBehaviour
         ballRoot = new GameObject("BallPool_Root").transform;
         ballRoot.SetParent(transform);
 
-        CellBlockerRoot = new GameObject("EmptyUnitPool_Root").transform;
-        CellBlockerRoot.SetParent(transform);
+        cellBlockerRoot = new GameObject("EmptyUnitPool_Root").transform;
+        cellBlockerRoot.SetParent(transform);
 
-        // Pre-warm allocations sequentially, breaking across frames via task yields
+        effectRoot = new GameObject("EffectPool_Root").transform;
+        effectRoot.SetParent(transform);
+
         await PrewarmPoolAsync(unitPrefab, 100, unitPool, unitRoot, 25);
         await PrewarmPoolAsync(containerPrefab, 300, containerPool, containerRoot, 50);
         await PrewarmPoolAsync(ballPrefab, 1000, ballPool, ballRoot, 100);
-       
+        await PrewarmPoolAsync(containerResolveEffectPrefab, 50, effectPool, effectRoot, 25);
     }
 
     private async Task PrewarmPoolAsync(GameObject prefab, int count, Queue<GameObject> pool, Transform root, int objectsPerFrame)
@@ -58,7 +59,6 @@ public class DamplingObjectPool : MonoBehaviour
             instance.SetActive(false);
             pool.Enqueue(instance);
 
-            // Yield control back to the main engine loop once the frame allotment threshold is reached
             if (i % objectsPerFrame == 0)
             {
                 await Task.Yield(); 
@@ -93,7 +93,14 @@ public class DamplingObjectPool : MonoBehaviour
         return obj;
     }
 
-   
+    public GameObject GetContainerResolveEffect(Vector3 position, Quaternion rotation)
+    {
+        GameObject obj = effectPool.Count > 0 ? effectPool.Dequeue() : Instantiate(containerResolveEffectPrefab);
+        obj.transform.SetParent(null);
+        obj.transform.SetPositionAndRotation(position, rotation);
+        obj.SetActive(true);
+        return obj;
+    }
 
     public void ReturnUnit(GameObject unit)
     {
@@ -116,4 +123,10 @@ public class DamplingObjectPool : MonoBehaviour
         ballPool.Enqueue(ball);
     }
 
+    public void ReturnContainerResolveEffect(GameObject effect)
+    {
+        effect.SetActive(false);
+        effect.transform.SetParent(effectRoot);
+        effectPool.Enqueue(effect);
+    }
 }

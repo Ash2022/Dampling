@@ -125,6 +125,10 @@ public class BallView : MonoBehaviour
 
         Vector3 startPos = transform.position;
         transform.DOKill();
+
+        // Smoothly interpolate rotation to absolute zero over the exact same flight duration
+        transform.DORotate(Vector3.zero, 0.4f).SetEase(Ease.InOutSine);
+
         DOVirtual.Float(0f, 1f, 0.4f, t =>
         {
             if (destinationSlot) transform.position = Vector3.Lerp(startPos, destinationSlot.position, t);
@@ -140,5 +144,10 @@ public class BallView : MonoBehaviour
     internal void MoveHigher()
     {
         spriteRenderer.sortingOrder =31;
+    }
+
+    internal void ExecuteWinkVisual()
+    {
+        Debug.Log("Wink");
     }
 }
