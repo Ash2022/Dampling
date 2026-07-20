@@ -20,6 +20,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private GameObject iceOverlayRenderer; // Assign in Inspector
     [SerializeField] private TMPro.TextMeshPro iceCountText;
 
+    [SerializeField] private Transform clickIndication;
+
     private Vector2Int gridCoordinate;
     private List<BallView> preAllocatedBallViews = new List<BallView>();
     private Sequence releaseSequence;
@@ -39,6 +41,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         // Reset relation overlays, lines, and text layers to safely handle recycling
         disableButton = false;
+        clickIndication.gameObject.SetActive(false);
         lockOverlayRenderer.gameObject.SetActive(false);
         keyIndicatorRenderer.gameObject.SetActive(false);
         iceOverlayRenderer.gameObject.SetActive(false);
@@ -226,7 +229,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             releaseSequence.Kill();
 
         float uniformFinalScale = 1f;
-        float giantOvershootMultiplier = 4.5f;
+        float giantOvershootMultiplier = 6.5f;
         float normalOvershootMultiplier = 1.1f;
         float giantChance = 0.05f;
         float blastDelayStagger = 0.05f;
@@ -268,8 +271,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                 rb.AddForce(new Vector2(horizontalSpread, upwardForce), ForceMode2D.Impulse);
             });
 
-            float activeScaleUp = isGiantPop ? scaleUpDuration*7f : scaleUpDuration;
-            float activeScaleDown = isGiantPop ? scaleDownDuration*7f : scaleDownDuration;
+            float activeScaleUp = isGiantPop ? scaleUpDuration * 7f : scaleUpDuration;
+            float activeScaleDown = isGiantPop ? scaleDownDuration * 7f : scaleDownDuration;
 
             // 2. Run the visual scale tween on top of the physics trajectory
             releaseSequence.Insert(jumpDelay, ballTransform.DOScale(peakOvershootScale, activeScaleUp).SetEase(Ease.OutQuad));
@@ -386,53 +389,81 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     }
 
-    private void RemoveLidCover()
+    public void RemoveLidCover()
     {
-        if (openLidSequence != null && openLidSequence.IsActive())
+        if (openLidSequence.IsActive())
             openLidSequence.Kill();
 
         openLidSequence = DOTween.Sequence();
 
-        // 1. Pop the Lid off flying away dynamically
-        if (lidRenderer != null)
+        float duration = 0.4f;
+        Vector3 targetFlyPosition = transform.position + new Vector3(0.6f, 1.2f, 0f);
+
+        // Initial subtle high-speed squish down on Y axis and stretch on X axis to show build-up force
+        openLidSequence.Append(lidRenderer.transform.DOScale(new Vector3(1.2f, 0.4f, 1f), duration * 0.25f).SetEase(Ease.OutQuad));
+
+        // Pop up, scale thin during flight, rotate rapidly, and fade out cleanly
+        openLidSequence.Append(lidRenderer.transform.DOMove(targetFlyPosition, duration * 0.75f).SetEase(Ease.OutCubic));
+        openLidSequence.Join(lidRenderer.transform.DOScale(new Vector3(0.8f, 0.2f, 1f), duration * 0.75f).SetEase(Ease.InQuad));
+        openLidSequence.Join(lidRenderer.transform.DORotate(new Vector3(0f, 0f, 180f), duration * 0.75f, RotateMode.FastBeyond360).SetEase(Ease.OutQuad));
+        openLidSequence.Join(lidRenderer.DOFade(0f, duration * 0.75f).SetEase(Ease.InQuint));
+
+        openLidSequence.OnComplete(() =>
         {
-            openLidSequence.Append(lidRenderer.transform.DOMove(transform.position + new Vector3(.5f, .5f, 0f), .75f).SetEase(Ease.OutQuad));
-            openLidSequence.Join(lidRenderer.transform.DORotate(new Vector3(0f, 0f, 360f), 0.75f, RotateMode.FastBeyond360));
-            openLidSequence.Join(lidRenderer.DOFade(0f, 0.75f));
-        }
+            lidRenderer.gameObject.SetActive(false);
+        });
 
         openLidSequence.Play();
     }
 
-    public void FlyBallToTarget(Transform targetSlot, Action onComplete)
+    public void FlyBallToTargetExtended(Vector3 targetPosition, float delay, Action<BallView> onComplete)
     {
-        // Assuming GetFirstBall() returns the actual BallView or GameObject
+        float animTime = 1f;
+
         var ball = preAllocatedBallViews[0];
-
-        if (ball != null)
-        {
-            // Detach it from the UnitView so it flies freely in world space
-            ball.transform.SetParent(null);
-
-            // Fly directly to the reserved slot
-            ball.transform.DOMove(targetSlot.position, 0.6f)
-                .SetEase(Ease.InBack)
-                .OnComplete(() =>
-                {
-                    // Return the ball to the pool once it visually enters the container
-                    DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
-
-                    // Fire the callback to tell GameManager the ball arrived
-                    onComplete?.Invoke();
-                });
-        }
-        else
-        {
-            onComplete?.Invoke();
-        }
-
         preAllocatedBallViews.RemoveAt(0);
+
+        Sequence flySeq = DOTween.Sequence();
+
+        if (delay > 0f)
+        {
+            flySeq.AppendInterval(delay);
+        }
+
+        flySeq.AppendCallback(() =>
+        {
+            ball.transform.SetParent(null);
+            ball.SR.sortingOrder = 36;
+        });
+
+        flySeq.Append(ball.transform.DOScale(Vector3.one, animTime / 2f).SetEase(Ease.OutQuad));
+        flySeq.Join(ball.transform.DOMove(targetPosition, animTime).SetEase(Ease.InSine));
+
+        flySeq.OnComplete(() =>
+        {
+            onComplete.Invoke(ball);
+        });
+
+        flySeq.Play();
     }
 
+    public void FadeOutBox()
+    {
+        spriteRenderer.DOFade(0f, 0.5f).OnComplete(()=>
+        {
+            preAllocatedBallViews.Clear();
+            DamplingObjectPool.Instance.ReturnUnit(gameObject);
+        });
+    }
+
+    public void ShowHideClickIndication(bool showHide)
+    {
+        clickIndication.gameObject.SetActive(showHide);
+    }
+
+    internal bool IsLidOn()
+    {
+        return lidRenderer.gameObject.activeInHierarchy;
+    }
 
 }

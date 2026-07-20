@@ -5,24 +5,22 @@ using System;
 
 public class ModelManager : MonoBehaviour
 {
-    const string LAST_PLAYED_LEVEL = "LastPlayedLevel";
-    const string GOLD_AMOUNT = "GoldAmount";
+    public const int MAGNET_UNLOCKED = 1;
+    public const int SHUFFLE_UNLOCKED = 2;
 
+    private const string PLAYER_DATA_KEY = "PlayerDataSaveState";
     public const int GOLD_PER_WIN = 50;
     public const int REVIVE_COST = 50;
-    
+
     public static ModelManager Instance { get; private set; }
 
     [SerializeField] private List<TextAsset> levelTextAssets = new List<TextAsset>();
-
     private List<GameLevelSchema> loadedLevels = new List<GameLevelSchema>();
 
-    List<int> unlocksIndexList = new List<int>();
-    public List<int> UnlocksIndexList { get => unlocksIndexList; set => unlocksIndexList = value; }
+    public List<int> UnlocksIndexList { get; set; } = new List<int>();
     public int LevelCount => loadedLevels.Count;
 
-    
-    int coinsAmount = 0;
+    public PlayerData Data { get; private set; }
 
     private void Awake()
     {
@@ -32,17 +30,15 @@ public class ModelManager : MonoBehaviour
     public void Initialize()
     {
         loadedLevels.Clear();
-
         foreach (var asset in levelTextAssets)
         {
-            // Use Newtonsoft Json.NET to accurately parse complex, nested multi-dimensional data schemas
-            GameLevelSchema levelData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameLevelSchema>(asset.text);
+            GameLevelSchema levelData = JsonConvert.DeserializeObject<GameLevelSchema>(asset.text);
             loadedLevels.Add(levelData);
         }
 
-        unlocksIndexList.Add(15); //bonus bubbles
+        UnlocksIndexList.Add(15);
 
-        coinsAmount = LoadBalance();
+        LoadData();
     }
 
     public GameLevelSchema GetLevelByIndex(int index)
@@ -52,30 +48,61 @@ public class ModelManager : MonoBehaviour
         return JsonConvert.DeserializeObject<GameLevelSchema>(json);
     }
 
-    internal int GetBalance()
-    {
-        return coinsAmount;
-    }
+    public int GetBalance() => Data.CoinsAmount;
 
     public void AddToBalanceAndSave(int amount)
     {
-        coinsAmount += amount;
-
-        PlayerPrefs.SetInt(GOLD_AMOUNT, coinsAmount);
+        Data.CoinsAmount += amount;
+        SaveData();
     }
 
-    private int LoadBalance()
-    {
-        return PlayerPrefs.GetInt(GOLD_AMOUNT, 0);
-    }
-
-    public int GetLastPlayedLevel()
-    {
-        return PlayerPrefs.GetInt(LAST_PLAYED_LEVEL, -1);
-    }
+    public int GetLastPlayedLevel() => Data.LastPlayedLevel;
 
     public void SetLastPlayedLevel(int level)
     {
-        PlayerPrefs.SetInt(LAST_PLAYED_LEVEL, level);
+        Data.LastPlayedLevel = level;
+        SaveData();
+    }
+
+    public void SaveData()
+    {
+        string json = JsonConvert.SerializeObject(Data);
+        PlayerPrefs.SetString(PLAYER_DATA_KEY, json);
+        PlayerPrefs.Save();
+    }
+
+    private void LoadData()
+    {
+        if (PlayerPrefs.HasKey(PLAYER_DATA_KEY))
+        {
+            string json = PlayerPrefs.GetString(PLAYER_DATA_KEY);
+            Data = JsonConvert.DeserializeObject<PlayerData>(json);
+        }
+        else
+        {
+            Data = new PlayerData();
+        }
+    }
+
+    public void AdjustMagnetCount(int amount)
+    {
+        Data.MagnetBoosterCount = Mathf.Max(0, Data.MagnetBoosterCount + amount);
+        SaveData();
+    }
+
+    public void AdjustShuffleCount(int amount)
+    {
+        Data.ShuffleBoosterCount = Mathf.Max(0, Data.ShuffleBoosterCount + amount);
+        SaveData();
+    }
+
+    [Serializable]
+    public class PlayerData
+    {
+        public int LastPlayedLevel = -1;
+        public int CoinsAmount = 0;
+        public int MagnetBoosterCount = 3;
+        public int ShuffleBoosterCount = 3;
     }
 }
+

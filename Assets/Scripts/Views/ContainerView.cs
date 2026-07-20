@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using DG.Tweening;
 using static GameLevelSchema;
+using System;
 
 public class ContainerView : MonoBehaviour
 {
@@ -10,7 +11,8 @@ public class ContainerView : MonoBehaviour
 
     [SerializeField] private Collider2D contCollider;
 
-
+    public SpriteRenderer SR => spriteRenderer;
+    public string contName;
     public int QueueIndex { get; set; }
 
     private List<BallView> absorbedBallViews = new List<BallView>();
@@ -57,7 +59,7 @@ public class ContainerView : MonoBehaviour
         {
             // This fallback is problematic as it doesn't provide a transform to follow.
             // This indicates a setup issue. For now, we will fail the reservation.
-            Debug.LogError($"Container '{name}' is missing a reference for localBallTargetSlots[{reservedSlotsCount}]. Cannot reserve a slot.", gameObject);
+            Debug.LogError($"Container '{contName}' is missing a reference for localBallTargetSlots[{reservedSlotsCount}]. Cannot reserve a slot.", gameObject);
             return false;
         }
 
@@ -113,7 +115,7 @@ public class ContainerView : MonoBehaviour
         clearSeq.Append(transform.DOMoveY(transform.position.y + upwardTravelDistance, animDuration).SetEase(Ease.InSine).OnUpdate(() =>
         {
             SyncSeatedBalls();
-        }).OnComplete(()=>
+        }).OnComplete(() =>
         {
             // Spawn the resolution effect at the container's final position before it is recycled
             DamplingObjectPool.Instance.GetContainerResolveEffect(transform.position, Quaternion.identity);
@@ -136,7 +138,7 @@ public class ContainerView : MonoBehaviour
             }
             absorbedBallViews.Clear();
 
-            
+
 
             GameManager.Instance.AdvanceContainerQueue(QueueIndex, this);
 
@@ -164,5 +166,15 @@ public class ContainerView : MonoBehaviour
                 absorbedBallViews[i].transform.position = localBallTargetSlots[i].position;
             }
         }
+    }
+
+    public Transform GetNextAvailableSlotTransform()
+    {
+        if (localBallTargetSlots == null || reservedSlotsCount >= localBallTargetSlots.Length)
+            return null;
+
+        Transform slot = localBallTargetSlots[reservedSlotsCount];
+        reservedSlotsCount++;
+        return slot;
     }
 }

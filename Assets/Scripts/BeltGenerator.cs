@@ -103,12 +103,11 @@ public class BeltGenerator : MonoBehaviour
             float distance = (currentOffset + (i * stepDistance)) % perimeter;
             if (distance < 0) distance += perimeter;
 
-            // Find position in the pre-calculated path array
             float pathT = distance / perimeter;
             float floatIndex = pathT * PATH_RESOLUTION;
-            int index1 = (int)floatIndex;
+            int index1 = (int)floatIndex % PATH_RESOLUTION;
             int index2 = (index1 + 1) % PATH_RESOLUTION;
-            float lerpT = floatIndex - index1;
+            float lerpT = floatIndex - (int)floatIndex;
 
             slots[i].position = Vector3.Lerp(pathPoints[index1], pathPoints[index2], lerpT);
         }

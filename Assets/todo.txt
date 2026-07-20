@@ -40,7 +40,7 @@ shuffle - takes the second row and switches with the items of the first row.
 
 
 
-1. refine release animation - with random for big guy pop
+1. refine release animation - with random for big guy pop -- DONE
 2. haptics.
 3. sfx
 4. fix the magnet animation.
@@ -66,5 +66,7 @@ shuffle - takes the second row and switches with the items of the first row.
 24. make the belt indications in 2 colors - sets of 3
 25. add a wink option to the ball views.
 26. consider making the balls without a face when they enter the belt
+27. ask Nina to modify the image BG_03.png from the folder to include the little images on_bg_01.png
+
 
 

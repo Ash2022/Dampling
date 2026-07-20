@@ -19,9 +19,10 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private LevelVisualization levelVisualization;
     [SerializeField] private BeltGenerator beltGenerator;
+    [SerializeField]private BoosterManager boosterManager;
     private DamplingGameCore gameCore;
     private GameLevelSchema currentLevelData;
-    private GameState currentState;
+    public GameState currentState;
 
     [SerializeField] private UIManager uiManager;          // assign in scene
     [SerializeField] private GameOverView gameOverView;    // assign in scene
@@ -30,7 +31,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ReviveView reviveView;
 
     private GameStateEvaluator gameStateEvaluator;
-    private BoosterManager boosterManager;
+    
 
     // Persistent progression tracker
     public int CurrentLevelIndex = 0;
@@ -38,6 +39,7 @@ public class GameManager : MonoBehaviour
     private float checkTimer = 0f;
 
     public int BallsInStagingArea { get; set; }
+    public GameState CurrGameState => currentState;
 
     private BoardVisualReferences activeBoardReferences;
     public List<BallView> ballViews = new List<BallView>();
@@ -93,6 +95,8 @@ public class GameManager : MonoBehaviour
     {
         currentState = GameState.Initializing;
         beltGenerator.InitializeBelt(BELT_CAPACITY);
+
+        boosterManager.Initialize (this,  beltGenerator,uiManager);
         // Step 1: Await the multi-frame async memory instantiation allocation loop
         await DamplingObjectPool.Instance.InitializePoolsAsync();
         // Step 2: Proceed with standard model loading and data processing now that objects are ready
@@ -159,13 +163,15 @@ public class GameManager : MonoBehaviour
 
         if (Keyboard.current.mKey.wasPressedThisFrame)
         {
-            currentState = GameState.Magnet;
+            ModelManager.Instance.AdjustMagnetCount(3);
+            boosterManager.RefreshButtonVisuals(BoosterButtonView.BoosterType.Magnet);
             return;
         }
 
         if (Keyboard.current.sKey.wasPressedThisFrame)
         {
-            boosterManager.ExecuteShuffle();
+            ModelManager.Instance.AdjustShuffleCount(3);
+            boosterManager.RefreshButtonVisuals(BoosterButtonView.BoosterType.Shuffle);
             return;
         }
 
@@ -201,6 +207,14 @@ public class GameManager : MonoBehaviour
         }
     }
   
+    public void MagnetClicked()
+    {
+        if(currentState == GameState.Magnet)
+            currentState = GameState.ReadyToPlay;
+        else if(currentState == GameState.ReadyToPlay)
+            currentState = GameState.Magnet;
+    }
+
     /// <summary>
     /// Executes dynamically every single time a level starts, reboots, or changes.
     /// </summary>
@@ -224,7 +238,8 @@ public class GameManager : MonoBehaviour
         gameCore.InitializeLevel(currentLevelData,isLiveMode: true,HandleUnitIceChanged,HandleLockKeyCollected,HandleLinkedUnitPlayed);
 
         gameStateEvaluator = new GameStateEvaluator(this, beltGenerator, activeBoardReferences);
-        boosterManager = new BoosterManager(this, gameCore, beltGenerator, activeBoardReferences);
+        boosterManager.InitLevel(gameCore, activeBoardReferences, CurrentLevelIndex);
+
 
         beltGenerator.StartBeltMovement();
 
