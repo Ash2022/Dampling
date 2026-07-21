@@ -13,13 +13,13 @@ public class GameManager : MonoBehaviour
     public const int BELT_CAPACITY = 30;
     public enum GameState
     {
-        Initializing,ReadyToPlay,ProcessingInput,BeltJammed,GameEnded,ShowingEndScreen,Magnet
+        Initializing, ReadyToPlay, ProcessingInput, BeltJammed, GameEnded, ShowingEndScreen, Magnet
     }
     public static GameManager Instance { get; private set; }
 
     [SerializeField] private LevelVisualization levelVisualization;
     [SerializeField] private BeltGenerator beltGenerator;
-    [SerializeField]private BoosterManager boosterManager;
+    [SerializeField] private BoosterManager boosterManager;
     private DamplingGameCore gameCore;
     private GameLevelSchema currentLevelData;
     public GameState currentState;
@@ -31,7 +31,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private ReviveView reviveView;
 
     private GameStateEvaluator gameStateEvaluator;
-    
+
 
     // Persistent progression tracker
     public int CurrentLevelIndex = 0;
@@ -48,7 +48,7 @@ public class GameManager : MonoBehaviour
     internal Vector3 GetBalanceRect() => uiManager.GetBalancePosition();
     public void MoveBalanceUp() => uiManager.MoveBalanceUpOnSort();
     internal void SetUIToBalance() => uiManager.SetBalanceToModel();
-    public bool IsGameOver()=>currentState == GameState.GameEnded;
+    public bool IsGameOver() => currentState == GameState.GameEnded;
 
     private void Awake()
     {
@@ -96,7 +96,7 @@ public class GameManager : MonoBehaviour
         currentState = GameState.Initializing;
         beltGenerator.InitializeBelt(BELT_CAPACITY);
 
-        boosterManager.Initialize (this,  beltGenerator,uiManager);
+        boosterManager.Initialize(this, beltGenerator, uiManager);
         // Step 1: Await the multi-frame async memory instantiation allocation loop
         await DamplingObjectPool.Instance.InitializePoolsAsync();
         // Step 2: Proceed with standard model loading and data processing now that objects are ready
@@ -120,7 +120,7 @@ public class GameManager : MonoBehaviour
 
         activeBoardReferences.logicalContainerPositions.Clear();
         activeBoardReferences.ContainerViews.Clear();
-        
+
         foreach (var ball in ballViews)
             DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
 
@@ -151,14 +151,14 @@ public class GameManager : MonoBehaviour
         {
             int nextLevelIndex = CurrentLevelIndex + 1;
             if (nextLevelIndex < ModelManager.Instance.LevelCount)
-                StartLevel(nextLevelIndex);            
+                StartLevel(nextLevelIndex);
         }
 
         if (Keyboard.current.downArrowKey.wasPressedThisFrame)
         {
             int prevLevelIndex = CurrentLevelIndex - 1;
             if (prevLevelIndex >= 0)
-                StartLevel(prevLevelIndex);            
+                StartLevel(prevLevelIndex);
         }
 
         if (Keyboard.current.mKey.wasPressedThisFrame)
@@ -206,12 +206,12 @@ public class GameManager : MonoBehaviour
             checkTimer = 0f;
         }
     }
-  
+
     public void MagnetClicked()
     {
-        if(currentState == GameState.Magnet)
+        if (currentState == GameState.Magnet)
             currentState = GameState.ReadyToPlay;
-        else if(currentState == GameState.ReadyToPlay)
+        else if (currentState == GameState.ReadyToPlay)
             currentState = GameState.Magnet;
     }
 
@@ -235,7 +235,7 @@ public class GameManager : MonoBehaviour
 
         // Step 2: Spin up a fresh simulation core instance to clear past game states completely
         gameCore = new DamplingGameCore();
-        gameCore.InitializeLevel(currentLevelData,isLiveMode: true,HandleUnitIceChanged,HandleLockKeyCollected,HandleLinkedUnitPlayed);
+        gameCore.InitializeLevel(currentLevelData, isLiveMode: true, HandleUnitIceChanged, HandleLockKeyCollected, HandleLinkedUnitPlayed);
 
         gameStateEvaluator = new GameStateEvaluator(this, beltGenerator, activeBoardReferences);
         boosterManager.InitLevel(gameCore, activeBoardReferences, CurrentLevelIndex);
@@ -289,50 +289,56 @@ public class GameManager : MonoBehaviour
                         var updatedNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == unblockedCoord.x && c.Position.Y == unblockedCoord.y);
                         unitView.UnitBecameUnBlocked(updatedNode);
                     }
-                    break;                
+                    break;
 
                 case DamplingGameCore.EngineEventType.PipeEmittedUnit:
-                    // 1. UNPACK COMPOSITE COORDINATES
+                    // 1. Unpack composite coordinates
                     var coords = (Tuple<Vector2Int, Vector2Int>)ev.Payload;
                     Vector2Int spawnCoord = coords.Item1;
                     Vector2Int pipeCoord = coords.Item2;
 
-                    Vector3 spawnPosition = Vector3.zero;
+                    // 2. Locate origin (pipe) and destination world positions
+                    var pipeView = activeBoardReferences.UnitViews[pipeCoord];
+                    Vector3 startPosition = pipeView.transform.position;
 
-                    // 2. CLEANUP CHECK
+                    Vector3 targetPosition = Vector2.zero;
+
                     if (activeBoardReferences.UnitViews.TryGetValue(spawnCoord, out var oldView))
                     {
                         if (oldView != null)
                         {
-                            spawnPosition = oldView.transform.position;
+                            targetPosition = oldView.transform.position;
                             // Return oldView components/balls to pool here if needed
                         }
                     }
 
-                    // 3. SPAWN FROM POOL
-                    GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
+                    // Get world position of the destination cell layout space
+                    //Vector3 targetPosition = activeBoardReferences.GetCellWorldPosition(spawnCoord);
+
+                    // 3. Spawn unit from pool at the pipe's mouth
+                    GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(startPosition, Quaternion.identity, transform);
                     UnitView newUnitView = unitInstance.GetComponent<UnitView>();
 
-                    // 4. INITIALIZE FRESH UNIT VIEW
+                    // Prepare unit visuals/contents but keep interactivity disabled during transit
                     var emittedNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == spawnCoord.x && c.Position.Y == spawnCoord.y);
-                    newUnitView.Initialize(emittedNode);
+                    //newUnitView.Initialize(emittedNode);
 
-                    // 5. REGISTER REGISTRY SLOT
-                    activeBoardReferences.UnitViews[spawnCoord] = newUnitView;
+                    newUnitView.PipeInitialize(emittedNode);
 
-                    // 6. UPDATE VISUAL PIPE COUNTER AT SOURCE
-                    if (activeBoardReferences.UnitViews.TryGetValue(pipeCoord, out var pipeView))
+                    // Scale down slightly to look like it is emerging inside the pipe
+                    newUnitView.transform.localScale = Vector3.zero;
+
+                    // 5. Run sequential slide out animation after clicked unit finishes clearing the cell
+                    AnimatePipeEmission(newUnitView, targetPosition, spawnCoord, emittedNode, (() =>
                     {
+                        // 4. Update the visual counter at the pipe source immediately
                         var pipeNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == pipeCoord.x && c.Position.Y == pipeCoord.y);
-                        if (pipeNode != null && pipeNode.ContinuousPipe != null)
-                        {
-                            int countLeft = pipeNode.ContinuousPipe.ReservoirQueue.Count;
-                            pipeView.UpdatePipeCounter(countLeft);
-                        }
-                    }
-                    break;                
+                        pipeView.UpdatePipeCounter(pipeNode.ContinuousPipe.ReservoirQueue.Count);
+                    }));
+
+                    break;
             }
-        }     
+        }
         currentState = GameState.ReadyToPlay;
     }
 
@@ -517,7 +523,13 @@ public class GameManager : MonoBehaviour
             //Debug.Log("LOGICAL WIN! All units played. Waiting for animations to finish...");
             // TODO: Fire off early confetti, change background music, or disable a pause menu here.
             uiManager.ShowHideSkipButton(true);
+            beltGenerator.IncreaseBeltSpeed();
         }
+    }
+
+    public void BallEnteredOrExitSlot()
+    {
+        beltGenerator.CheckBeltFullness();
     }
 
     public void SkipClicked()
@@ -543,5 +555,27 @@ public class GameManager : MonoBehaviour
     internal bool IsMagnet()
     {
         return currentState == GameState.Magnet;
+    }
+
+    private void AnimatePipeEmission(UnitView unitView, Vector3 targetPosition, Vector2Int spawnCoord, CellNode emittedNode, Action done)
+    {
+        DG.Tweening.Sequence emitSequence = DG.Tweening.DOTween.Sequence();
+
+        // Introduce a delay matching the active unit's fly/fade duration so it doesn't overlap
+        emitSequence.AppendInterval(0.75f);
+
+        // Animate scale up and slide down simultaneously to simulate emerging from the mouth
+        emitSequence.Append(unitView.transform.DOScale(Vector3.one * 0.375f, 0.2f).SetEase(DG.Tweening.Ease.OutQuad));
+        emitSequence.Join(unitView.transform.DOMove(targetPosition, 0.5f).SetEase(DG.Tweening.Ease.OutBack));
+
+        emitSequence.OnComplete(() =>
+        {
+            // Finalize registration and restore gameplay interactions once fully seated
+            activeBoardReferences.UnitViews[spawnCoord] = unitView;
+            unitView.Initialize(emittedNode);
+            unitView.RemoveLidCover();
+            EvaluateLogicalWinState();
+            done?.Invoke();
+        });
     }
 }

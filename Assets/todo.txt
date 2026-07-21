@@ -67,6 +67,8 @@ shuffle - takes the second row and switches with the items of the first row.
 25. add a wink option to the ball views.
 26. consider making the balls without a face when they enter the belt
 27. ask Nina to modify the image BG_03.png from the folder to include the little images on_bg_01.png
+28. for hidden - add a visual ? to the unit and the container image
+29. make for the pipes a counter as text object
 
 
 

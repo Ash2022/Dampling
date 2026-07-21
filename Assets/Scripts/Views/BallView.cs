@@ -91,6 +91,7 @@ public class BallView : MonoBehaviour
                 }).SetEase(Ease.OutQuad).OnComplete(() => isAnimatingCapture = false);
 
                 GameManager.Instance.BallEnteredSlot(this);
+                GameManager.Instance.BallEnteredOrExitSlot();
             }
         }
 
@@ -104,6 +105,7 @@ public class BallView : MonoBehaviour
                 if (container.TryReserveTargetSlot(out Transform targetSlotTransform))
                 {
                     ExecuteTransferToContainer(container, targetSlotTransform);
+                    GameManager.Instance.BallEnteredOrExitSlot();
                 }
             }
         }
@@ -148,6 +150,6 @@ public class BallView : MonoBehaviour
 
     internal void ExecuteWinkVisual()
     {
-        Debug.Log("Wink");
+        //Debug.Log("Wink");
     }
 }

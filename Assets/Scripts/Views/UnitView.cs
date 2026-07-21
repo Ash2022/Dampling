@@ -13,7 +13,10 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     [SerializeField] public SpriteRenderer lockOverlayRenderer; // Padlock/Chain overlay graphic
     [SerializeField] private SpriteRenderer keyIndicatorRenderer; // Decorative key badge icon
-    [SerializeField] private TMPro.TextMeshPro statusText;
+
+    [SerializeField] private SpriteRenderer pipeTextDisplay; // Decorative key badge icon
+
+
     [SerializeField] private LineRenderer linkLineRenderer;
 
     [Header("Ice Overlay Features")]
@@ -21,6 +24,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private TMPro.TextMeshPro iceCountText;
 
     [SerializeField] private Transform clickIndication;
+
+    Transform ballsOrgParent;
 
     private Vector2Int gridCoordinate;
     private List<BallView> preAllocatedBallViews = new List<BallView>();
@@ -45,8 +50,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         lockOverlayRenderer.gameObject.SetActive(false);
         keyIndicatorRenderer.gameObject.SetActive(false);
         iceOverlayRenderer.gameObject.SetActive(false);
+        pipeTextDisplay.gameObject.SetActive(false);
         linkLineRenderer.positionCount = 0;
-        statusText.text = "";
 
         // 1. Process Static Pipe Generation Matrix Cells
         if (cellNode.ContinuousPipe != null)
@@ -61,7 +66,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             lidRenderer.gameObject.SetActive(false);
 
             int emissionsLeft = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
-            statusText.text = emissionsLeft > 0 ? emissionsLeft.ToString() : "";
+
+            pipeTextDisplay.sprite = VisualsManager.Instance.GetPipeCounterSprite(emissionsLeft);
+            pipeTextDisplay.gameObject.SetActive(true);
 
             disableButton = true;
         }
@@ -86,7 +93,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
             if (isHidden)
             {
-                statusText.text = "?";
+                
             }
             else if (cellNode.OccupyingUnit.InteriorContents.Count > 0)
             {
@@ -315,7 +322,10 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     public void UpdatePipeCounter(int newPipeCount)
     {
-        statusText.text = newPipeCount > 0 ? newPipeCount.ToString() : "";
+        if(newPipeCount ==0)
+            pipeTextDisplay.gameObject.SetActive(false);
+        else
+            pipeTextDisplay.sprite = VisualsManager.Instance.GetPipeCounterSprite(newPipeCount);
     }
 
     /// <summary>
@@ -365,8 +375,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         if (wasInitiallyHidden)
         {
             wasInitiallyHidden = false;
-            statusText.text = ""; // Remove the "?"
-
+            
+            pipeTextDisplay.gameObject.SetActive(false);
+        
             // 1. Fetch the true color now that it is revealed
             unitColorIndex = updatedNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1;
             //Color realColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
@@ -449,7 +460,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     public void FadeOutBox()
     {
-        spriteRenderer.DOFade(0f, 0.5f).OnComplete(()=>
+        spriteRenderer.DOFade(0f, 0.5f).OnComplete(() =>
         {
             preAllocatedBallViews.Clear();
             DamplingObjectPool.Instance.ReturnUnit(gameObject);
@@ -466,4 +477,22 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         return lidRenderer.gameObject.activeInHierarchy;
     }
 
+    internal void PipeInitialize(GameLevelSchema.CellNode cellNode)
+    {
+        unitColorIndex = cellNode.OccupyingUnit.InteriorContents.FirstOrDefault().ColorIndex ;
+
+        spriteRenderer.sprite = VisualsManager.Instance.GetUnitSprite(unitColorIndex);
+        lidRenderer.sprite = VisualsManager.Instance.GetUnitLidSprite(unitColorIndex);
+
+        //lidRenderer.color = unitColor;
+        lidRenderer.gameObject.SetActive(true);
+        disableButton = true;
+        clickIndication.gameObject.SetActive(false);
+        lockOverlayRenderer.gameObject.SetActive(false);
+        keyIndicatorRenderer.gameObject.SetActive(false);
+        iceOverlayRenderer.gameObject.SetActive(false);
+        pipeTextDisplay.gameObject.SetActive(false);
+        linkLineRenderer.positionCount = 0;
+        
+    }
 }

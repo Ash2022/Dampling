@@ -6,6 +6,11 @@ public class SlotView : MonoBehaviour
     public BallView OccupyingBall { get; private set; }
     public bool IsOccupied => OccupyingBall != null;
 
+    [SerializeField] SpriteRenderer slotSprite;
+
+    public SpriteRenderer SR => slotSprite;
+
+
     /// <summary>
     /// Atomically claims this slot if it is available.
     /// </summary>

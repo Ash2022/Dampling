@@ -12,6 +12,7 @@ public class DamplingObjectPool : MonoBehaviour
     [SerializeField] private GameObject ballPrefab;
     [SerializeField] private GameObject containerResolveEffectPrefab;
 
+
     private Queue<GameObject> unitPool = new Queue<GameObject>();
     private Queue<GameObject> containerPool = new Queue<GameObject>();
     private Queue<GameObject> ballPool = new Queue<GameObject>();
@@ -129,4 +130,5 @@ public class DamplingObjectPool : MonoBehaviour
         effect.transform.SetParent(effectRoot);
         effectPool.Enqueue(effect);
     }
+    
 }

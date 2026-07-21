@@ -172,8 +172,8 @@ public class LevelEditorWindow : EditorWindow
             int totalUnits = 0;
             foreach (var cell in editorMatrix.Values)
             {
-                if (cell.Behavior == CellBehavior.Standard) totalUnits += 1;
-                else if (cell.Behavior == CellBehavior.Pipe) totalUnits += cell.PipeEmissions;
+                if (cell.Behavior == CellBehavior.Standard || cell.Behavior == CellBehavior.Pipe)
+                    totalUnits += 1;
             }
             if (totalUnits == 0) return;
 
@@ -191,15 +191,29 @@ public class LevelEditorWindow : EditorWindow
             foreach (var cell in editorMatrix.Values)
             {
                 if (cell.Behavior == CellBehavior.Standard && assignedCount < unitColorAssignments.Count)
+                {
                     cell.AssignedColorIndex = unitColorAssignments[assignedCount++];
-                else if (cell.Behavior == CellBehavior.Pipe)
+                }
+                else if (cell.Behavior == CellBehavior.Pipe && assignedCount < unitColorAssignments.Count)
                 {
                     cell.PipeEmittedColorIndexes.Clear();
-                    for (int e = 0; e < cell.PipeEmissions; e++)
-                        if (assignedCount < unitColorAssignments.Count) cell.PipeEmittedColorIndexes.Add(unitColorAssignments[assignedCount++]);
-                    cell.AssignedColorIndex = cell.PipeEmittedColorIndexes.Count > 0 ? cell.PipeEmittedColorIndexes[0] : -1;
+
+                    // Take exactly one valid color assignment for its active unit
+                    int chosenColor = unitColorAssignments[assignedCount++];
+                    cell.AssignedColorIndex = chosenColor;
+                    cell.PipeEmittedColorIndexes.Add(chosenColor);
+
+                    // Fill any remaining emissions with matching colors to prevent sub-system crashes
+                    for (int e = 1; e < cell.PipeEmissions; e++)
+                    {
+                        cell.PipeEmittedColorIndexes.Add(chosenColor);
+                    }
                 }
-                else { cell.AssignedColorIndex = -1; cell.PipeEmittedColorIndexes.Clear(); }
+                else
+                {
+                    cell.AssignedColorIndex = -1;
+                    cell.PipeEmittedColorIndexes.Clear();
+                }
             }
             currentUnitColors = unitColorAssignments;
         }
@@ -324,8 +338,56 @@ public class LevelEditorWindow : EditorWindow
                     string pipeLabelText = hasColor ? $"Pipe: Color_{cell.AssignedColorIndex}" : "Pipe Anchor";
                     GUI.Label(labelRect, pipeLabelText, EditorStyles.whiteMiniLabel);
 
-                    Rect inputRect = new Rect(cellRect.x + 6, cellRect.y + 32, cellRect.width - 12, 18f);
-                    cell.PipeEmissions = EditorGUI.IntField(inputRect, cell.PipeEmissions);
+                    Rect inputRect = new Rect(cellRect.x + 6, cellRect.y + 20, cellRect.width - 12, 18f);
+
+                    EditorGUI.BeginChangeCheck();
+                    int newEmissions = EditorGUI.IntField(inputRect, cell.PipeEmissions);
+                    if (EditorGUI.EndChangeCheck())
+                    {
+                        cell.PipeEmissions = newEmissions;
+
+                        // Ensure the emitted colors list matches the emission count
+                        while (cell.PipeEmittedColorIndexes.Count < cell.PipeEmissions)
+                            cell.PipeEmittedColorIndexes.Add(cell.AssignedColorIndex != -1 ? cell.AssignedColorIndex : 0);
+                        while (cell.PipeEmittedColorIndexes.Count > cell.PipeEmissions)
+                            cell.PipeEmittedColorIndexes.RemoveAt(cell.PipeEmittedColorIndexes.Count - 1);
+
+                        // Sync the master assigned color to the first emission if available
+                        if (cell.PipeEmittedColorIndexes.Count > 0)
+                            cell.AssignedColorIndex = cell.PipeEmittedColorIndexes[0];
+                    }
+
+                    // Draw small color rects
+                    float pipSize = 15f;
+                    float paddingX = 2f;
+                    float startX = cellRect.x + 2f;
+                    float startY = cellRect.y + 40f;
+
+                    int cols = (int)(cellRect.width / (pipSize + paddingX));
+
+                    for (int i = 0; i < cell.PipeEmittedColorIndexes.Count; i++)
+                    {
+                        int row = i / cols;
+                        int col = i % cols;
+
+                        float pX = startX + (col * (pipSize + paddingX));
+                        float pY = startY + (row * (pipSize + 2f));
+
+                        Rect pipRect = new Rect(pX, pY, pipSize, pipSize);
+
+                        if (pipRect.Contains(e.mousePosition) && e.type == EventType.MouseDown && e.button == 0)
+                        {
+                            cell.PipeEmittedColorIndexes[i] = GetNextColorIndex(cell.PipeEmittedColorIndexes[i], colorCount);
+
+                            // If the first pip is changed, update the primary AssignedColorIndex so the tool logic syncs
+                            if (i == 0) cell.AssignedColorIndex = cell.PipeEmittedColorIndexes[0];
+
+                            e.Use();
+                            Repaint();
+                        }
+
+                        EditorGUI.DrawRect(pipRect, GetColorValue(cell.PipeEmittedColorIndexes[i]));
+                    }
                 }
 
                 // --- INSTANT MIDDLE-CLICK PAINTING ENGINE ---

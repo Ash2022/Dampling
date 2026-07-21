@@ -200,7 +200,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 20
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: c4b2c7222c6731d4b955e5f409a04f1f, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 7f358bf999dfbc24fa85d8aa419905ac, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -1984,7 +1984,7 @@ GameObject:
   - component: {fileID: 1334223718}
   - component: {fileID: 1334223717}
   m_Layer: 5
-  m_Name: CoinImage (1)
+  m_Name: PlusSign
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2246,6 +2246,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9431ad822bdba734591badec1ed27721, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BeltGenerator
+  lightBrown: {r: 0.206, g: 0.10905882, b: 0, a: 1}
+  darkBrown: {r: 0.305, g: 0.20424236, b: 0.09089001, a: 1}
   leftCenter: {fileID: 1366878518}
   rightCenter: {fileID: 850481021}
   slotPrefab: {fileID: 5515439124192318093, guid: 2f2f24f2a87fb4048a53633a1aa21fb4, type: 3}
@@ -2254,6 +2256,7 @@ MonoBehaviour:
   speed: 1.75
   direction: 1
   slots: []
+  beltBlinker: {fileID: 1596400020}
 --- !u!4 &1502354386
 Transform:
   m_ObjectHideFlags: 0
@@ -2289,7 +2292,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1596400019
 Transform:
   m_ObjectHideFlags: 0
@@ -2352,10 +2355,10 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 1
+  m_SortingOrder: 2
   m_MaskInteraction: 0
-  m_Sprite: {fileID: 21300000, guid: b3dbf70b5a3d08c4ca8a21946e486367, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Sprite: {fileID: 21300000, guid: d143961cd769ccc489ebfff3d5aa9e97, type: 3}
+  m_Color: {r: 1, g: 1, b: 1, a: 0}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -3118,6 +3121,8 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 87d88da18b0a6784dae0edf5e1ad5946, type: 3}
   - {fileID: 4900000, guid: 7c6bba601fde54449895a13f0b577ff5, type: 3}
   - {fileID: 4900000, guid: d9ade8cbaa48ba04bb5ccb6b43b5c382, type: 3}
+  - {fileID: 4900000, guid: 481bb387e79abe94b90ca674c0b4d292, type: 3}
+  - {fileID: 4900000, guid: 3132fbc923bcc704793a3345e84f3b9c, type: 3}
   - {fileID: 4900000, guid: 18babc80ac93e3d4fb7cc6a0f5741dbd, type: 3}
 --- !u!114 &2070676744
 MonoBehaviour:
@@ -3209,6 +3214,11 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 80053efaa3527474fa015779d27f1d46, type: 3}
   - {fileID: 21300000, guid: b20f4969064387c42883ffaa218b1d29, type: 3}
   - {fileID: 21300000, guid: 30a341f8ecd5fbb4c86225b20383c90f, type: 3}
+  pipeCounterSprites:
+  - {fileID: 21300000, guid: b27bcf37600cca24196520251965a496, type: 3}
+  - {fileID: 21300002, guid: b27bcf37600cca24196520251965a496, type: 3}
+  - {fileID: 21300004, guid: b27bcf37600cca24196520251965a496, type: 3}
+  - {fileID: 21300006, guid: b27bcf37600cca24196520251965a496, type: 3}
   unitHidden: {fileID: 21300000, guid: 1d8039ee369a2dd41aa5cbb12b3033bf, type: 3}
   unitLidHidden: {fileID: 21300000, guid: 97c36fd79bb6cc14b8292e5dc7815d7c, type: 3}
   containerHidden: {fileID: 21300000, guid: 3eaf973cc9faf29428e6fcacd36fdf0e, type: 3}
@@ -3936,7 +3946,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: b6d4c3ad0f8f42d4fa7d4be912f0deda, type: 3}
+  m_Sprite: {fileID: 21300000, guid: af5115259ddbe6d4383186a487c2d3d8, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4228,8 +4238,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 42
-  m_fontSizeBase: 42
+  m_fontSize: 50
+  m_fontSizeBase: 50
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
