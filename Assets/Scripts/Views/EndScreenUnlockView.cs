@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class EndScreenUnlockView : MonoBehaviour
 {
     [SerializeField]CanvasGroup canvasGroup;
-    [SerializeField] Image fillBGImage;
+    [SerializeField] Image featureImage;
     [SerializeField] Image fillImage;
     [SerializeField] RectTransform mainImageRect;
     [SerializeField] GameObject backParticles;
@@ -32,19 +32,15 @@ public class EndScreenUnlockView : MonoBehaviour
         this.totalSteps = totalSteps;
         this.currentStep = currentStep;
 
-        fillImage.sprite = spriteFill;
+        //fillImage.sprite = spriteFill;
 
         fillImage.fillAmount = (float)currentStep /totalSteps;
 
 
-        //mainFeatureImage.sprite = spriteBG;
-
-        //mainFeatureImage.SetNativeSize();
-        fillBGImage.sprite = spriteBG;
-        mainImageRect.localScale = Vector3.one;
-
-        fillImage.SetNativeSize();
-        fillBGImage.SetNativeSize();
+        featureImage.sprite = spriteBG;
+        featureImage.SetNativeSize();
+        
+        //mainImageRect.localScale = Vector3.one;
 
         //titleText.text = title;
         SetProgessText();

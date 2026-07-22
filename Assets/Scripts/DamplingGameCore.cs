@@ -20,8 +20,7 @@ public class DamplingGameCore
 
     // --- Optional View Notification Callbacks ---
     private Action<int, int> OnUnitIceChanged;             // Params: UnitId, RemainingIceLayers
-    private Action<int, int> OnLockKeyCollected;
-    private Action<int> OnLinkedUnitPlayed;         // Params: LockedUnitId, CollectedKeyUnitId
+          // Params: LockedUnitId, CollectedKeyUnitId
 
     // --- Structural Feedback Transaction Packets ---
     public enum EngineEventType
@@ -51,9 +50,7 @@ public class DamplingGameCore
     public void InitializeLevel(
         GameLevelSchema levelData,
         bool isLiveMode = false, // NEW: Defaults to true for normal gameplay
-        Action<int, int> onUnitIceChanged = null,
-        Action<int, int> onLockKeyCollected = null,
-        Action<int> onLinkedUnitPlayed = null)
+        Action<int, int> onUnitIceChanged = null)
     {
         ActiveLevelData = levelData;
         IsLiveMode = isLiveMode;
@@ -64,8 +61,7 @@ public class DamplingGameCore
 
         // Assign optional callbacks
         OnUnitIceChanged = onUnitIceChanged;
-        OnLockKeyCollected = onLockKeyCollected;
-        OnLinkedUnitPlayed = onLinkedUnitPlayed;
+        
 
         gridMatrix = new Dictionary<GameLevelSchema.Coordinate, GameLevelSchema.CellNode>();
         foreach (var node in ActiveLevelData.Grid.Matrix)
@@ -149,9 +145,6 @@ public class DamplingGameCore
         {
             PlayedUnitIds.Add(currentUnit.UnitId);
 
-            // Trigger the explicit lock/key dependencies checks before wiping the key unit data
-            NotifyLocksOfKeyCollection(currentUnit.UnitId);
-
             var node = FindCellNodeByUnitId(currentUnit.UnitId);
             if (node != null)
             {
@@ -159,9 +152,6 @@ public class DamplingGameCore
                 node.OccupyingUnit = null;
             }
 
-            // --- THE FIX: ONLY TRIGGER FOR THE ACTUAL LINKED UNITS ---
-            if (currentUnit.UnitId != activeUnit.UnitId)
-                OnLinkedUnitPlayed?.Invoke(currentUnit.UnitId);
             
             foreach (var dumpling in currentUnit.InteriorContents)
             {
@@ -230,23 +220,7 @@ public class DamplingGameCore
         }
     }
 
-    // --- Key/Lock Evaluation Event Despatcher ---
-    private void NotifyLocksOfKeyCollection(int keyId)
-    {
-        if (OnLockKeyCollected == null) return;
-
-        // Scan all remaining locked cells to check if they were listening for this specific Key ID
-        foreach (var cellNode in ActiveLevelData.Grid.Matrix)
-        {
-            if (cellNode.OccupyingUnit != null && !PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId))
-            {
-                if (cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Contains(keyId))
-                {
-                    OnLockKeyCollected.Invoke(cellNode.OccupyingUnit.UnitId, keyId);
-                }
-            }
-        }
-    }
+    
 
     // --- Automated Processing Logic Loops ---
     private void ProcessBeltResolutionPipeline(List<EngineEvent> transactions)

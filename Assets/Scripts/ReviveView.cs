@@ -1,17 +1,18 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class ReviveView : MonoBehaviour
 {
 
     Action<bool> answerBack;
+    [SerializeField] TMP_Text reviveCost;
 
-    public void ShowRevive(Action<bool> action)
+    public void ShowRevive(Action<bool> action, int cost)
     {
         answerBack = action;
-        gameObject.SetActive(true);    
+        gameObject.SetActive(true);  
+        reviveCost.text = "RECOVER\n<size=50><Sprite=0>"+cost;  
     }
 
     public void ButtonYesClicked()

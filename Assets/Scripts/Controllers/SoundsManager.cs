@@ -12,12 +12,27 @@ public class SoundsManager : MonoBehaviour
         High
     }
 
-    [SerializeField] AudioClip _unitPlayed;
-    [SerializeField] AudioClip _illegalMove;
     [SerializeField] AudioClip _coinBalance;
+    [SerializeField] AudioClip _illegalMove;
     [SerializeField] AudioClip _levelComplete;
     [SerializeField] AudioClip _levelFail;
-    
+
+    [SerializeField] AudioClip _unitPlayed;
+    [SerializeField] AudioClip _linkBroken;
+    [SerializeField] AudioClip _hiddenRevealed;
+    [SerializeField] AudioClip _keyAndLock;
+    [SerializeField] AudioClip _pipeEmit;
+    [SerializeField] AudioClip _iceCracked;
+    [SerializeField] AudioClip _winkHappen;
+    [SerializeField] AudioClip _containerResolved;
+    [SerializeField] AudioClip _revive;
+    [SerializeField] AudioClip _unitUnlocked;
+    [SerializeField] AudioClip _ballJumpToSlot;
+    [SerializeField] AudioClip _lidPopped;
+
+
+
+
 
     [SerializeField] AudioSource _SFX_Source1 = null;
     [SerializeField] AudioSource _SFX_Source2 = null;
@@ -39,7 +54,7 @@ public class SoundsManager : MonoBehaviour
     {
         _instance = this;
     }
-   
+
 
     internal void PlayLevelFailed()
     {
@@ -53,12 +68,90 @@ public class SoundsManager : MonoBehaviour
         PlayHaptics(TapticsStrenght.Medium);
     }
 
-     public void IllegalMove()
+    public void IllegalMove()
     {
+        PlayHaptics(TapticsStrenght.Medium);
         PlayClip(_illegalMove);
     }
+    internal void PlayCoinReachBalance()
+    {
+        PlayHaptics(TapticsStrenght.Light);
+        PlayClip(_coinBalance, 0.5f);
+    }
 
-   
+    public void UnitPlayed()
+    {
+        PlayHaptics(TapticsStrenght.High);
+        PlayClip(_unitPlayed);
+    }
+
+    public void LinkBroken()
+    {
+        PlayHaptics(TapticsStrenght.Medium);
+        PlayClip(_linkBroken);
+    }
+
+    public void HiddenRevealed()
+    {
+        PlayHaptics(TapticsStrenght.Medium);
+        PlayClip(_hiddenRevealed);
+    }
+
+    public void KeyAndLock()
+    {
+        PlayHaptics(TapticsStrenght.Medium);
+        PlayClip(_keyAndLock);
+    }
+
+    public void PipeEmit()
+    {
+        PlayHaptics(TapticsStrenght.Medium);
+        PlayClip(_pipeEmit);
+    }
+
+    public void IceCracked()
+    {
+        PlayHaptics(TapticsStrenght.Medium);
+        PlayClip(_iceCracked);
+    }
+
+    public void WinkHappen()
+    {
+        PlayHaptics(TapticsStrenght.Medium);
+        PlayClip(_winkHappen);
+    }
+
+    public void ContainerResolved()
+    {
+        PlayHaptics(TapticsStrenght.Light);
+        PlayClip(_containerResolved);
+    }
+
+
+    internal void PlayRevive()
+    {
+        PlayClip(_revive);
+    }
+
+    internal void SomethingUnlocked()
+    {
+        PlayHaptics(TapticsStrenght.Medium);
+        PlayClip(_unitUnlocked);       
+    }
+
+    public void BallJumpedToSlot()
+    {
+        PlayHaptics(TapticsStrenght.Light);
+        PlayClip(_ballJumpToSlot); 
+    }
+
+    public void LidPopped()
+    {
+        PlayHaptics(TapticsStrenght.Light);
+        PlayClip(_lidPopped); 
+    }
+
+
     public void DisableEnableMixer(bool disable)
     {
         if (disable)
@@ -150,27 +243,14 @@ public class SoundsManager : MonoBehaviour
     //used to later change between IOS and Android as needed
     public void PlayHaptics(TapticsStrenght tapticsStrenght)
     {
-        
+
         if (tapticsStrenght == TapticsStrenght.Light)
             Taptic.Light();
-        else if(tapticsStrenght == TapticsStrenght.Medium)
+        else if (tapticsStrenght == TapticsStrenght.Medium)
             Taptic.Medium();
-        else if(tapticsStrenght == TapticsStrenght.High)
+        else if (tapticsStrenght == TapticsStrenght.High)
             Taptic.Heavy();
     }
 
-    internal void PlayCoinReachBalance()
-    {
-        PlayClip(_coinBalance,0.5f);
-    }
 
-    internal void PlayRevive()
-    {
-        
-    }
-
-    internal void SomethingUnlocked()
-    {
-        
-    }
 }

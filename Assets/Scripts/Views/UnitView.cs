@@ -108,17 +108,18 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
                 SetupNestedInteriorBalls(cellNode.OccupyingUnit.InteriorContents);
             }
 
-            // --- 2. LOCK / KEY STATE ---
-            // The lock overlay is ONLY for explicit dependencies!
+
+
             if (cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count > 0)
             {
                 lockOverlayRenderer.gameObject.SetActive(true);
+                lockOverlayRenderer.sprite = VisualsManager.Instance.GetLockSprite(cellNode.OccupyingUnit.KeyLockPairIndex);
             }
 
-            bool isAKeyUnit = GameManager.Instance.IsUnitActingAsKey(cellNode.OccupyingUnit.UnitId);
-            if (isAKeyUnit)
+            if (cellNode.OccupyingUnit.KeyLockPairIndex > 0 && cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count == 0)
             {
                 keyIndicatorRenderer.gameObject.SetActive(true);
+                keyIndicatorRenderer.sprite = VisualsManager.Instance.GetKeySprite(cellNode.OccupyingUnit.KeyLockPairIndex);
             }
 
             // --- 3. ICE STATE ---
@@ -141,7 +142,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             lidRenderer.gameObject.SetActive(false);
         }
     }
-   
+
     public void RenderLinkLines(UnitView partnerView)
     {
         Vector3 myPos = transform.position;
@@ -214,6 +215,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         if (GameManager.Instance.IsUnitLockedAt(gridCoordinate))
         {
+            SoundsManager.Instance.IllegalMove();
             Debug.Log("unit blocked");
             return;
         }
@@ -225,15 +227,85 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         //check if we are in magnet mode - 
 
+        if (model.OccupyingUnit.KeyLockPairIndex > 0 && model.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count == 0)
+        {
+            UnitView targetLockView = GameManager.Instance.GetLockUnitView(model.OccupyingUnit.KeyLockPairIndex);
+            ExecuteKeyUnlockSequence(targetLockView);
+        }
+        else if (model.OccupyingUnit.LinkedUnitIds.Count > 0)
+        {
+            UnitView partnerView = GameManager.Instance.GetUnitView(model.OccupyingUnit.LinkedUnitIds[0]);
 
-        GameManager.Instance.OnUnitElementClicked(gridCoordinate);
-        ExecuteReleaseUnitContents();
+            // Determine which unit physically owns the active link visual
+            UnitView linkOwner = linkSpriteRenderer.gameObject.activeInHierarchy ? this : partnerView;
+            ExecuteLinkedPlaySequence(partnerView, linkOwner);
+        }
+        else
+        {
+            GameManager.Instance.OnUnitElementClicked(gridCoordinate);
+            ExecuteReleaseUnitContents();
+        }
 
     }
 
     public void LinkedUnitPlayed()
     {
         ExecuteReleaseUnitContents();
+    }
+
+    private void ExecuteLinkedPlaySequence(UnitView partnerView, UnitView linkOwner)
+    {
+        Sequence linkSeq = DOTween.Sequence();
+
+        SoundsManager.Instance.LinkBroken();
+
+        linkSeq.Append(linkOwner.linkSpriteRenderer.transform.DOShakePosition(0.5f, strength: 0.25f, vibrato: 20));
+        linkSeq.Join(linkOwner.linkSpriteRenderer.DOFade(0f, 0.5f));
+
+        linkSeq.OnComplete(() =>
+        {
+            linkOwner.linkSpriteRenderer.gameObject.SetActive(false);
+            
+            GameManager.Instance.OnUnitElementClicked(gridCoordinate);
+            ExecuteReleaseUnitContents();
+
+            partnerView.LinkedUnitPlayed();
+        });
+
+        linkSeq.Play();
+    }
+
+    private void ExecuteKeyUnlockSequence(UnitView lockView)
+    {
+        keyIndicatorRenderer.transform.SetParent(null);
+        keyIndicatorRenderer.sortingOrder = 50;
+
+        Sequence keySeq = DOTween.Sequence();
+
+        SoundsManager.Instance.KeyAndLock();
+
+        keySeq.Append(keyIndicatorRenderer.transform.DOMove(lockView.lockOverlayRenderer.transform.position, 0.4f).SetEase(Ease.InOutSine));
+        keySeq.Join(keyIndicatorRenderer.transform.DOScale(1.25f, 0.2f).SetLoops(2, LoopType.Yoyo));
+
+        keySeq.OnComplete(() =>
+        {
+            // GameManager.Instance.PlaySFX("Unlock"); // Trigger SFX here
+
+            Sequence fadeSeq = DOTween.Sequence();
+            fadeSeq.Append(keyIndicatorRenderer.DOFade(0f, 0.2f));
+            fadeSeq.Join(lockView.lockOverlayRenderer.DOFade(0f, 0.2f));
+
+            fadeSeq.OnComplete(() =>
+            {
+                keyIndicatorRenderer.gameObject.SetActive(false);
+                lockView.LockUnlocked();
+
+                GameManager.Instance.OnUnitElementClicked(gridCoordinate);
+                ExecuteReleaseUnitContents();
+            });
+        });
+
+        keySeq.Play();
     }
 
     private void ExecuteReleaseUnitContents()
@@ -350,6 +422,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     /// </summary>
     public void ShatterIce(Color originalUnitColor)
     {
+        SoundsManager.Instance.IceCracked();
+
         DG.Tweening.Sequence shatterSeq = DG.Tweening.DOTween.Sequence();
 
         SpriteRenderer overlaySpriteRenderer = iceOverlayRenderer.GetComponent<SpriteRenderer>();
@@ -381,6 +455,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         // We only need to do a visual overhaul if the unit was hiding its true identity
         if (wasInitiallyHidden)
         {
+            SoundsManager.Instance.HiddenRevealed();
             wasInitiallyHidden = false;
 
             pipeTextDisplay.gameObject.SetActive(false);

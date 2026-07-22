@@ -41,25 +41,16 @@ shuffle - takes the second row and switches with the items of the first row.
 
 
 2. haptics.
-3. sfx -- Ice Crack, 
-8. refine the end screen flow with the unlocks - need images from Nina - also the unlocks
-9. check the link feature visually - 
+3. sfx -- Ice Crack, link break, key and lock 
+
 10. levels
-11. loop end game
-13. revive screen - Nina
-17. tutorial
-18. hard level indication support
-19. decide what to do with skip - now it keeps playing in the BG and not really skipping
-20. visuals for lock and key and their animations.
+
 
 25. add a wink option to the ball views.
 
+end screen lose mock
+remove the methods that we dont need in the core - the 2 callbacks
 
-28. for hidden - add a visual ? to the unit and the container image
-
-29. make for the pipes a counter as text image - make 4 3 2 1 
-Settings screen
-change the link from LineRenderer to image we rotate
 
 
 

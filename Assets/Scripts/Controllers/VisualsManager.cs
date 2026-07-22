@@ -6,7 +6,6 @@ public class VisualsManager : MonoBehaviour
 {
     public static VisualsManager Instance { get; private set; }
 
-    [SerializeField] List<Sprite> unlockBGs = new List<Sprite>();
     [SerializeField] List<Sprite> unlockFills = new List<Sprite>();
 
     [SerializeField] List<Sprite> ballSprites;
@@ -15,6 +14,9 @@ public class VisualsManager : MonoBehaviour
     [SerializeField] List<Sprite> unitLidsSprites;
 
     [SerializeField] List<Sprite> pipeCounterSprites;
+
+    [SerializeField] List<Sprite> keySprites;
+    [SerializeField] List<Sprite> lockSprites;
 
     
     [SerializeField] Sprite unitHidden;
@@ -70,16 +72,23 @@ public class VisualsManager : MonoBehaviour
         return Pipe;
     }
 
-    public Sprite GetUnlockImage(int index, bool BGImage)
+    public Sprite GetUnlockImage(int index)
     {
-        if (BGImage)
-            return unlockBGs[index];
-        else
-            return unlockFills[index];
+        return unlockFills[index];
     }
 
     internal Sprite GetPipeCounterSprite(int v)
     {
         return pipeCounterSprites[v];
+    }
+
+    public Sprite GetKeySprite(int index)
+    {
+        return keySprites[index];
+    }
+
+    public Sprite GetLockSprite(int index)
+    {
+        return lockSprites[index];
     }
 }

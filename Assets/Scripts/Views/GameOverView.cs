@@ -239,7 +239,7 @@ public class GameOverView : MonoBehaviour
             //endScreenUnlockView.InitDisplay(unlockColor, total, curr);
             
 
-            endScreenUnlockView.InitDisplay(VisualsManager.Instance.GetUnlockImage(presentIndex, true), VisualsManager.Instance.GetUnlockImage(presentIndex, false),total, curr);
+            endScreenUnlockView.InitDisplay(VisualsManager.Instance.GetUnlockImage(presentIndex), VisualsManager.Instance.GetUnlockImage(presentIndex),total, curr);
         }
 
 

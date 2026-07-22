@@ -31,13 +31,26 @@ public class ContainerView : MonoBehaviour
         QueueIndex = orgQueueIndex;
         absorbedBallViews.Clear();
 
-        spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(containerData.ColorIndex);
+        if(containerData.startHidden)
+            spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(-1);
+        else
+            spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(containerData.ColorIndex);
 
         // Reset visual alphas/scales back to normal defaults when pulled from pool
         spriteRenderer.DOComplete();
         spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 1f);
         transform.localScale = Vector3.one;
         spriteRenderer.sortingOrder = 1;
+    }
+
+    public void RevealContainerColor()
+    {
+        if(dataModel.startHidden)
+        {
+            dataModel.startHidden = false;
+            spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(dataModel.ColorIndex);
+        }
+
     }
 
     /// <summary>

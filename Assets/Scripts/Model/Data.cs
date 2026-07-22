@@ -31,6 +31,7 @@ public class GameLevelSchema
         public int ColorIndex { get; set; } = -1;
         public int Capacity { get; set; } = 3;
         public int FilledSlotsCount { get; set; } = 0;
+        public bool startHidden;
     }
 
     public class GridTopology
@@ -86,6 +87,7 @@ public class GameLevelSchema
         /// >0 = Unit is frozen in ice. It cannot be clicked or pathfind until this hits 0.
         /// </summary>
         public int IceLayers { get; set; } = 0;
+        public int KeyLockPairIndex { get; set; } = -1;
     }
 
     public class DumplingItem

@@ -519,12 +519,21 @@ public class LevelEditorWindow : EditorWindow
                     e.Use();
                     Repaint();
                 }
+                if (containerRect.Contains(e.mousePosition) && e.type == EventType.MouseDown && e.button == 1)
+                {
+                    generatedQueues[q][c].startHidden = !generatedQueues[q][c].startHidden;
+
+                    e.Use();
+                    Repaint();
+                }
 
                 int colorIndex = generatedQueues[q][c].ColorIndex;
 
                 EditorGUI.DrawRect(containerRect, GetColorValue(colorIndex));
                 GUIStyle labelOverride = new GUIStyle(EditorStyles.whiteBoldLabel) { fontSize = 10, alignment = TextAnchor.MiddleCenter };
-                EditorGUI.LabelField(containerRect, $"COLOR_{colorIndex}", labelOverride);
+                //EditorGUI.LabelField(containerRect, $"COLOR_{colorIndex}", labelOverride);
+                EditorGUI.LabelField(containerRect, $"COLOR_{colorIndex}", new GUIStyle(EditorStyles.label)
+                 { normal = { textColor = generatedQueues[q][c].startHidden ? Color.black : Color.white } });
             }
         }
         GUILayout.EndVertical();
@@ -807,7 +816,8 @@ public class LevelEditorWindow : EditorWindow
                     node.OccupyingUnit = new GameLevelSchema.GridUnit
                     {
                         UnitId = positionToIdMap[kvp.Key],
-                        IceLayers = kvp.Value.IceLayers
+                        IceLayers = kvp.Value.IceLayers,
+                        KeyLockPairIndex = kvp.Value.KeyGroupId > 0 ? kvp.Value.KeyGroupId : (kvp.Value.LockGroupId > 0 ? kvp.Value.LockGroupId : -1)
                     };
                     node.OccupyingUnit.IsHiddenUntilUnblocked = kvp.Value.StartHidden;
 

@@ -90,6 +90,7 @@ public class BallView : MonoBehaviour
                     if (currentBeltSlot) transform.position = Vector3.Lerp(startPos, currentBeltSlot.position, t);
                 }).SetEase(Ease.OutQuad).OnComplete(() => isAnimatingCapture = false);
 
+                SoundsManager.Instance.BallJumpedToSlot();
                 GameManager.Instance.BallEnteredSlot(this);
                 GameManager.Instance.BallEnteredOrExitSlot();
             }
@@ -110,6 +111,8 @@ public class BallView : MonoBehaviour
             }
         }
     }
+
+   
 
     private void ExecuteTransferToContainer(ContainerView targetContainer, Transform destinationSlot)
     {

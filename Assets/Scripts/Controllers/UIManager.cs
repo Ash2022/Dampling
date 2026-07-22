@@ -21,12 +21,12 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] RectTransform inGameUIHolder;
 
-    [SerializeField] GameObject skipButton;
-
     [SerializeField] List<Sprite> tutorialImages = new List<Sprite>();
     [SerializeField] Sprite hardLevelImage;
-    
+
     [SerializeField] TutorialImageView tutorialImageView;
+
+
 
     int currDisplayBalance;
 
@@ -35,50 +35,37 @@ public class UIManager : MonoBehaviour
     Sequence handSequence;
 
 
-    public void InitLevel(int levelIndex, int balance, int unlockedIndex,bool isHardLevel, bool showTutorial)
+    public void InitLevel(int levelIndex, int balance, int unlockedIndex, bool isHardLevel, bool showTutorial)
     {
-        ShowHideSkipButton(false);
         balanceSortingGroup.sortingLayerName = "Default";
         currDisplayBalance = balance;
         AddToBalanceVisual(0);
         levelText.text = "LEVEL " + (levelIndex + 1).ToString();
 
-        /*
-                if (levelIndex == 0)
-                {
-                    //get the first container position 
-                    Vector3 containerPosition = GameManager.Instance.GetContainerWorldPosition("Q0_C0");
-                    ShowTutorialHand(containerPosition, 0);
-                    showingClick = 0;
-                }
-                else if(levelIndex == BUTTON_TUTORIAL)
-                {
-                    Vector3 containerPosition = GameManager.Instance.ForcePushAnchor.position;
-                    ShowTutorialHand(containerPosition, 0);
-                }
-                else if (levelIndex == BONUS_BUBBLE)
-                {
-                    Vector3 containerPosition = GameManager.Instance.GetBubblePosition();
-                    ShowTutorialHandOnBubble();
-                }
-                else*/
-        HideTutorialHand();
-        ShowTutorialImage(showTutorial, unlockedIndex,isHardLevel);
-        
+
+        if (levelIndex == 0)
+        {
+            //get the first container position 
+            UnitView unitView = GameManager.Instance.GetUnitViewAtPosition(2, 0);
+            Vector3 containerPosition = unitView.transform.position;
+            ShowTutorialHand(containerPosition, 0);
+        }
+        else
+            HideTutorialHand();
+
+
+        ShowTutorialImage(showTutorial, unlockedIndex, isHardLevel);
+
     }
 
 
-
+    
 
     public Vector2 WorldToAnchoredPos(Vector3 worldPos, RectTransform container)
     {
-        // 1) World -> Screen
         Vector2 screen = RectTransformUtility.WorldToScreenPoint(Camera.main, worldPos);
-
-        // 2) Screen -> Local (anchored) in the target container
-
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(container, screen, Camera.main, out var local);
-        return local; // assign this to rect.anchoredPosition
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(container, screen, null, out var local);
+        return local;
     }
 
     public void AddToBalanceVisual(int amount)
@@ -99,6 +86,7 @@ public class UIManager : MonoBehaviour
 
     internal void MoveBalanceUpOnSort()
     {
+        balanceSortingGroup.overrideSorting = true;
         balanceSortingGroup.sortingOrder = 10;
     }
 
@@ -154,19 +142,8 @@ public class UIManager : MonoBehaviour
         Debug.Log("UIManage GameOver");
     }
 
-    public void ShowHideSkipButton(bool showButton)
-    {
-        skipButton.SetActive(showButton);
-    }
 
-    //called from the scene
-    public void SkipButtonClicked()
-    {
-        GameManager.Instance.SkipClicked();
-        ShowHideSkipButton(false);
-    }
-
-    public void ShowTutorialImage(bool show, int imageIndex,bool hardLevel)
+    public void ShowTutorialImage(bool show, int imageIndex, bool hardLevel)
     {
         if (show)
         {
@@ -179,7 +156,7 @@ public class UIManager : MonoBehaviour
                 tutorialImageView.ShowTutorial(tutorialImages[imageIndex - 1], auxImage);
             }
 
-            if(hardLevel)
+            if (hardLevel)
             {
                 Sprite auxImage = null;
 

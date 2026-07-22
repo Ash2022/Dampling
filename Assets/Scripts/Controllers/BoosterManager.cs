@@ -292,6 +292,8 @@ public class BoosterManager : MonoBehaviour
 
                 r1Container.SyncSeatedBalls();
                 r2Container.SyncSeatedBalls();
+
+                r2Container.RevealContainerColor();
             });
         }
     }

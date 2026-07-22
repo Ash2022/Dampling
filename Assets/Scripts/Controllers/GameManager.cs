@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
     public const int BELT_CAPACITY = 30;
     public enum GameState
     {
-        Initializing,ShowingTut, ReadyToPlay, ProcessingInput, BeltJammed, GameEnded, ShowingEndScreen, Magnet
+        Initializing, Pause, ShowingTut, ReadyToPlay, ProcessingInput, BeltJammed, GameEnded, ShowingEndScreen, Magnet
     }
     public static GameManager Instance { get; private set; }
 
@@ -29,6 +29,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject splashScreen;
     [SerializeField] private TMP_Text splashText;
     [SerializeField] private ReviveView reviveView;
+    [SerializeField] PausePanelView _pausePanel;
 
     private GameStateEvaluator gameStateEvaluator;
 
@@ -141,8 +142,8 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         if (currentState == GameState.GameEnded || currentState == GameState.ShowingEndScreen ||
-            currentState == GameState.BeltJammed || currentState == GameState.Initializing 
-            || currentState == GameState.ShowingTut)
+            currentState == GameState.BeltJammed || currentState == GameState.Initializing
+            || currentState == GameState.ShowingTut || currentState == GameState.Pause)
 
             return;
 
@@ -194,7 +195,8 @@ public class GameManager : MonoBehaviour
                         SoundsManager.Instance.PlayRevive();
                         //revive requested
                         boosterManager.ExecuteRevive();
-                        ModelManager.Instance.AddToBalanceAndSave(-ModelManager.REVIVE_COST);
+                        ModelManager.Instance.AddToBalanceAndSave(-ModelManager.Instance.GetReviveCost());
+                        ModelManager.Instance.UseRevive();
                         uiManager.SetBalanceToModelAnimate();
                         currentState = GameState.ReadyToPlay;
                     }
@@ -203,7 +205,7 @@ public class GameManager : MonoBehaviour
                         //no revive
                         ResumeGameOver(false);
                     }
-                });
+                }, ModelManager.Instance.GetReviveCost());
             }
             checkTimer = 0f;
         }
@@ -232,25 +234,26 @@ public class GameManager : MonoBehaviour
 
         bool isHardLevel = currentLevelData.HardLevel;
         int unlockedIndex = ModelManager.Instance.GetUnlock(CurrentLevelIndex);
-        bool showTutorial = isHardLevel || unlockedIndex>0;
+        bool showTutorial = isHardLevel || unlockedIndex > 0;
 
-        uiManager.InitLevel(CurrentLevelIndex, ModelManager.Instance.GetBalance()
-        ,ModelManager.Instance.GetUnlock(CurrentLevelIndex),currentLevelData.HardLevel,showTutorial);
-
+        
         // Step 3: Wipe past scene instances and render the fresh board layout array mapping setup
         activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData);
 
         // Step 2: Spin up a fresh simulation core instance to clear past game states completely
         gameCore = new DamplingGameCore();
-        gameCore.InitializeLevel(currentLevelData, isLiveMode: true, HandleUnitIceChanged, HandleLockKeyCollected, HandleLinkedUnitPlayed);
+        gameCore.InitializeLevel(currentLevelData, isLiveMode: true, HandleUnitIceChanged);
 
         gameStateEvaluator = new GameStateEvaluator(this, beltGenerator, activeBoardReferences);
         boosterManager.InitLevel(gameCore, activeBoardReferences, CurrentLevelIndex);
 
+        uiManager.InitLevel(CurrentLevelIndex, ModelManager.Instance.GetBalance()
+        , ModelManager.Instance.GetUnlock(CurrentLevelIndex), currentLevelData.HardLevel, showTutorial);
+
 
         beltGenerator.StartBeltMovement();
 
-        if(showTutorial)
+        if (showTutorial)
             currentState = GameState.ShowingTut;
         else
             currentState = GameState.ReadyToPlay;
@@ -290,7 +293,12 @@ public class GameManager : MonoBehaviour
     {
         if (currentState != GameState.ReadyToPlay) return;
 
+        SoundsManager.Instance.UnitPlayed();
+
         currentState = GameState.ProcessingInput;
+
+        if(CurrentLevelIndex==0)
+            uiManager.HideTutorialHand();
 
         List<DamplingGameCore.EngineEvent> transactions = gameCore.ExecutePlayerClick(coordinate.x, coordinate.y);
 
@@ -344,6 +352,7 @@ public class GameManager : MonoBehaviour
                     // Scale down slightly to look like it is emerging inside the pipe
                     newUnitView.transform.localScale = Vector3.zero;
 
+                    SoundsManager.Instance.PipeEmit();
                     // 5. Run sequential slide out animation after clicked unit finishes clearing the cell
                     AnimatePipeEmission(newUnitView, targetPosition, spawnCoord, emittedNode, (() =>
                     {
@@ -436,22 +445,14 @@ public class GameManager : MonoBehaviour
                 // Safely kill the old tween and smoothly glide to the new target
                 container.transform.DOKill();
                 container.transform.DOMove(newTargetPos, 0.3f).SetEase(Ease.OutBack);
-            }
-        }
-    }
 
-    public bool IsUnitActingAsKey(int unitId)
-    {
-        // Search the active grid matrix matrix to see if any unplayed unit lists this ID as a blocker
-        foreach (var cellNode in currentLevelData.Grid.Matrix)
-        {
-            if (cellNode.OccupyingUnit != null &&
-                cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Contains(unitId))
-            {
-                return true; // Found a lock that depends on this specific unit ID key
+                if (Mathf.Abs(newTargetPos.y - levelVisualization.QueueBottomY) < 0.05f || newTargetPos.y <= levelVisualization.QueueBottomY)
+                {
+                    container.RevealContainerColor();
+                }
+
             }
         }
-        return false;
     }
 
     /// <summary>
@@ -488,47 +489,6 @@ public class GameManager : MonoBehaviour
     }
 
 
-    /// <summary>
-    /// Core hook triggered when a targeted key is successfully collected by the player.
-    /// </summary>
-    private void HandleLockKeyCollected(int lockedUnitId, int collectedKeyUnitId)
-    {
-        if (activeBoardReferences == null) return;
-
-        // Scan values sequentially since the collection is keyed by coordinate vectors instead of integer IDs
-        UnitView lockedView = null;
-        foreach (var view in activeBoardReferences.UnitViews.Values)
-        {
-            if (view != null && view.UnitId == lockedUnitId)
-            {
-                lockedView = view;
-                break;
-            }
-        }
-
-        if (lockedView != null)
-        {
-            lockedView.LockUnlocked();
-        }
-    }
-
-    /// <summary>
-    /// Core hook triggered when a unit within an activated link chain executes its gameplay action.
-    /// </summary>
-    private void HandleLinkedUnitPlayed(int unitId)
-    {
-        if (activeBoardReferences == null) return;
-
-        // Locate the corresponding view for the unit that was part of the triggered chain
-        foreach (var view in activeBoardReferences.UnitViews.Values)
-        {
-            if (view != null && view.UnitId == unitId)
-            {
-                view.LinkedUnitPlayed();
-                break;
-            }
-        }
-    }
 
     internal void BallEnteredSlot(BallView ballView)
     {
@@ -538,7 +498,6 @@ public class GameManager : MonoBehaviour
         {
             //Debug.Log("LOGICAL WIN! All units played. Waiting for animations to finish...");
             // TODO: Fire off early confetti, change background music, or disable a pause menu here.
-            uiManager.ShowHideSkipButton(true);
             beltGenerator.IncreaseBeltSpeed();
         }
     }
@@ -546,11 +505,6 @@ public class GameManager : MonoBehaviour
     public void BallEnteredOrExitSlot()
     {
         beltGenerator.CheckBeltFullness();
-    }
-
-    public void SkipClicked()
-    {
-        ResumeGameOver(true);
     }
 
     public void UseMagnetBooster(UnitView targetedUnitView)
@@ -595,5 +549,59 @@ public class GameManager : MonoBehaviour
         });
     }
 
-    
+    internal UnitView GetLockUnitView(int keyLockPairIndex)
+    {
+        return activeBoardReferences.UnitViews.Values.First(view =>
+            view.ModelData != null &&
+            view.ModelData.OccupyingUnit != null &&
+            view.ModelData.OccupyingUnit.KeyLockPairIndex == keyLockPairIndex &&
+            view.ModelData.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count > 0);
+    }
+
+    internal UnitView GetUnitView(int unitId)
+    {
+        return activeBoardReferences.UnitViews.Values.First(view => view.UnitId == unitId);
+    }
+
+    public void PauseMenuClicked()
+    {
+        beltGenerator.StopBeltMovement();
+        currentState = GameState.Pause;
+        _pausePanel.ShowPanel(async (pauseAnswer) =>
+        {
+            _pausePanel.HidePanel();
+
+            if (pauseAnswer == PausePanelView.PauseAnswer.Resume)
+            {
+                currentState = GameState.ReadyToPlay;
+                beltGenerator.ResumeBelt();
+
+            }
+
+            else if (pauseAnswer == PausePanelView.PauseAnswer.Restart)
+            {
+                //AnalyticsManagerGame.Instance.LogLevelComplete(_currLevel.Index, 0, false, _numFailsInLevel, GetCurrentProgress(), isCurrentKillMode);
+                StartLevel(CurrentLevelIndex);
+            }
+            else if (pauseAnswer == PausePanelView.PauseAnswer.DeleteAll)
+            {
+                ModelManager.Instance.DeleteData();
+                StartLevel(0);
+            }
+        });
+    }
+
+    public UnitView GetUnitViewAtPosition(int x, int y)
+    {
+        foreach (var kvp in activeBoardReferences.UnitViews)
+        {
+            var unitView = kvp.Value;
+            if (unitView != null && unitView.ModelData.Position.X == x && unitView.ModelData.Position.Y == y)
+            {
+                return unitView;
+            }
+        }
+        return null;
+    }
+
 }

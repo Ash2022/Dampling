@@ -8,9 +8,11 @@ public class ModelManager : MonoBehaviour
     public const int MAGNET_UNLOCKED = 1;
     public const int SHUFFLE_UNLOCKED = 2;
 
+    public const int LOOP_SIZE = 20;
+
     private const string PLAYER_DATA_KEY = "PlayerDataSaveState";
     public const int GOLD_PER_WIN = 50;
-    public const int REVIVE_COST = 50;
+    private const int REVIVE_COST = 50;
 
     public static ModelManager Instance { get; private set; }
 
@@ -43,8 +45,13 @@ public class ModelManager : MonoBehaviour
 
     public GameLevelSchema GetLevelByIndex(int index)
     {
-        int targetedIndex = index % loadedLevels.Count;
-        string json = JsonConvert.SerializeObject(loadedLevels[targetedIndex]);
+        int numLevels = loadedLevels.Count;
+        int loopedIndex = index;
+
+        while (loopedIndex >= numLevels)
+            loopedIndex -= LOOP_SIZE;
+
+        string json = JsonConvert.SerializeObject(loadedLevels[loopedIndex]);
         return JsonConvert.DeserializeObject<GameLevelSchema>(json);
     }
 
@@ -94,6 +101,16 @@ public class ModelManager : MonoBehaviour
         }
     }
 
+    public void DeleteData()
+    {
+        int currentMoney = Data.CoinsAmount;
+        PlayerPrefs.DeleteKey(PLAYER_DATA_KEY);
+        PlayerPrefs.Save();
+        Data = new PlayerData();
+        Data.CoinsAmount = currentMoney;
+        SaveData();
+    }
+
     public void AdjustMagnetCount(int amount)
     {
         Data.MagnetBoosterCount = Mathf.Max(0, Data.MagnetBoosterCount + amount);
@@ -106,6 +123,17 @@ public class ModelManager : MonoBehaviour
         SaveData();
     }
 
+    public int GetReviveCost()
+    {
+        return REVIVE_COST* Data.revivesUsed;
+    }
+
+    public void UseRevive()
+    {
+        Data.revivesUsed++;
+        SaveData();
+    }
+
     [Serializable]
     public class PlayerData
     {
@@ -113,6 +141,7 @@ public class ModelManager : MonoBehaviour
         public int CoinsAmount = 0;
         public int MagnetBoosterCount = 3;
         public int ShuffleBoosterCount = 3;
+        public int revivesUsed =1;
     }
 }
 
