@@ -1,4 +1,5 @@
 {
+  "HardLevel": true,
   "LevelId": 1,
   "LevelName": "Level5_pipe",
   "ConveyorBeltMaxCapacity": 30,

@@ -67,9 +67,10 @@ public class GameStateEvaluator
     {
         if (activeBoardReferences == null || activeBoardReferences.UnitViews == null) return false;
 
-        if (activeBoardReferences.UnitViews.Values.Any(unit => unit != null && unit.gameObject.activeInHierarchy))
+        if (activeBoardReferences.UnitViews.Values.Any(unit => unit.gameObject.activeInHierarchy 
+        && unit.ModelData.ContinuousPipe ==null))
         {
-            return false; // Units are still on the board, game is not won yet.
+            return false;
         }
 
         //Debug.Log("Check Logic Win");

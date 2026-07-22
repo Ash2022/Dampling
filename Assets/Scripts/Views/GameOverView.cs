@@ -10,15 +10,12 @@ using static UnityEngine.ParticleSystem;
 public class GameOverView : MonoBehaviour
 {
     [SerializeField] CanvasGroup mainCanvasGroup;
-
-    [SerializeField] TMP_Text titleText;
     
     [SerializeField] Button endGameButton;
     [SerializeField] Image buttonImage;
 
     [SerializeField] Sprite continueButton;
     [SerializeField] Sprite tryAgainButton;
-    [SerializeField] GameObject completeStar;
 
     [SerializeField] GameObject particles;
 
@@ -28,8 +25,7 @@ public class GameOverView : MonoBehaviour
     [SerializeField] CanvasGroup goldCoinsCanvasGroup;
     [SerializeField]TMP_Text goldCoinsText;
     [SerializeField] List<GoldCoinView> availableCoinViews;
-    [SerializeField] GameObject middleStar;
-    
+  
 
 
     [SerializeField] EndScreenUnlockView endScreenUnlockView;
@@ -47,7 +43,6 @@ public class GameOverView : MonoBehaviour
 
         mainCanvasGroup.alpha = 0;
 
-        completeStar.SetActive(levelWon);
         particles.SetActive(false);
         gameObject.SetActive(true);
 
@@ -65,38 +60,14 @@ public class GameOverView : MonoBehaviour
 
         if (levelWon)
         {
-            titleText.text = "<size=120>LEVEL " + (levelIndex + 1) + "\nCOMPLETE!";
-
-            if (unlocksFinished)
-            {
-                titleText.transform.localPosition = new Vector3(0, 350, 0);
-                completeStar.transform.localPosition = new Vector3(0,-100,0);
-            }
-            else
-            {
-                titleText.transform.localPosition = new Vector3(0, 450, 0);
-                completeStar.transform.localPosition = new Vector3(0, 250, 0);
-                
-            }
-
-            middleStar.SetActive(unlocksFinished);
             goldCoinsCanvasGroup.alpha = 0;
             goldCoinsGroup.SetActive(true);
             goldCoinsText.text = ModelManager.GOLD_PER_WIN.ToString();
         }
         else
         {
-            titleText.text = "LEVEL " + (levelIndex + 1) + "\nFAILED";
-
-
-            
-            titleText.text += "\n<size=50>NO MORE MOVES";
-            
-
-            titleText.transform.localPosition = new Vector3(0, -550, 0);
             endScreenUnlockView.HideEndScreenUnlocks();
             goldCoinsGroup.SetActive(false);
-            middleStar.SetActive(false);
         }
 
         SoundsManager.Instance.PlayHaptics(SoundsManager.TapticsStrenght.Medium);

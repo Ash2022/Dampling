@@ -19,6 +19,8 @@ public class GameLevelSchema
     // --- Supply Side (The Grid Board Topology) ---
     public GridTopology Grid { get; set; } = new GridTopology();
 
+    public bool HardLevel;
+
     // =========================================================================
     // INNER CORE TYPES
     // =========================================================================

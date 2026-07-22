@@ -11,6 +11,7 @@ public class LevelEditorWindow : EditorWindow
     public const int BELT_MAX = 30;
 
     private bool isOddColumnsWidth = false; // False = 8x8 Grid, True = 7x8 Grid
+    private bool hardLevel = false;
     private int gridColumns => isOddColumnsWidth ? 7 : 6;
     private int gridRows => 7; // Row sizing is now locked to 8 permanently
 
@@ -72,6 +73,7 @@ public class LevelEditorWindow : EditorWindow
         {
             BuildCanvas();
         }
+        hardLevel = EditorGUILayout.Toggle("Hard Level", hardLevel);
         EditorGUILayout.LabelField($"Active Workspace Dimensions: {gridColumns} Columns × {gridRows} Rows");
 
         queueCount = EditorGUILayout.IntSlider("Container Queues", queueCount, 1, 8);
@@ -605,6 +607,7 @@ public class LevelEditorWindow : EditorWindow
 
         BuildCanvas();
         generatedQueues = levelData.ResolutionQueues;
+        hardLevel = levelData.HardLevel;
 
         Dictionary<int, Vector2Int> guidToCoordMap = new Dictionary<int, Vector2Int>();
         foreach (var cellNode in levelData.Grid.Matrix)
@@ -726,6 +729,7 @@ public class LevelEditorWindow : EditorWindow
         level.Grid.Columns = gridColumns;
         level.Grid.Rows = gridRows;
         level.Grid.Matrix = new List<GameLevelSchema.CellNode>();
+        level.HardLevel = hardLevel;
 
         Dictionary<Vector2Int, int> positionToIdMap = new Dictionary<Vector2Int, int>();
         int nextUnitId = 0;

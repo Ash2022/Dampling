@@ -56,6 +56,16 @@ public class ModelManager : MonoBehaviour
         SaveData();
     }
 
+    internal int GetUnlock(int currLevelIndex)
+    {
+        int index = -1;
+
+        if (UnlocksIndexList.Contains(currLevelIndex))
+            index = UnlocksIndexList.FindIndex(x => x.Equals(currLevelIndex));
+
+        return index;
+    }
+
     public int GetLastPlayedLevel() => Data.LastPlayedLevel;
 
     public void SetLastPlayedLevel(int level)

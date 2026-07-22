@@ -2,7 +2,6 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using DG.Tweening;
-using static GameLevelSchema;
 using UnityEngine.EventSystems;
 using System;
 
@@ -17,11 +16,12 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     [SerializeField] private SpriteRenderer pipeTextDisplay; // Decorative key badge icon
 
 
-    [SerializeField] private LineRenderer linkLineRenderer;
+    //[SerializeField] private LineRenderer linkLineRenderer;
+
+    [SerializeField] private SpriteRenderer linkSpriteRenderer;
 
     [Header("Ice Overlay Features")]
     [SerializeField] private GameObject iceOverlayRenderer; // Assign in Inspector
-    [SerializeField] private TMPro.TextMeshPro iceCountText;
 
     [SerializeField] private Transform clickIndication;
 
@@ -32,6 +32,13 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     private Sequence releaseSequence;
     private Sequence openLidSequence;
     public int unitColorIndex = -1;
+    GameLevelSchema.CellNode model;
+    public GameLevelSchema.CellNode ModelData
+    {
+        get => model;
+        private set => model = value;
+    }
+
 
     private bool wasInitiallyHidden = false;
 
@@ -40,6 +47,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     public int UnitId { get; private set; }
     public void Initialize(GameLevelSchema.CellNode cellNode)
     {
+        model = cellNode;
         gridCoordinate = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
         CleanUpActiveSequence();
         ReturnBallsToPool();
@@ -51,7 +59,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         keyIndicatorRenderer.gameObject.SetActive(false);
         iceOverlayRenderer.gameObject.SetActive(false);
         pipeTextDisplay.gameObject.SetActive(false);
-        linkLineRenderer.positionCount = 0;
+        linkSpriteRenderer.gameObject.SetActive(false);
 
         // 1. Process Static Pipe Generation Matrix Cells
         if (cellNode.ContinuousPipe != null)
@@ -93,7 +101,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
             if (isHidden)
             {
-                
+
             }
             else if (cellNode.OccupyingUnit.InteriorContents.Count > 0)
             {
@@ -119,13 +127,6 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             {
                 iceOverlayRenderer.gameObject.SetActive(true);
 
-                if (iceCountText != null)
-                {
-                    iceCountText.text = iceLayers.ToString();
-                }
-
-                //spriteRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
-                //lidRenderer.color = Color.Lerp(unitColor, new Color(0.5f, 0.8f, 1f), 0.6f);
             }
 
             if (cellNode.Position.Y <= 0)
@@ -140,14 +141,19 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             lidRenderer.gameObject.SetActive(false);
         }
     }
+   
     public void RenderLinkLines(UnitView partnerView)
     {
-        if (partnerView == null || linkLineRenderer == null) return;
+        Vector3 myPos = transform.position;
+        Vector3 partnerPos = partnerView.transform.position;
 
-        // Configure and draw the line directly between the two verified transforms
-        linkLineRenderer.positionCount = 2;
-        linkLineRenderer.SetPosition(0, this.transform.position);
-        linkLineRenderer.SetPosition(1, partnerView.transform.position);
+        linkSpriteRenderer.transform.position = (myPos + partnerPos) / 2f;
+
+        Vector3 direction = partnerPos - myPos;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        linkSpriteRenderer.transform.rotation = Quaternion.Euler(0f, 0f, angle);
+
+        linkSpriteRenderer.gameObject.SetActive(true);
     }
 
 
@@ -322,7 +328,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     public void UpdatePipeCounter(int newPipeCount)
     {
-        if(newPipeCount ==0)
+        if (newPipeCount == 0)
             pipeTextDisplay.gameObject.SetActive(false);
         else
             pipeTextDisplay.sprite = VisualsManager.Instance.GetPipeCounterSprite(newPipeCount);
@@ -333,10 +339,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     /// </summary>
     public void UpdateIceLayers(int remainingLayers, Color originalUnitColor)
     {
-        if (iceCountText != null && remainingLayers > 0)
-        {
-            iceCountText.text = remainingLayers.ToString();
-        }
+
 
         // Optional: Fade the frosty blue tint slightly as ice gets thinner
         // spriteRenderer.color = Color.Lerp(originalUnitColor, new Color(0.5f, 0.8f, 1f), remainingLayers * 0.2f);
@@ -347,14 +350,18 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     /// </summary>
     public void ShatterIce(Color originalUnitColor)
     {
-        if (iceOverlayRenderer != null)
-        {
-            iceOverlayRenderer.gameObject.SetActive(false);
-        }
+        DG.Tweening.Sequence shatterSeq = DG.Tweening.DOTween.Sequence();
 
-        // Restore the unit's natural coloring
-        spriteRenderer.color = originalUnitColor;
-        lidRenderer.color = originalUnitColor;
+        SpriteRenderer overlaySpriteRenderer = iceOverlayRenderer.GetComponent<SpriteRenderer>();
+
+        shatterSeq.Append(iceOverlayRenderer.transform.DOShakePosition(1f, strength: 0.15f, vibrato: 20));
+        shatterSeq.Join(overlaySpriteRenderer.DOFade(0, 1f).SetEase(DG.Tweening.Ease.InBack));
+
+        shatterSeq.OnComplete(() =>
+        {
+            iceOverlayRenderer.SetActive(false);
+            iceOverlayRenderer.transform.localScale = Vector3.one;
+        });
     }
 
     public void LockUnlocked()
@@ -375,9 +382,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         if (wasInitiallyHidden)
         {
             wasInitiallyHidden = false;
-            
+
             pipeTextDisplay.gameObject.SetActive(false);
-        
+
             // 1. Fetch the true color now that it is revealed
             unitColorIndex = updatedNode.OccupyingUnit.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1;
             //Color realColor = DamplingGameUtils.GetColorByIndex(unitColorIndex);
@@ -407,7 +414,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         openLidSequence = DOTween.Sequence();
 
-        float duration = 0.4f;
+        float duration = 0.55f;
         Vector3 targetFlyPosition = transform.position + new Vector3(0.6f, 1.2f, 0f);
 
         // Initial subtle high-speed squish down on Y axis and stretch on X axis to show build-up force
@@ -479,7 +486,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     internal void PipeInitialize(GameLevelSchema.CellNode cellNode)
     {
-        unitColorIndex = cellNode.OccupyingUnit.InteriorContents.FirstOrDefault().ColorIndex ;
+        unitColorIndex = cellNode.OccupyingUnit.InteriorContents.FirstOrDefault().ColorIndex;
 
         spriteRenderer.sprite = VisualsManager.Instance.GetUnitSprite(unitColorIndex);
         lidRenderer.sprite = VisualsManager.Instance.GetUnitLidSprite(unitColorIndex);
@@ -492,7 +499,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         keyIndicatorRenderer.gameObject.SetActive(false);
         iceOverlayRenderer.gameObject.SetActive(false);
         pipeTextDisplay.gameObject.SetActive(false);
-        linkLineRenderer.positionCount = 0;
-        
+        linkSpriteRenderer.gameObject.SetActive(false);
+
     }
 }

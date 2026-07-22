@@ -12,26 +12,9 @@ public class SoundsManager : MonoBehaviour
         High
     }
 
-    [SerializeField] AudioClip _containerPlayed;
+    [SerializeField] AudioClip _unitPlayed;
     [SerializeField] AudioClip _illegalMove;
-
-    [SerializeField] AudioClip _bubbleShotToContainer;
-    [SerializeField] AudioClip _bubbleArrived;
-
-    [SerializeField] AudioClip _unlockedAchieved;
-
-    [SerializeField] AudioClip _bubbleemitted;
-    [SerializeField] AudioClip _hiddenUnlocked;
-
-    [SerializeField] AudioClip _revive;
-    [SerializeField] AudioClip _pushButton1;
-    [SerializeField] AudioClip _pushButton2;
-
-
     [SerializeField] AudioClip _coinBalance;
-
-    [SerializeField] AudioClip _bigBubblePop;
-
     [SerializeField] AudioClip _levelComplete;
     [SerializeField] AudioClip _levelFail;
     
@@ -70,59 +53,12 @@ public class SoundsManager : MonoBehaviour
         PlayHaptics(TapticsStrenght.Medium);
     }
 
-   
-    public void PlayContainer()
-    {
-        PlayClip(_containerPlayed);
-    }
-
-    public void IllegalMove()
+     public void IllegalMove()
     {
         PlayClip(_illegalMove);
     }
 
-    public void BubbleMove()
-    {
-        PlayClip(_bubbleShotToContainer);
-    }
-
-    public void BubbleArrived()
-    {
-        PlayClip(_bubbleArrived);
-    }
-
-    public void BubbleEmitted()
-    {
-        PlayClip(_bubbleemitted);
-    }
-
-    public void HiddenRevealed()
-    {
-        PlayClip(_hiddenUnlocked);
-    }
-
-    public void SomethingUnlocked()
-    {
-        PlayClip(_unlockedAchieved);
-    }
-
-    public void PlayRevive()
-    {
-        PlayClip(_revive);
-    }
-
-    public void PlayBigBubblePop()
-    {
-        PlayClip(_bigBubblePop);
-    }
-
-    public void PlayPushButton()
-    {
-        PlayClip(_pushButton1);
-        PlayClip(_pushButton2);
-        PlayHaptics(TapticsStrenght.Light);
-    }
-
+   
     public void DisableEnableMixer(bool disable)
     {
         if (disable)
@@ -226,5 +162,15 @@ public class SoundsManager : MonoBehaviour
     internal void PlayCoinReachBalance()
     {
         PlayClip(_coinBalance,0.5f);
+    }
+
+    internal void PlayRevive()
+    {
+        
+    }
+
+    internal void SomethingUnlocked()
+    {
+        
     }
 }

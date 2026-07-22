@@ -13,7 +13,7 @@ public class GameManager : MonoBehaviour
     public const int BELT_CAPACITY = 30;
     public enum GameState
     {
-        Initializing, ReadyToPlay, ProcessingInput, BeltJammed, GameEnded, ShowingEndScreen, Magnet
+        Initializing,ShowingTut, ReadyToPlay, ProcessingInput, BeltJammed, GameEnded, ShowingEndScreen, Magnet
     }
     public static GameManager Instance { get; private set; }
 
@@ -141,7 +141,9 @@ public class GameManager : MonoBehaviour
     private void Update()
     {
         if (currentState == GameState.GameEnded || currentState == GameState.ShowingEndScreen ||
-            currentState == GameState.BeltJammed || currentState == GameState.Initializing)
+            currentState == GameState.BeltJammed || currentState == GameState.Initializing 
+            || currentState == GameState.ShowingTut)
+
             return;
 
         // Cheats for level switching using the new Input System.
@@ -228,7 +230,12 @@ public class GameManager : MonoBehaviour
 
         ClearActiveBoard();
 
-        uiManager.InitLevel(CurrentLevelIndex, ModelManager.Instance.GetBalance());
+        bool isHardLevel = currentLevelData.HardLevel;
+        int unlockedIndex = ModelManager.Instance.GetUnlock(CurrentLevelIndex);
+        bool showTutorial = isHardLevel || unlockedIndex>0;
+
+        uiManager.InitLevel(CurrentLevelIndex, ModelManager.Instance.GetBalance()
+        ,ModelManager.Instance.GetUnlock(CurrentLevelIndex),currentLevelData.HardLevel,showTutorial);
 
         // Step 3: Wipe past scene instances and render the fresh board layout array mapping setup
         activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData);
@@ -243,6 +250,15 @@ public class GameManager : MonoBehaviour
 
         beltGenerator.StartBeltMovement();
 
+        if(showTutorial)
+            currentState = GameState.ShowingTut;
+        else
+            currentState = GameState.ReadyToPlay;
+    }
+
+    internal void TutorialClicked()
+    {
+        uiManager.HideTutorial();
         currentState = GameState.ReadyToPlay;
     }
 
@@ -578,4 +594,6 @@ public class GameManager : MonoBehaviour
             done?.Invoke();
         });
     }
+
+    
 }

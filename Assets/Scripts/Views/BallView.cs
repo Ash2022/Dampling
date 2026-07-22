@@ -113,6 +113,8 @@ public class BallView : MonoBehaviour
 
     private void ExecuteTransferToContainer(ContainerView targetContainer, Transform destinationSlot)
     {
+
+        float animTime = 0.25f;
         // Sever ties immediately with the conveyor slot infrastructure
         if (currentSlotView != null)
         {
@@ -129,9 +131,9 @@ public class BallView : MonoBehaviour
         transform.DOKill();
 
         // Smoothly interpolate rotation to absolute zero over the exact same flight duration
-        transform.DORotate(Vector3.zero, 0.4f).SetEase(Ease.InOutSine);
+        transform.DORotate(Vector3.zero, animTime).SetEase(Ease.InOutSine);
 
-        DOVirtual.Float(0f, 1f, 0.4f, t =>
+        DOVirtual.Float(0f, 1f, animTime, t =>
         {
             if (destinationSlot) transform.position = Vector3.Lerp(startPos, destinationSlot.position, t);
         }).SetEase(Ease.InOutSine).OnComplete(() =>
