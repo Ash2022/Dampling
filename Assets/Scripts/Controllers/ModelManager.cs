@@ -5,8 +5,21 @@ using System;
 
 public class ModelManager : MonoBehaviour
 {
-    public const int MAGNET_UNLOCKED = 1;
-    public const int SHUFFLE_UNLOCKED = 2;
+    const int HIDDEN_UNIT_UNLOCKED = 4;
+    const int MAGNET_UNLOCKED = 6;
+    const int SHUFFLE_UNLOCKED = 8;
+    const int PIPE_UNIT_UNLOCKED = 10;
+    const int ICE_UNIT_UNLOCKED = 15;
+    const int LOCK_KEY_UNLOCKED = 25;
+    const int LINK_UNLOCKED = 40;
+    const int HIDDEN_CONTAINER = 55;
+    //const int COVER_UNLOCKED = 75;
+
+    
+    
+
+    public const int MAGNET_BOOSTER = 1;
+    public const int SHUFFLE_BOOSTER = 2;
 
     public const int LOOP_SIZE = 20;
 
@@ -38,7 +51,16 @@ public class ModelManager : MonoBehaviour
             loadedLevels.Add(levelData);
         }
 
-        UnlocksIndexList.Add(15);
+        UnlocksIndexList.Add(HIDDEN_UNIT_UNLOCKED);
+        UnlocksIndexList.Add(MAGNET_UNLOCKED);
+        UnlocksIndexList.Add(SHUFFLE_UNLOCKED);
+        UnlocksIndexList.Add(PIPE_UNIT_UNLOCKED);
+        UnlocksIndexList.Add(ICE_UNIT_UNLOCKED);
+        UnlocksIndexList.Add(LOCK_KEY_UNLOCKED);
+        UnlocksIndexList.Add(LINK_UNLOCKED);
+        UnlocksIndexList.Add(HIDDEN_CONTAINER);
+
+
 
         LoadData();
     }

@@ -236,7 +236,7 @@ public class GameManager : MonoBehaviour
         int unlockedIndex = ModelManager.Instance.GetUnlock(CurrentLevelIndex);
         bool showTutorial = isHardLevel || unlockedIndex > 0;
 
-        
+
         // Step 3: Wipe past scene instances and render the fresh board layout array mapping setup
         activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData);
 
@@ -297,7 +297,7 @@ public class GameManager : MonoBehaviour
 
         currentState = GameState.ProcessingInput;
 
-        if(CurrentLevelIndex==0)
+        if (CurrentLevelIndex == 0)
             uiManager.HideTutorialHand();
 
         List<DamplingGameCore.EngineEvent> transactions = gameCore.ExecutePlayerClick(coordinate.x, coordinate.y);
@@ -498,7 +498,8 @@ public class GameManager : MonoBehaviour
         {
             //Debug.Log("LOGICAL WIN! All units played. Waiting for animations to finish...");
             // TODO: Fire off early confetti, change background music, or disable a pause menu here.
-            beltGenerator.IncreaseBeltSpeed();
+            uiManager.ShowHideSkipButton(true);
+            beltGenerator.IncreaseBeltSpeed(false);
         }
     }
 
@@ -604,4 +605,10 @@ public class GameManager : MonoBehaviour
         return null;
     }
 
+    public void SkipClicked()
+    {
+        //boosterManager.ExecuteSkipLevel();
+        beltGenerator.IncreaseBeltSpeed(true);
+        
+    }
 }

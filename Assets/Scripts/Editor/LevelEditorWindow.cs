@@ -12,11 +12,15 @@ public class LevelEditorWindow : EditorWindow
 
     private bool isOddColumnsWidth = false; // False = 8x8 Grid, True = 7x8 Grid
     private bool hardLevel = false;
-    private int gridColumns => isOddColumnsWidth ? 7 : 6;
+    private int gridColumns => isOddColumnsWidth ? 7 : 8;
     private int gridRows => 7; // Row sizing is now locked to 8 permanently
 
     private int queueCount = 4;
     private int colorCount = 4;
+
+    // Add these to your class scope
+    private int swapQ = -1;
+    private int swapC = -1;
 
     private enum CellBehavior { Standard, Blocker, Pipe }
 
@@ -527,13 +531,47 @@ public class LevelEditorWindow : EditorWindow
                     Repaint();
                 }
 
+                if (swapQ == q && swapC == c)
+                {
+                    EditorGUI.DrawRect(new Rect(containerRect.x, containerRect.y, containerRect.width, 2), Color.white);
+                    EditorGUI.DrawRect(new Rect(containerRect.x, containerRect.y + containerRect.height - 2, containerRect.width, 2), Color.white);
+                    EditorGUI.DrawRect(new Rect(containerRect.x, containerRect.y, 2, containerRect.height), Color.white);
+                    EditorGUI.DrawRect(new Rect(containerRect.x + containerRect.width - 2, containerRect.y, 2, containerRect.height), Color.white);
+                }
+
+                if (containerRect.Contains(e.mousePosition) && e.type == EventType.MouseDown && e.button == 2)
+                {
+                    if (swapQ == -1)
+                    {
+                        swapQ = q;
+                        swapC = c;
+                    }
+                    else if (swapQ == q && swapC == c)
+                    {
+                        swapQ = -1;
+                        swapC = -1;
+                    }
+                    else
+                    {
+                        int tempColor = generatedQueues[swapQ][swapC].ColorIndex;
+                        generatedQueues[swapQ][swapC].ColorIndex = generatedQueues[q][c].ColorIndex;
+                        generatedQueues[q][c].ColorIndex = tempColor;
+
+                        swapQ = -1;
+                        swapC = -1;
+                    }
+
+                    e.Use();
+                    Repaint();
+                }
+
                 int colorIndex = generatedQueues[q][c].ColorIndex;
 
                 EditorGUI.DrawRect(containerRect, GetColorValue(colorIndex));
                 GUIStyle labelOverride = new GUIStyle(EditorStyles.whiteBoldLabel) { fontSize = 10, alignment = TextAnchor.MiddleCenter };
                 //EditorGUI.LabelField(containerRect, $"COLOR_{colorIndex}", labelOverride);
                 EditorGUI.LabelField(containerRect, $"COLOR_{colorIndex}", new GUIStyle(EditorStyles.label)
-                 { normal = { textColor = generatedQueues[q][c].startHidden ? Color.black : Color.white } });
+                { normal = { textColor = generatedQueues[q][c].startHidden ? Color.black : Color.white } });
             }
         }
         GUILayout.EndVertical();

@@ -26,7 +26,7 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] TutorialImageView tutorialImageView;
 
-
+    [SerializeField] GameObject skipButton;
 
     int currDisplayBalance;
 
@@ -37,6 +37,7 @@ public class UIManager : MonoBehaviour
 
     public void InitLevel(int levelIndex, int balance, int unlockedIndex, bool isHardLevel, bool showTutorial)
     {
+        ShowHideSkipButton(false);
         balanceSortingGroup.sortingLayerName = "Default";
         currDisplayBalance = balance;
         AddToBalanceVisual(0);
@@ -173,6 +174,19 @@ public class UIManager : MonoBehaviour
     public void HideTutorial()
     {
         tutorialImageView.HideTutorial();
+    }
+
+    
+    public void ShowHideSkipButton(bool showButton)
+    {
+        skipButton.SetActive(showButton);
+    }
+
+    //called from the scene
+    public void SkipButtonClicked()
+    {
+        GameManager.Instance.SkipClicked();
+        ShowHideSkipButton(false);
     }
 
 }

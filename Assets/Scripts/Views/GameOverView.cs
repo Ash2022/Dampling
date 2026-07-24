@@ -26,6 +26,10 @@ public class GameOverView : MonoBehaviour
     [SerializeField]TMP_Text goldCoinsText;
     [SerializeField] List<GoldCoinView> availableCoinViews;
   
+    [SerializeField]Image endGameImage;
+    [SerializeField]Sprite loseSprite;
+    [SerializeField]Sprite winSprite;
+    
 
 
     [SerializeField] EndScreenUnlockView endScreenUnlockView;
@@ -37,6 +41,11 @@ public class GameOverView : MonoBehaviour
 
     public void InitEndScreen(bool levelWon, int levelIndex, Action endGameResumeClicked)
     {
+
+        endGameImage.sprite = levelWon?winSprite:loseSprite;
+
+        endGameImage.SetNativeSize();
+
         currLevelIndex = levelIndex;
         endScreenUnlockView.BackParticles.SetActive(false);
         endScreenUnlockView.CanvasGroup.alpha = 0;
@@ -56,7 +65,7 @@ public class GameOverView : MonoBehaviour
 
         bool unlocksFinished = UnlocksFinished();
 
-        endGameBG.color = new Color(0, 0, 0, levelWon?0.975f:0.85f);
+        endGameBG.color = new Color(0, 0, 0, 0.95f);
 
         if (levelWon)
         {

@@ -70,12 +70,12 @@ public class BoosterManager : MonoBehaviour
 
             if (view.Type == BoosterButtonView.BoosterType.Magnet)
             {
-                isUnlocked = currentLevelIndex >= ModelManager.MAGNET_UNLOCKED;
+                isUnlocked = currentLevelIndex >= ModelManager.MAGNET_BOOSTER;
                 currentCount = data.MagnetBoosterCount;
             }
             else if (view.Type == BoosterButtonView.BoosterType.Shuffle)
             {
-                isUnlocked = currentLevelIndex >= ModelManager.SHUFFLE_UNLOCKED;
+                isUnlocked = currentLevelIndex >= ModelManager.SHUFFLE_BOOSTER;
                 currentCount = data.ShuffleBoosterCount;
             }
 
@@ -296,6 +296,44 @@ public class BoosterManager : MonoBehaviour
                 r2Container.RevealContainerColor();
             });
         }
+    }
+
+    public void ExecuteSkipLevel()
+    {
+        var activeBalls = GameManager.Instance.ballViews.ToList();
+        int totalBalls = activeBalls.Count;
+
+        if (totalBalls == 0)
+        {
+            gameManager.EvaluateLogicalWinState();
+            return;
+        }
+
+        for (int i = 0; i < totalBalls; i++)
+        {
+            var ballView = activeBalls[i];
+            
+            var targetContainer = activeBoardReferences.ContainerViews.Values
+                .Where(v => v.CurrentRequiredColorIndex == ballView.ColorIndex)
+                .OrderByDescending(v => v.gameObject.activeInHierarchy)
+                .ThenBy(v => v.QueueIndex)
+                .First(v => v.HasRoomLeft());
+
+            targetContainer.TryReserveTargetSlot(out Transform targetSlot);
+
+
+            ballView.GetComponent<Collider2D>().enabled = false;
+            ballView.transform.DOKill();
+
+            GameManager.Instance.BallEnteredOrExitSlot();
+
+            DOVirtual.DelayedCall(i * 0.05f, () =>
+            {
+                ballView.ExecuteTransferToContainer(targetContainer, targetSlot);
+            });
+        }
+
+        DOVirtual.DelayedCall((totalBalls * 0.05f) + 0.5f, () => gameManager.EvaluateLogicalWinState());
     }
 
     private void ToggleColliders(ContainerView containerView, bool state)

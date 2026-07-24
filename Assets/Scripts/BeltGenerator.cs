@@ -248,8 +248,11 @@ public class BeltGenerator : MonoBehaviour
         EvaluateBlinkStatus();
     }
 
-    internal void IncreaseBeltSpeed()
+    internal void IncreaseBeltSpeed(bool topSpeed)
     {
-        speed = FAST_SPEED;
+        if(topSpeed)
+            speed = FAST_SPEED*2;
+        else
+            speed = FAST_SPEED;
     }
 }

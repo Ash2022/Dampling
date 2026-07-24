@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,6 +8,11 @@ public class TutorialImageView : MonoBehaviour
 {
     [SerializeField] Image tutImage;
     [SerializeField] Image tutAuxImage;
+
+    [SerializeField]TMP_Text titleText;
+    [SerializeField]TMP_Text bodyText;
+    
+
 
     public void ShowTutorial(Sprite sprite,Sprite auxSprite=null)
     {

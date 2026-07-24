@@ -40,8 +40,7 @@ shuffle - takes the second row and switches with the items of the first row.
 
 
 
-2. haptics.
-3. sfx -- Ice Crack, link break, key and lock 
+
 
 10. levels
 
@@ -51,7 +50,36 @@ shuffle - takes the second row and switches with the items of the first row.
 end screen lose mock
 remove the methods that we dont need in the core - the 2 callbacks
 
+put the unlock values on the booster - to show which level they will unlock
 
+
+hidden mochi at end of level 4 - for level 5
+
+magnet unlocks - level 6 - and you get 5 magnets
+
+shuffle unlocks - level 8 - you get 5
+
+pipe unlocked - level 10 - 
+
+level 15 - hurricane unlocks - clears all the items that are in the belt and cant be resolved
+
+lock comes in 16 levels - so around level 30 
+
+change like this: 
+skip does nothing - just stops the belt and finishes the level
+when all the units were dropped to the stage - speed increase
+when we detect the skip button - speed increase more
+if click skip - all stops and level ends
+
+show a 0 on the pipe once its done 
+
+
+
+from Nina:
+number 0
+hidden unit unlocked
+hidden container unlocked
+Magnet icon for the boosters
 
 
 

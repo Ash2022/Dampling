@@ -114,7 +114,7 @@ public class BallView : MonoBehaviour
 
    
 
-    private void ExecuteTransferToContainer(ContainerView targetContainer, Transform destinationSlot)
+    public void ExecuteTransferToContainer(ContainerView targetContainer, Transform destinationSlot)
     {
 
         float animTime = 0.25f;
