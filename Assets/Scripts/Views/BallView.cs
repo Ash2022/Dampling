@@ -20,6 +20,7 @@ public class BallView : MonoBehaviour
 
     public void Initialize(int colorIndex)
     {
+        spriteRenderer.color = Color.white;
         ColorIndex = colorIndex;
         isCaptured = false;
         isAnimatingCapture = false;
@@ -90,7 +91,7 @@ public class BallView : MonoBehaviour
                     if (currentBeltSlot) transform.position = Vector3.Lerp(startPos, currentBeltSlot.position, t);
                 }).SetEase(Ease.OutQuad).OnComplete(() => isAnimatingCapture = false);
 
-                SoundsManager.Instance.BallJumpedToSlot();
+                //SoundsManager.Instance.BallJumpedToSlot();
                 GameManager.Instance.BallEnteredSlot(this);
                 GameManager.Instance.BallEnteredOrExitSlot();
             }
@@ -133,6 +134,8 @@ public class BallView : MonoBehaviour
         Vector3 startPos = transform.position;
         transform.DOKill();
 
+        SoundsManager.Instance.BallJumpToContainer();
+
         // Smoothly interpolate rotation to absolute zero over the exact same flight duration
         transform.DORotate(Vector3.zero, animTime).SetEase(Ease.InOutSine);
 
@@ -155,6 +158,6 @@ public class BallView : MonoBehaviour
 
     internal void ExecuteWinkVisual()
     {
-        //Debug.Log("Wink");
+        SoundsManager.Instance.WinkHappen();
     }
 }

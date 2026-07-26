@@ -30,6 +30,9 @@ public class SoundsManager : MonoBehaviour
     [SerializeField] AudioClip _ballJumpToSlot;
     [SerializeField] AudioClip _lidPopped;
 
+    [SerializeField] AudioClip _ballJumpToContainer;
+    
+    
 
 
 
@@ -125,6 +128,12 @@ public class SoundsManager : MonoBehaviour
     {
         PlayHaptics(TapticsStrenght.Light);
         PlayClip(_containerResolved);
+    }
+
+    public void BallJumpToContainer()
+    {
+        PlayHaptics(TapticsStrenght.Light);
+        PlayClip(_ballJumpToContainer);
     }
 
 

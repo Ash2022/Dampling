@@ -21,7 +21,6 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] RectTransform inGameUIHolder;
 
-    [SerializeField] List<Sprite> tutorialImages = new List<Sprite>();
     [SerializeField] Sprite hardLevelImage;
 
     [SerializeField] TutorialImageView tutorialImageView;
@@ -38,7 +37,7 @@ public class UIManager : MonoBehaviour
     public void InitLevel(int levelIndex, int balance, int unlockedIndex, bool isHardLevel, bool showTutorial)
     {
         ShowHideSkipButton(false);
-        balanceSortingGroup.sortingLayerName = "Default";
+        //balanceSortingGroup.sortingLayerName = "Default";
         currDisplayBalance = balance;
         AddToBalanceVisual(0);
         levelText.text = "LEVEL " + (levelIndex + 1).ToString();
@@ -60,7 +59,7 @@ public class UIManager : MonoBehaviour
     }
 
 
-    
+
 
     public Vector2 WorldToAnchoredPos(Vector3 worldPos, RectTransform container)
     {
@@ -150,18 +149,23 @@ public class UIManager : MonoBehaviour
         {
             //levelText.text = "";
 
-            if (imageIndex > 0)
+            if (imageIndex > -1)
             {
                 Sprite auxImage = null;
 
-                tutorialImageView.ShowTutorial(tutorialImages[imageIndex - 1], auxImage);
+                ModelManager.UnlockTypes unlockType = (ModelManager.UnlockTypes)(imageIndex);
+
+                Sprite unlockedImageSprite = VisualsManager.Instance.GetUnlockImage(imageIndex);
+
+                tutorialImageView.ShowTutorial(unlockedImageSprite,
+                auxImage, GetTitleText(unlockType), GetBodyText(unlockType));
             }
 
             if (hardLevel)
             {
                 Sprite auxImage = null;
 
-                tutorialImageView.ShowTutorial(hardLevelImage, auxImage);
+                tutorialImageView.ShowHardLevelIndication(hardLevelImage);
             }
         }
         else
@@ -171,12 +175,62 @@ public class UIManager : MonoBehaviour
         }
     }
 
+    private string GetTitleText(ModelManager.UnlockTypes unlockType)
+    {
+        switch (unlockType)
+        {
+            case ModelManager.UnlockTypes.HIDDEN:
+                return "Hidden Unit Unlocked";
+            case ModelManager.UnlockTypes.HIDDEN_CONTAINER:
+                return "Hidden Container Unlocked";
+            case ModelManager.UnlockTypes.ICE:
+                return "Ice Unit Unlocked";
+            case ModelManager.UnlockTypes.PIPE:
+                return "Pipe Unit Unlocked";
+            case ModelManager.UnlockTypes.LINK:
+                return "Linked Units Unlocked";
+            case ModelManager.UnlockTypes.LOCK_KEY:
+                return "Lock And Key Unlocked";
+            case ModelManager.UnlockTypes.MAGNET:
+                return "Magnet Booster Unlocked";
+            case ModelManager.UnlockTypes.SHUFFLE:
+                return "Shuffle Booster Unlocked";
+            default:
+                return "";
+        }
+    }
+
+    private string GetBodyText(ModelManager.UnlockTypes unlockType)
+    {
+        switch (unlockType)
+        {
+            case ModelManager.UnlockTypes.HIDDEN:
+                return "Units can now start <color=blue>Hidden";
+            case ModelManager.UnlockTypes.HIDDEN_CONTAINER:
+                return "Container can now start <color=blue>Hidden";
+            case ModelManager.UnlockTypes.ICE:
+                return "Play a unit next to this, to break the <color=blue>Ice";
+            case ModelManager.UnlockTypes.PIPE:
+                return "<color=blue>Pipe</color> holds a few units inside";
+            case ModelManager.UnlockTypes.LINK:
+                return "<color=blue>Linked</color> units both play together";
+            case ModelManager.UnlockTypes.LOCK_KEY:
+                return "Grab the <color=blue>Key</color> to open the <color=blue>Lock";
+            case ModelManager.UnlockTypes.MAGNET:
+                return "Pick any unit to <color=blue>Magnet</color> its contents";
+            case ModelManager.UnlockTypes.SHUFFLE:
+                return "<color=blue>Shuffle</color> the first 2 rows of containers";
+            default:
+                return "";
+        }
+    }
+
     public void HideTutorial()
     {
         tutorialImageView.HideTutorial();
     }
 
-    
+
     public void ShowHideSkipButton(bool showButton)
     {
         skipButton.SetActive(showButton);

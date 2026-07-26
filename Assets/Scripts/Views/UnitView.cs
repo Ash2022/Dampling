@@ -7,6 +7,9 @@ using System;
 
 public class UnitView : MonoBehaviour, IPointerClickHandler
 {
+    const float UNIT_FINAL_SIZE =0.48f;
+    const float UNIT_LOCKED_SIZE = 0.41f;
+
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private SpriteRenderer lidRenderer; // Reference to the round box lid
 
@@ -15,10 +18,11 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     [SerializeField] private SpriteRenderer pipeTextDisplay; // Decorative key badge icon
 
-
     //[SerializeField] private LineRenderer linkLineRenderer;
 
     [SerializeField] private SpriteRenderer linkSpriteRenderer;
+
+    [SerializeField] private Collider2D unitCollider;
 
     [Header("Ice Overlay Features")]
     [SerializeField] private GameObject iceOverlayRenderer; // Assign in Inspector
@@ -32,6 +36,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     private Sequence releaseSequence;
     private Sequence openLidSequence;
     public int unitColorIndex = -1;
+    public bool isMagnetBlocked = false;
     GameLevelSchema.CellNode model;
     public GameLevelSchema.CellNode ModelData
     {
@@ -50,16 +55,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         model = cellNode;
         gridCoordinate = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
         CleanUpActiveSequence();
-        ReturnBallsToPool();
-
-        // Reset relation overlays, lines, and text layers to safely handle recycling
-        disableButton = false;
-        clickIndication.gameObject.SetActive(false);
-        lockOverlayRenderer.gameObject.SetActive(false);
-        keyIndicatorRenderer.gameObject.SetActive(false);
-        iceOverlayRenderer.gameObject.SetActive(false);
-        pipeTextDisplay.gameObject.SetActive(false);
-        linkSpriteRenderer.gameObject.SetActive(false);
+        preAllocatedBallViews.Clear();
+        ResetToStart();
+        
 
         // 1. Process Static Pipe Generation Matrix Cells
         if (cellNode.ContinuousPipe != null)
@@ -101,7 +99,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
             if (isHidden)
             {
-
+                isMagnetBlocked = true;
             }
             else if (cellNode.OccupyingUnit.InteriorContents.Count > 0)
             {
@@ -114,12 +112,14 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             {
                 lockOverlayRenderer.gameObject.SetActive(true);
                 lockOverlayRenderer.sprite = VisualsManager.Instance.GetLockSprite(cellNode.OccupyingUnit.KeyLockPairIndex);
+                isMagnetBlocked = true;
             }
 
             if (cellNode.OccupyingUnit.KeyLockPairIndex > 0 && cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count == 0)
             {
                 keyIndicatorRenderer.gameObject.SetActive(true);
                 keyIndicatorRenderer.sprite = VisualsManager.Instance.GetKeySprite(cellNode.OccupyingUnit.KeyLockPairIndex);
+                isMagnetBlocked = true;
             }
 
             // --- 3. ICE STATE ---
@@ -127,7 +127,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             if (iceLayers > 0)
             {
                 iceOverlayRenderer.gameObject.SetActive(true);
-
+                isMagnetBlocked = true;
             }
 
             if (cellNode.Position.Y <= 0)
@@ -157,10 +157,33 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         linkSpriteRenderer.gameObject.SetActive(true);
     }
 
+    private void ResetToStart()
+    {
+        // Reset relation overlays, lines, and text layers to safely handle recycling
+        isMagnetBlocked = false;
+        disableButton = false;
+        unitCollider.enabled = true;
+        clickIndication.gameObject.SetActive(false);
+        lockOverlayRenderer.gameObject.SetActive(false);
+        keyIndicatorRenderer.gameObject.SetActive(false);
+        iceOverlayRenderer.gameObject.SetActive(false);
+        pipeTextDisplay.gameObject.SetActive(false);
+        linkSpriteRenderer.gameObject.SetActive(false);
+
+        spriteRenderer.color = Color.white;
+        lidRenderer.color = Color.white;
+
+        transform.localScale = Vector3.one * UNIT_LOCKED_SIZE;
+        lidRenderer.transform.localScale = Vector3.one;
+        lidRenderer.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+        lidRenderer.transform.localEulerAngles = Vector3.zero;
+
+      
+    }
 
     private void SetupNestedInteriorBalls(List<GameLevelSchema.DumplingItem> contents)
     {
-        float radius = 0.125f;
+        float radius = 0.175f;
         Vector3 centerPos = transform.position;
 
         // 1. PRE-PROCESS STAGE: Compute original mathematical positions accurately
@@ -183,7 +206,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             Vector3 targetWorldPos = rawMathPositions[mathIndex];
 
             GameObject ball = DamplingObjectPool.Instance.GetBall(targetWorldPos, Quaternion.identity);
-            ball.transform.localScale = Vector3.one * 0.45f;
+            ball.transform.localScale = Vector3.one * 0.65f;
 
             BallView bView = ball.GetComponent<BallView>();
             bView.Initialize(contents[i].ColorIndex);
@@ -208,6 +231,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         if (GameManager.Instance.IsMagnet())
         {
+            if(isMagnetBlocked)
+                return;
+
             GameManager.Instance.UseMagnetBooster(this);
             disableButton = true;
             return;
@@ -224,16 +250,21 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             return;
 
         disableButton = true;
+        unitCollider.enabled = false;
 
         //check if we are in magnet mode - 
 
         if (model.OccupyingUnit.KeyLockPairIndex > 0 && model.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count == 0)
         {
+            //Debug.Log("Key");
+
             UnitView targetLockView = GameManager.Instance.GetLockUnitView(model.OccupyingUnit.KeyLockPairIndex);
             ExecuteKeyUnlockSequence(targetLockView);
         }
         else if (model.OccupyingUnit.LinkedUnitIds.Count > 0)
         {
+            //Debug.Log("Link");
+
             UnitView partnerView = GameManager.Instance.GetUnitView(model.OccupyingUnit.LinkedUnitIds[0]);
 
             // Determine which unit physically owns the active link visual
@@ -373,20 +404,13 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         releaseSequence.OnComplete(() =>
         {
             preAllocatedBallViews.Clear();
-            DamplingObjectPool.Instance.ReturnUnit(gameObject);
+            //DamplingObjectPool.Instance.ReturnUnit(gameObject);
         });
 
         releaseSequence.Play();
     }
 
-    private void ReturnBallsToPool()
-    {
-        foreach (var ballView in preAllocatedBallViews)
-        {
-            if (ballView != null) DamplingObjectPool.Instance.ReturnBall(ballView.gameObject);
-        }
-        preAllocatedBallViews.Clear();
-    }
+    
 
     private void CleanUpActiveSequence()
     {
@@ -455,6 +479,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         // We only need to do a visual overhaul if the unit was hiding its true identity
         if (wasInitiallyHidden)
         {
+            isMagnetBlocked = false;
+
             SoundsManager.Instance.HiddenRevealed();
             wasInitiallyHidden = false;
 
@@ -489,12 +515,16 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         openLidSequence = DOTween.Sequence();
 
+        //transform.localScale = Vector3.one * UNIT_FINAL_SIZE;
+        SoundsManager.Instance.LidPopped();
+
         float duration = 0.55f;
         Vector3 targetFlyPosition = transform.position + new Vector3(0.6f, 1.2f, 0f);
 
         // Initial subtle high-speed squish down on Y axis and stretch on X axis to show build-up force
         openLidSequence.Append(lidRenderer.transform.DOScale(new Vector3(1.2f, 0.4f, 1f), duration * 0.25f).SetEase(Ease.OutQuad));
 
+        openLidSequence.Append(transform.DOScale(Vector3.one * UNIT_FINAL_SIZE, duration * 0.25f).SetEase(Ease.OutQuad));
         // Pop up, scale thin during flight, rotate rapidly, and fade out cleanly
         openLidSequence.Append(lidRenderer.transform.DOMove(targetFlyPosition, duration * 0.75f).SetEase(Ease.OutCubic));
         openLidSequence.Join(lidRenderer.transform.DOScale(new Vector3(0.8f, 0.2f, 1f), duration * 0.75f).SetEase(Ease.InQuad));
@@ -545,7 +575,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         spriteRenderer.DOFade(0f, 0.5f).OnComplete(() =>
         {
             preAllocatedBallViews.Clear();
-            DamplingObjectPool.Instance.ReturnUnit(gameObject);
+            //DamplingObjectPool.Instance.ReturnUnit(gameObject);
         });
     }
 
@@ -566,15 +596,24 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         spriteRenderer.sprite = VisualsManager.Instance.GetUnitSprite(unitColorIndex);
         lidRenderer.sprite = VisualsManager.Instance.GetUnitLidSprite(unitColorIndex);
 
-        //lidRenderer.color = unitColor;
-        lidRenderer.gameObject.SetActive(true);
+        // Reset relation overlays, lines, and text layers to safely handle recycling
         disableButton = true;
+        unitCollider.enabled = false;
         clickIndication.gameObject.SetActive(false);
         lockOverlayRenderer.gameObject.SetActive(false);
         keyIndicatorRenderer.gameObject.SetActive(false);
         iceOverlayRenderer.gameObject.SetActive(false);
         pipeTextDisplay.gameObject.SetActive(false);
         linkSpriteRenderer.gameObject.SetActive(false);
+
+        spriteRenderer.color = Color.white;
+        lidRenderer.color = Color.white;
+
+        transform.localScale = Vector3.one * UNIT_LOCKED_SIZE;
+        lidRenderer.transform.localScale = Vector3.one;
+        lidRenderer.transform.localPosition = new Vector3(0f, 0.05f, 0f);
+        lidRenderer.transform.localEulerAngles = Vector3.zero;
+        lidRenderer.gameObject.SetActive(true);
 
     }
 }

@@ -6,8 +6,9 @@ using UnityEngine;
 public class BeltGenerator : MonoBehaviour
 {
 
-    const float FAST_SPEED = 3.5f;
-    const float BELT_SPEED = 1.75f;
+    const float FAST_SPEED = 3f;
+    const float MAX_SPEED = 4f;
+    const float BELT_SPEED = 2f;
 
     [Header("Visual Configurations")]
     [SerializeField] Color lightBrown;
@@ -184,8 +185,12 @@ public class BeltGenerator : MonoBehaviour
             if (slot.IsOccupied && slot.OccupyingBall.ColorIndex == targetColorIndex)
             {
                 // 1. Return the visual ball to the object pool
+                GameManager.Instance.ballViews.Remove(slot.OccupyingBall);
+
                 DamplingObjectPool.Instance.ReturnBall(slot.OccupyingBall.gameObject);
 
+                
+                
                 // 2. Clear the slot data so it accepts new balls
                 slot.Release();                
                 
@@ -250,9 +255,16 @@ public class BeltGenerator : MonoBehaviour
 
     internal void IncreaseBeltSpeed(bool topSpeed)
     {
+        
         if(topSpeed)
-            speed = FAST_SPEED*2;
-        else
+        {
+            speed = MAX_SPEED;
+            Debug.Log("Belt Speed Increased to Max");
+        }
+        else if(speed < FAST_SPEED)
+        {
             speed = FAST_SPEED;
+            Debug.Log("Belt Speed Increased to Fast");
+        }
     }
 }

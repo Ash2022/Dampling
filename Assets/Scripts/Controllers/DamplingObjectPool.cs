@@ -46,10 +46,10 @@ public class DamplingObjectPool : MonoBehaviour
         effectRoot = new GameObject("EffectPool_Root").transform;
         effectRoot.SetParent(transform);
 
-        await PrewarmPoolAsync(unitPrefab, 100, unitPool, unitRoot, 25);
-        await PrewarmPoolAsync(containerPrefab, 300, containerPool, containerRoot, 50);
-        await PrewarmPoolAsync(ballPrefab, 1000, ballPool, ballRoot, 100);
-        await PrewarmPoolAsync(containerResolveEffectPrefab, 50, effectPool, effectRoot, 25);
+        await PrewarmPoolAsync(unitPrefab, 50, unitPool, unitRoot, 25);
+        await PrewarmPoolAsync(containerPrefab, 150, containerPool, containerRoot, 50);
+        await PrewarmPoolAsync(ballPrefab, 500, ballPool, ballRoot, 100);
+        await PrewarmPoolAsync(containerResolveEffectPrefab, 10, effectPool, effectRoot, 25);
     }
 
     private async Task PrewarmPoolAsync(GameObject prefab, int count, Queue<GameObject> pool, Transform root, int objectsPerFrame)
@@ -126,6 +126,9 @@ public class DamplingObjectPool : MonoBehaviour
 
     public void ReturnContainerResolveEffect(GameObject effect)
     {
+        if(effect==null)
+            return;
+
         effect.SetActive(false);
         effect.transform.SetParent(effectRoot);
         effectPool.Enqueue(effect);

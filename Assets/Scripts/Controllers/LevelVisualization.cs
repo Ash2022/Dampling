@@ -14,7 +14,7 @@ public class LevelVisualization : MonoBehaviour
     public float QueueBottomY = 3.0f;
     public float GridTopY = -1.0f;
 
-    float ScaleFactor = 1.2f;
+    float ScaleFactor = 1.1f;
     private List<GameObject> spawnedVisualElements = new List<GameObject>();
 
     public BoardVisualReferences RenderInitialBoard(GameLevelSchema levelData)
@@ -163,6 +163,7 @@ public class LevelVisualization : MonoBehaviour
                 }
                 else if (element.GetComponent<ContainerView>() != null)
                 {
+                    DamplingObjectPool.Instance.ReturnContainerResolveEffect(element.GetComponent<ContainerView>().containerResolveEffect);
                     DamplingObjectPool.Instance.ReturnContainer(element);
                 }
                 else
@@ -270,6 +271,11 @@ public class LevelVisualization : MonoBehaviour
                 fv.ApplyTopRowOverride(pathLeft, pathRight);
             }
         }
+    }
+
+    public void AddPipeElement(GameObject gameObject)
+    {
+        spawnedVisualElements.Add(gameObject);
     }
 
 }

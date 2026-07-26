@@ -7,30 +7,40 @@ using UnityEngine.UI;
 public class TutorialImageView : MonoBehaviour
 {
     [SerializeField] Image tutImage;
-    [SerializeField] Image tutAuxImage;
+
+    [SerializeField] GameObject bgImage;
 
     [SerializeField]TMP_Text titleText;
     [SerializeField]TMP_Text bodyText;
     
 
 
-    public void ShowTutorial(Sprite sprite,Sprite auxSprite=null)
+    public void ShowTutorial(Sprite sprite,Sprite auxSprite,string title,string body)
     {
         SoundsManager.Instance.SomethingUnlocked();
+
+        bgImage.SetActive(true);
 
         tutImage.sprite = sprite;
         tutImage.SetNativeSize();
 
-        if(auxSprite != null )//aux image is made for colors unlock ad its size is 5
-        {
-            tutAuxImage.sprite = auxSprite;
-            tutAuxImage.SetNativeSize();
-            tutAuxImage.gameObject.SetActive(true);
-        }
-        else
-            tutAuxImage.gameObject.SetActive(false);
+        titleText.text = title;
+        bodyText.text = body;
 
         gameObject.SetActive(true);
+    }
+
+    public void ShowHardLevelIndication(Sprite sprite)
+    {
+        bgImage.SetActive(false);
+        
+        titleText.text = string.Empty;
+        bodyText.text = string.Empty;
+
+        tutImage.sprite = sprite;
+        tutImage.SetNativeSize();
+        gameObject.SetActive(true);
+
     }
 
     public void HideTutorial()

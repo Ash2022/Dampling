@@ -65,13 +65,6 @@ public class GameStateEvaluator
 
     public bool CheckForLogicalWin()
     {
-        if (activeBoardReferences == null || activeBoardReferences.UnitViews == null) return false;
-
-        if (activeBoardReferences.UnitViews.Values.Any(unit => unit.gameObject.activeInHierarchy 
-        && unit.ModelData.ContinuousPipe ==null))
-        {
-            return false;
-        }
 
         //Debug.Log("Check Logic Win");
 

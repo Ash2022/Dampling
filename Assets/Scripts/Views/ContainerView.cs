@@ -19,7 +19,7 @@ public class ContainerView : MonoBehaviour
     private ContainerData dataModel;
     private int reservedSlotsCount = 0; // Guard variable to prevent double-claiming on the same frame
 
-
+    public GameObject containerResolveEffect=null;
 
     public int CurrentRequiredColorIndex => dataModel != null ? dataModel.ColorIndex : -1;
     public ContainerData Model => dataModel;
@@ -30,6 +30,7 @@ public class ContainerView : MonoBehaviour
         reservedSlotsCount = dataModel.FilledSlotsCount; // Synchronize with data layer state
         QueueIndex = orgQueueIndex;
         absorbedBallViews.Clear();
+        containerResolveEffect=null;
 
         if(containerData.startHidden)
             spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(-1);
@@ -130,8 +131,8 @@ public class ContainerView : MonoBehaviour
             SyncSeatedBalls();
         }).OnComplete(() =>
         {
-            // Spawn the resolution effect at the container's final position before it is recycled
-            DamplingObjectPool.Instance.GetContainerResolveEffect(transform.position, Quaternion.identity);
+            SoundsManager.Instance.ContainerResolved();            // Spawn the resolution effect at the container's final position before it is recycled
+            containerResolveEffect = DamplingObjectPool.Instance.GetContainerResolveEffect(transform.position, Quaternion.identity);
         }));
 
         // Phase 2: Scale down and fade out concurrently after the upward motion completes
@@ -144,18 +145,12 @@ public class ContainerView : MonoBehaviour
         }
 
         clearSeq.OnComplete(() =>
-        {
-            foreach (var ballView in absorbedBallViews)
-            {
-                DamplingObjectPool.Instance.ReturnBall(ballView.gameObject);
-            }
+        {            
             absorbedBallViews.Clear();
-
-
 
             GameManager.Instance.AdvanceContainerQueue(QueueIndex, this);
 
-            DamplingObjectPool.Instance.ReturnContainer(gameObject);
+            //DamplingObjectPool.Instance.ReturnContainer(gameObject);
         });
 
         clearSeq.Play();

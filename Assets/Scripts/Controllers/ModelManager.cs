@@ -5,9 +5,21 @@ using System;
 
 public class ModelManager : MonoBehaviour
 {
+    public enum UnlockTypes
+    {
+        HIDDEN,
+        MAGNET,
+        SHUFFLE,
+        PIPE,
+        ICE,
+        LOCK_KEY,
+        LINK,
+        HIDDEN_CONTAINER
+    }
+
     const int HIDDEN_UNIT_UNLOCKED = 4;
-    const int MAGNET_UNLOCKED = 6;
-    const int SHUFFLE_UNLOCKED = 8;
+    public const int MAGNET_UNLOCKED = 6;
+    public const int SHUFFLE_UNLOCKED = 8;
     const int PIPE_UNIT_UNLOCKED = 10;
     const int ICE_UNIT_UNLOCKED = 15;
     const int LOCK_KEY_UNLOCKED = 25;
@@ -16,12 +28,7 @@ public class ModelManager : MonoBehaviour
     //const int COVER_UNLOCKED = 75;
 
     
-    
-
-    public const int MAGNET_BOOSTER = 1;
-    public const int SHUFFLE_BOOSTER = 2;
-
-    public const int LOOP_SIZE = 20;
+    public const int LOOP_SIZE = 2;
 
     private const string PLAYER_DATA_KEY = "PlayerDataSaveState";
     public const int GOLD_PER_WIN = 50;
@@ -125,7 +132,7 @@ public class ModelManager : MonoBehaviour
 
     public void DeleteData()
     {
-        int currentMoney = Data.CoinsAmount;
+        int currentMoney = Math.Max(0, Data.CoinsAmount);
         PlayerPrefs.DeleteKey(PLAYER_DATA_KEY);
         PlayerPrefs.Save();
         Data = new PlayerData();

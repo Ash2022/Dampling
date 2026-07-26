@@ -46,7 +46,7 @@ public class BoosterManager : MonoBehaviour
             Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(Camera.main, targetTransform.position);
 
             // 2) Convert Screen Pixel Space directly into local Canvas space (null camera for Overlay)
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasContainer, screenPoint, null, out var localPoint);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasContainer, screenPoint, Camera.main, out var localPoint);
 
             view.Rect.anchoredPosition = localPoint;
         }
@@ -70,12 +70,12 @@ public class BoosterManager : MonoBehaviour
 
             if (view.Type == BoosterButtonView.BoosterType.Magnet)
             {
-                isUnlocked = currentLevelIndex >= ModelManager.MAGNET_BOOSTER;
+                isUnlocked = currentLevelIndex >= ModelManager.MAGNET_UNLOCKED;
                 currentCount = data.MagnetBoosterCount;
             }
             else if (view.Type == BoosterButtonView.BoosterType.Shuffle)
             {
-                isUnlocked = currentLevelIndex >= ModelManager.SHUFFLE_BOOSTER;
+                isUnlocked = currentLevelIndex >= ModelManager.SHUFFLE_UNLOCKED;
                 currentCount = data.ShuffleBoosterCount;
             }
 
@@ -118,7 +118,9 @@ public class BoosterManager : MonoBehaviour
     {
         foreach (var unitView in activeBoardReferences.UnitViews.Values)
         {
-            unitView.ShowHideClickIndication(show);
+            //not hidden units
+            if(unitView.isMagnetBlocked == false)
+                unitView.ShowHideClickIndication(show);
         }
     }
 
@@ -145,6 +147,9 @@ public class BoosterManager : MonoBehaviour
 
         Vector2Int[] spawnCoords = { new Vector2Int(3, -1), new Vector2Int(4, -1) };
 
+        float xPosWorld = 0.33792f;
+        float yPosWorld = -0.32416f;
+        
         for (int i = 0; i < topColors.Count; i++)
         {
             int color = topColors[i].ColorIndex;
@@ -154,10 +159,12 @@ public class BoosterManager : MonoBehaviour
 
             var newNode = gameCore.InjectReviveUnit(spawnCoords[i].x, spawnCoords[i].y, color, ballsToExtract);
 
-            Vector3 spawnPosition = i == 0 ? new Vector2(-0.3f, -0.424f) : new Vector2(0.3f, -0.424f);
+            Vector3 spawnPosition = i == 0 ? new Vector2(-xPosWorld, yPosWorld) : new Vector2(xPosWorld,yPosWorld);
 
             GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, gameManager.transform);
             UnitView newUnitView = unitInstance.GetComponent<UnitView>();
+
+            GameManager.Instance.NotifyLevelVisualizerAboutNewUnits(unitInstance);
 
             newUnitView.Initialize(newNode);
             activeBoardReferences.UnitViews[spawnCoords[i]] = newUnitView;
@@ -296,45 +303,7 @@ public class BoosterManager : MonoBehaviour
                 r2Container.RevealContainerColor();
             });
         }
-    }
-
-    public void ExecuteSkipLevel()
-    {
-        var activeBalls = GameManager.Instance.ballViews.ToList();
-        int totalBalls = activeBalls.Count;
-
-        if (totalBalls == 0)
-        {
-            gameManager.EvaluateLogicalWinState();
-            return;
-        }
-
-        for (int i = 0; i < totalBalls; i++)
-        {
-            var ballView = activeBalls[i];
-            
-            var targetContainer = activeBoardReferences.ContainerViews.Values
-                .Where(v => v.CurrentRequiredColorIndex == ballView.ColorIndex)
-                .OrderByDescending(v => v.gameObject.activeInHierarchy)
-                .ThenBy(v => v.QueueIndex)
-                .First(v => v.HasRoomLeft());
-
-            targetContainer.TryReserveTargetSlot(out Transform targetSlot);
-
-
-            ballView.GetComponent<Collider2D>().enabled = false;
-            ballView.transform.DOKill();
-
-            GameManager.Instance.BallEnteredOrExitSlot();
-
-            DOVirtual.DelayedCall(i * 0.05f, () =>
-            {
-                ballView.ExecuteTransferToContainer(targetContainer, targetSlot);
-            });
-        }
-
-        DOVirtual.DelayedCall((totalBalls * 0.05f) + 0.5f, () => gameManager.EvaluateLogicalWinState());
-    }
+    }    
 
     private void ToggleColliders(ContainerView containerView, bool state)
     {

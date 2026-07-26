@@ -40,14 +40,12 @@ shuffle - takes the second row and switches with the items of the first row.
 
 
 
-
+TODO::::
+______________________________
 
 10. levels
 
 
-25. add a wink option to the ball views.
-
-end screen lose mock
 remove the methods that we dont need in the core - the 2 callbacks
 
 put the unlock values on the booster - to show which level they will unlock
@@ -74,6 +72,18 @@ if click skip - all stops and level ends
 show a 0 on the pipe once its done 
 
 
+Make it that when a unit is locked it's smaller in size compared with unlocked
+Also, unit leaves an indication like it's shadow, also it's nice if all size changes are animated 
+
+The resolve container SFX, more subtle 
+
+Make the size dynamic and start bigger, maybe even bigger always 
+
+Have some visuals of the lanes
+
+Level 8 the game shows defective units, no base only unit, reset issue
+
+Level 10 9 crashing 
 
 from Nina:
 number 0
@@ -83,3 +93,4 @@ Magnet icon for the boosters
 
 
 
+return the effect of contaqiner to the pool
