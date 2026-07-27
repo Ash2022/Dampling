@@ -16,6 +16,7 @@ public class BoosterButtonView : MonoBehaviour
     [SerializeField] private GameObject counterBG;
     [SerializeField] private GameObject lockedOverlay;
     [SerializeField] private TextMeshProUGUI countText;
+    [SerializeField] private TextMeshProUGUI unlockLevelText;
 
     [SerializeField] private RectTransform rect;
 
@@ -24,7 +25,7 @@ public class BoosterButtonView : MonoBehaviour
     public BoosterType Type => type;
 
 
-    public void Setup(bool isUnlocked, int count, Action<BoosterType> onClickCallback)
+    public void Setup(bool isUnlocked, int count, Action<BoosterType> onClickCallback,int unlockLevel=-1)
     {
         actionButton.onClick.RemoveAllListeners();
         
@@ -37,6 +38,11 @@ public class BoosterButtonView : MonoBehaviour
         {
             countText.text = count.ToString();
             actionButton.onClick.AddListener(() => onClickCallback?.Invoke(type));
+        }
+        else
+        {
+            if(unlockLevel!=-1)
+                unlockLevelText.text  =(unlockLevel+1).ToString();
         }
     }
 }

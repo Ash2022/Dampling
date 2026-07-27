@@ -67,19 +67,22 @@ public class BoosterManager : MonoBehaviour
         {
             bool isUnlocked = false;
             int currentCount = 0;
+            int unlocksAtLevel =0;
 
             if (view.Type == BoosterButtonView.BoosterType.Magnet)
             {
                 isUnlocked = currentLevelIndex >= ModelManager.MAGNET_UNLOCKED;
+                unlocksAtLevel = ModelManager.MAGNET_UNLOCKED;
                 currentCount = data.MagnetBoosterCount;
             }
             else if (view.Type == BoosterButtonView.BoosterType.Shuffle)
             {
                 isUnlocked = currentLevelIndex >= ModelManager.SHUFFLE_UNLOCKED;
+                unlocksAtLevel = ModelManager.SHUFFLE_UNLOCKED;
                 currentCount = data.ShuffleBoosterCount;
             }
 
-            view.Setup(isUnlocked, currentCount, HandleBoosterClick);
+            view.Setup(isUnlocked, currentCount, HandleBoosterClick,unlocksAtLevel);
         }
     }
 

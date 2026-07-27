@@ -26,15 +26,17 @@ public class LevelVisualization : MonoBehaviour
 
         Vector2 unitSize = GetPrefabSize(UnitPrefab)*ScaleFactor;
         Vector2 containerSize = GetPrefabSize(ContainerPrefab);
+        float containerSpacingX = 0.1f;
 
         // 1. GENERATE AND CENTER DEMAND QUEUES
         int totalQueues = levelData.ResolutionQueues.Count;
-        float totalQueuesWidth = totalQueues * containerSize.x;
-        float queueStartX = -(totalQueuesWidth / 2f) + (containerSize.x / 2f);
+        
+        // Center calculation based purely on layout column counts and padding intervals
+        float queueStartX = -((totalQueues - 1) * (containerSize.x + containerSpacingX)) / 2f;
 
         for (int q = 0; q < totalQueues; q++)
         {
-            float targetX = queueStartX + (q * containerSize.x);
+            float targetX = queueStartX + (q * (containerSize.x + containerSpacingX));
             var activeQueueList = levelData.ResolutionQueues[q];
 
             for (int c = 0; c < activeQueueList.Count; c++)
@@ -50,7 +52,6 @@ public class LevelVisualization : MonoBehaviour
 
                 containerInstance.name = $"Container_Q{q}_Idx{c}_{activeQueueList[c].ColorIndex}";
 
-                // Map reference by unique ID for instant event resolution
                 references.ContainerViews.Add(activeQueueList[c].Id, containerView);
                 references.logicalContainerPositions.Add(containerView, containerInstance.transform.position);
             }

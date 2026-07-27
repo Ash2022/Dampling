@@ -63,34 +63,10 @@ level 15 - hurricane unlocks - clears all the items that are in the belt and can
 
 lock comes in 16 levels - so around level 30 
 
-change like this: 
-skip does nothing - just stops the belt and finishes the level
-when all the units were dropped to the stage - speed increase
-when we detect the skip button - speed increase more
-if click skip - all stops and level ends
-
-show a 0 on the pipe once its done 
-
-
-Make it that when a unit is locked it's smaller in size compared with unlocked
-Also, unit leaves an indication like it's shadow, also it's nice if all size changes are animated 
-
-The resolve container SFX, more subtle 
-
-Make the size dynamic and start bigger, maybe even bigger always 
-
-Have some visuals of the lanes
-
-Level 8 the game shows defective units, no base only unit, reset issue
-
-Level 10 9 crashing 
-
-from Nina:
-number 0
-hidden unit unlocked
-hidden container unlocked
-Magnet icon for the boosters
 
 
 
-return the effect of contaqiner to the pool
+
+
+
+

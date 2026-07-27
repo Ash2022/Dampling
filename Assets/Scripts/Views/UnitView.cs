@@ -26,6 +26,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     [Header("Ice Overlay Features")]
     [SerializeField] private GameObject iceOverlayRenderer; // Assign in Inspector
+    [SerializeField] private SpriteRenderer iceOverlayCounter; 
 
     [SerializeField] private Transform clickIndication;
 
@@ -62,6 +63,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         // 1. Process Static Pipe Generation Matrix Cells
         if (cellNode.ContinuousPipe != null)
         {
+            isMagnetBlocked = true;
             UnitId = -1; // Pipes are anchor locations, not standard unit structures
 
             var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
@@ -126,6 +128,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             int iceLayers = cellNode.OccupyingUnit.IceLayers;
             if (iceLayers > 0)
             {
+                iceOverlayCounter.sprite = VisualsManager.Instance.GetPipeCounterSprite(iceLayers);
                 iceOverlayRenderer.gameObject.SetActive(true);
                 isMagnetBlocked = true;
             }
@@ -344,7 +347,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         if (releaseSequence != null && releaseSequence.IsActive())
             releaseSequence.Kill();
 
-        float uniformFinalScale = 1f;
+        float uniformFinalScale = 1.1f;
         float giantOvershootMultiplier = 6.5f;
         float normalOvershootMultiplier = 1.1f;
         float giantChance = 0.05f;
@@ -436,7 +439,19 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     public void UpdateIceLayers(int remainingLayers, Color originalUnitColor)
     {
 
+        SoundsManager.Instance.IceCracked();
 
+        DG.Tweening.Sequence shatterSeq = DG.Tweening.DOTween.Sequence();
+
+        SpriteRenderer overlaySpriteRenderer = iceOverlayRenderer.GetComponent<SpriteRenderer>();
+
+        shatterSeq.Append(iceOverlayRenderer.transform.DOShakePosition(.65f, strength: 0.15f, vibrato: 20));
+        
+        shatterSeq.OnComplete(() =>
+        {
+            iceOverlayCounter.sprite = VisualsManager.Instance.GetPipeCounterSprite(remainingLayers);
+                
+        });
         // Optional: Fade the frosty blue tint slightly as ice gets thinner
         // spriteRenderer.color = Color.Lerp(originalUnitColor, new Color(0.5f, 0.8f, 1f), remainingLayers * 0.2f);
     }

@@ -8,23 +8,23 @@ public class ModelManager : MonoBehaviour
     public enum UnlockTypes
     {
         HIDDEN,
-        MAGNET,
-        SHUFFLE,
         PIPE,
+        SHUFFLE,
         ICE,
+        MAGNET,
         LOCK_KEY,
         LINK,
         HIDDEN_CONTAINER
     }
 
     const int HIDDEN_UNIT_UNLOCKED = 4;
-    public const int MAGNET_UNLOCKED = 6;
-    public const int SHUFFLE_UNLOCKED = 8;
-    const int PIPE_UNIT_UNLOCKED = 10;
-    const int ICE_UNIT_UNLOCKED = 15;
-    const int LOCK_KEY_UNLOCKED = 25;
-    const int LINK_UNLOCKED = 40;
-    const int HIDDEN_CONTAINER = 55;
+    const int PIPE_UNIT_UNLOCKED = 7;
+    public const int SHUFFLE_UNLOCKED = 11;
+    const int ICE_UNIT_UNLOCKED = 16;
+    public const int MAGNET_UNLOCKED = 22;
+    const int LOCK_KEY_UNLOCKED = 29;
+    const int LINK_UNLOCKED = 37;
+    const int HIDDEN_CONTAINER = 46;
     //const int COVER_UNLOCKED = 75;
 
     
@@ -59,10 +59,10 @@ public class ModelManager : MonoBehaviour
         }
 
         UnlocksIndexList.Add(HIDDEN_UNIT_UNLOCKED);
-        UnlocksIndexList.Add(MAGNET_UNLOCKED);
-        UnlocksIndexList.Add(SHUFFLE_UNLOCKED);
         UnlocksIndexList.Add(PIPE_UNIT_UNLOCKED);
+        UnlocksIndexList.Add(SHUFFLE_UNLOCKED);
         UnlocksIndexList.Add(ICE_UNIT_UNLOCKED);
+        UnlocksIndexList.Add(MAGNET_UNLOCKED);
         UnlocksIndexList.Add(LOCK_KEY_UNLOCKED);
         UnlocksIndexList.Add(LINK_UNLOCKED);
         UnlocksIndexList.Add(HIDDEN_CONTAINER);

@@ -431,7 +431,7 @@ public class LevelEditorWindow : EditorWindow
 
                     if (cell.Behavior == CellBehavior.Standard)
                     {
-                        menu.AddItem(new GUIContent("Environment/Add Ice Layer"), cell.IceLayers > 0, () => { if (cell.IceLayers == 0) cell.IceLayers = 1; Repaint(); });
+                        menu.AddItem(new GUIContent("Environment/Add Ice Layer"), cell.IceLayers > 0, () => { if (cell.IceLayers == 0) cell.IceLayers = 2; Repaint(); });
                         menu.AddItem(new GUIContent("Environment/Thaw Ice Completely"), cell.IceLayers == 0, () => { cell.IceLayers = 0; Repaint(); });
                         menu.AddSeparator("Environment/");
 
