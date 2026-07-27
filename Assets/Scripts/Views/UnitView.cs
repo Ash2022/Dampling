@@ -172,6 +172,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         iceOverlayRenderer.gameObject.SetActive(false);
         pipeTextDisplay.gameObject.SetActive(false);
         linkSpriteRenderer.gameObject.SetActive(false);
+        iceOverlayRenderer.GetComponent<SpriteRenderer>().color = Color.white;
 
         spriteRenderer.color = Color.white;
         lidRenderer.color = Color.white;
@@ -574,7 +575,10 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             ball.SR.sortingOrder = 36;
         });
 
-        flySeq.Append(ball.transform.DOScale(Vector3.one, animTime / 2f).SetEase(Ease.OutQuad));
+        flySeq.Append(ball.transform.DOScale(Vector3.one, animTime / 2f).SetEase(Ease.OutQuad).OnStart(()=>
+        {
+            SoundsManager.Instance.BallJumpToContainer(); 
+        }));
         flySeq.Join(ball.transform.DOMove(targetPosition, animTime).SetEase(Ease.InSine));
 
         flySeq.OnComplete(() =>

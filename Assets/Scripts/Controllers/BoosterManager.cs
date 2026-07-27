@@ -67,7 +67,7 @@ public class BoosterManager : MonoBehaviour
         {
             bool isUnlocked = false;
             int currentCount = 0;
-            int unlocksAtLevel =0;
+            int unlocksAtLevel = 0;
 
             if (view.Type == BoosterButtonView.BoosterType.Magnet)
             {
@@ -82,7 +82,7 @@ public class BoosterManager : MonoBehaviour
                 currentCount = data.ShuffleBoosterCount;
             }
 
-            view.Setup(isUnlocked, currentCount, HandleBoosterClick,unlocksAtLevel);
+            view.Setup(isUnlocked, currentCount, HandleBoosterClick, unlocksAtLevel);
         }
     }
 
@@ -96,11 +96,13 @@ public class BoosterManager : MonoBehaviour
 
             if (gameManager.currentState == GameManager.GameState.ReadyToPlay)
             {
+                SoundsManager.Instance.BoosterClicked(true);
                 ToggleAllUnitsIndication(true);
                 gameManager.MagnetClicked();
             }
             else if (gameManager.currentState == GameManager.GameState.Magnet)
             {
+                SoundsManager.Instance.BoosterClicked(false);
                 ToggleAllUnitsIndication(false);
                 gameManager.MagnetClicked();
             }
@@ -109,6 +111,7 @@ public class BoosterManager : MonoBehaviour
         {
             if (data.ShuffleBoosterCount <= 0) return;
 
+            SoundsManager.Instance.BoosterClicked(true);
             // Instant Execution
             ExecuteShuffle();
             data.ShuffleBoosterCount--;
@@ -122,7 +125,7 @@ public class BoosterManager : MonoBehaviour
         foreach (var unitView in activeBoardReferences.UnitViews.Values)
         {
             //not hidden units
-            if(unitView.isMagnetBlocked == false)
+            if (unitView.isMagnetBlocked == false)
                 unitView.ShowHideClickIndication(show);
         }
     }
@@ -152,7 +155,7 @@ public class BoosterManager : MonoBehaviour
 
         float xPosWorld = 0.33792f;
         float yPosWorld = -0.32416f;
-        
+
         for (int i = 0; i < topColors.Count; i++)
         {
             int color = topColors[i].ColorIndex;
@@ -162,7 +165,7 @@ public class BoosterManager : MonoBehaviour
 
             var newNode = gameCore.InjectReviveUnit(spawnCoords[i].x, spawnCoords[i].y, color, ballsToExtract);
 
-            Vector3 spawnPosition = i == 0 ? new Vector2(-xPosWorld, yPosWorld) : new Vector2(xPosWorld,yPosWorld);
+            Vector3 spawnPosition = i == 0 ? new Vector2(-xPosWorld, yPosWorld) : new Vector2(xPosWorld, yPosWorld);
 
             GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, gameManager.transform);
             UnitView newUnitView = unitInstance.GetComponent<UnitView>();
@@ -241,40 +244,26 @@ public class BoosterManager : MonoBehaviour
     public void ExecuteShuffle(float speedMultiplier = 3f)
     {
         var activeQueues = activeBoardReferences.ContainerViews.Values
-            .Where(v => v.gameObject.activeInHierarchy)
-            .GroupBy(v => v.QueueIndex)
-            .ToList();
-
-        List<ContainerView> row1 = new List<ContainerView>();
-        List<ContainerView> row2 = new List<ContainerView>();
+        .Where(v => v.gameObject.activeInHierarchy && !v.IsResolved) // <-- Add strict state exclusion here
+        .GroupBy(v => v.QueueIndex)
+        .ToList();
 
         foreach (var queue in activeQueues)
         {
-            var orderedColumn = queue.OrderBy(v => v.transform.position.y).ToList();
+            var orderedColumn = queue.OrderBy(v => activeBoardReferences.logicalContainerPositions[v].y).ToList();
 
-            if (orderedColumn.Count > 0) row1.Add(orderedColumn[0]);
-            if (orderedColumn.Count > 1) row2.Add(orderedColumn[1]);
-        }
+            if (orderedColumn.Count < 2) continue;
 
-        if (row1.Count == 0 || row1.Count != row2.Count) return;
-
-        for (int i = 0; i < row1.Count; i++)
-        {
-            var r1Container = row1[i];
-            var r2Container = row2[i];
+            var r1Container = orderedColumn[0];
+            var r2Container = orderedColumn[1];
 
             ToggleColliders(r1Container, false);
             ToggleColliders(r2Container, false);
 
             r1Container.SR.sortingOrder = 2;
 
-            Vector3 r1LogicalPos = activeBoardReferences.logicalContainerPositions.ContainsKey(r1Container)
-                ? activeBoardReferences.logicalContainerPositions[r1Container]
-                : r1Container.transform.position;
-
-            Vector3 r2LogicalPos = activeBoardReferences.logicalContainerPositions.ContainsKey(r2Container)
-                ? activeBoardReferences.logicalContainerPositions[r2Container]
-                : r2Container.transform.position;
+            Vector3 r1LogicalPos = activeBoardReferences.logicalContainerPositions[r1Container];
+            Vector3 r2LogicalPos = activeBoardReferences.logicalContainerPositions[r2Container];
 
             activeBoardReferences.logicalContainerPositions[r1Container] = r2LogicalPos;
             activeBoardReferences.logicalContainerPositions[r2Container] = r1LogicalPos;
@@ -306,7 +295,7 @@ public class BoosterManager : MonoBehaviour
                 r2Container.RevealContainerColor();
             });
         }
-    }    
+    }
 
     private void ToggleColliders(ContainerView containerView, bool state)
     {

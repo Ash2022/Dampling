@@ -32,7 +32,8 @@ public class SoundsManager : MonoBehaviour
 
     [SerializeField] AudioClip _ballJumpToContainer;
     
-    
+    [SerializeField] AudioClip _boosterButtonClicked;
+    [SerializeField] AudioClip _boosterButtonOff;
 
 
 
@@ -158,6 +159,12 @@ public class SoundsManager : MonoBehaviour
     {
         PlayHaptics(TapticsStrenght.Light);
         PlayClip(_lidPopped); 
+    }
+
+    public void BoosterClicked(bool isOn)
+    {
+        PlayHaptics(TapticsStrenght.Medium);
+        PlayClip(isOn?_boosterButtonClicked:_boosterButtonOff); 
     }
 
 

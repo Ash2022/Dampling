@@ -123,6 +123,10 @@ public class ModelManager : MonoBehaviour
         {
             string json = PlayerPrefs.GetString(PLAYER_DATA_KEY);
             Data = JsonConvert.DeserializeObject<PlayerData>(json);
+
+            Data.MagnetBoosterCount =5;
+            Data.ShuffleBoosterCount =5;
+            
         }
         else
         {

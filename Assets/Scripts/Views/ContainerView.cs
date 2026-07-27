@@ -24,6 +24,9 @@ public class ContainerView : MonoBehaviour
     public int CurrentRequiredColorIndex => dataModel != null ? dataModel.ColorIndex : -1;
     public ContainerData Model => dataModel;
 
+    public bool IsResolved { get; private set; }
+
+
     public void Initialize(ContainerData containerData, int orgQueueIndex)
     {
         dataModel = containerData;
@@ -31,6 +34,8 @@ public class ContainerView : MonoBehaviour
         QueueIndex = orgQueueIndex;
         absorbedBallViews.Clear();
         containerResolveEffect=null;
+        
+        IsResolved = false;
 
         if(containerData.startHidden)
             spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(-1);
@@ -117,6 +122,7 @@ public class ContainerView : MonoBehaviour
         // Ensure absorb animation is halted before fulfillment starts
         transform.DOKill(true);
 
+        IsResolved = true;
         Sequence clearSeq = DOTween.Sequence();
 
         // --- CONFIGURATION PARAMS ---
@@ -146,11 +152,12 @@ public class ContainerView : MonoBehaviour
 
         clearSeq.OnComplete(() =>
         {            
-            absorbedBallViews.Clear();
+            //absorbedBallViews.Clear();
 
             GameManager.Instance.AdvanceContainerQueue(QueueIndex, this);
 
             //DamplingObjectPool.Instance.ReturnContainer(gameObject);
+
         });
 
         clearSeq.Play();

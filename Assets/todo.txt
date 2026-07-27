@@ -64,6 +64,22 @@ level 15 - hurricane unlocks - clears all the items that are in the belt and can
 lock comes in 16 levels - so around level 30 
 
 
+TODO:
+levels
+SFX for using boosters
+SFX for when the booster is being used - for the magnet and for teh shuffle
+
+Add to levels - by level not index:
+
+level10 -- hidden
+level11 - hidden
+level12 - add hidden
+level18 - hidden
+level19 - add ice
+level20 - add ice and hidden
+level22 - add hidden
+
+Level27 - give Hard indication
 
 
 
