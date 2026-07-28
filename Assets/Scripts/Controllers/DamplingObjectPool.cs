@@ -8,21 +8,25 @@ public class DamplingObjectPool : MonoBehaviour
 
     [Header("Prefabs")]
     [SerializeField] private GameObject unitPrefab;
+    [SerializeField] private GameObject framePrefab;
     [SerializeField] private GameObject containerPrefab;
     [SerializeField] private GameObject ballPrefab;
     [SerializeField] private GameObject containerResolveEffectPrefab;
 
 
     private Queue<GameObject> unitPool = new Queue<GameObject>();
+    private Queue<GameObject> framePool = new Queue<GameObject>();
     private Queue<GameObject> containerPool = new Queue<GameObject>();
     private Queue<GameObject> ballPool = new Queue<GameObject>();
     private Queue<GameObject> effectPool = new Queue<GameObject>();
 
     private Transform unitRoot;
+    private Transform frameRoot;
     private Transform containerRoot;
     private Transform ballRoot;
     private Transform cellBlockerRoot;
     private Transform effectRoot;
+    public Transform stageRoot;
 
     private void Awake()
     {
@@ -33,6 +37,9 @@ public class DamplingObjectPool : MonoBehaviour
     {
         unitRoot = new GameObject("UnitPool_Root").transform;
         unitRoot.SetParent(transform);
+
+        frameRoot = new GameObject("FramePool_Root").transform;
+        frameRoot.SetParent(transform);
         
         containerRoot = new GameObject("ContainerPool_Root").transform;
         containerRoot.SetParent(transform);
@@ -47,6 +54,7 @@ public class DamplingObjectPool : MonoBehaviour
         effectRoot.SetParent(transform);
 
         await PrewarmPoolAsync(unitPrefab, 50, unitPool, unitRoot, 25);
+        await PrewarmPoolAsync(framePrefab, 100, framePool, frameRoot, 25);
         await PrewarmPoolAsync(containerPrefab, 150, containerPool, containerRoot, 50);
         await PrewarmPoolAsync(ballPrefab, 500, ballPool, ballRoot, 100);
         await PrewarmPoolAsync(containerResolveEffectPrefab, 10, effectPool, effectRoot, 25);
@@ -70,7 +78,16 @@ public class DamplingObjectPool : MonoBehaviour
     public GameObject GetUnit(Vector3 position, Quaternion rotation, Transform parent)
     {
         GameObject obj = unitPool.Count > 0 ? unitPool.Dequeue() : Instantiate(unitPrefab);
-        obj.transform.SetParent(parent);
+
+        obj.transform.SetPositionAndRotation(position, rotation);
+        obj.SetActive(true);
+        return obj;
+    }
+
+    public GameObject GetFrame(Vector3 position, Quaternion rotation, Transform parent)
+    {
+        GameObject obj = framePool.Count > 0 ? framePool.Dequeue() : Instantiate(framePrefab);
+
         obj.transform.SetPositionAndRotation(position, rotation);
         obj.SetActive(true);
         return obj;
@@ -79,7 +96,7 @@ public class DamplingObjectPool : MonoBehaviour
     public GameObject GetContainer(Vector3 position, Quaternion rotation, Transform parent)
     {
         GameObject obj = containerPool.Count > 0 ? containerPool.Dequeue() : Instantiate(containerPrefab);
-        obj.transform.SetParent(parent);
+
         obj.transform.SetPositionAndRotation(position, rotation);
         obj.SetActive(true);
         return obj;
@@ -88,7 +105,7 @@ public class DamplingObjectPool : MonoBehaviour
     public GameObject GetBall(Vector3 position, Quaternion rotation)
     {
         GameObject obj = ballPool.Count > 0 ? ballPool.Dequeue() : Instantiate(ballPrefab);
-        obj.transform.SetParent(null); 
+        obj.transform.SetParent(stageRoot);
         obj.transform.SetPositionAndRotation(position, rotation);
         obj.SetActive(true);
         return obj;
@@ -97,7 +114,7 @@ public class DamplingObjectPool : MonoBehaviour
     public GameObject GetContainerResolveEffect(Vector3 position, Quaternion rotation)
     {
         GameObject obj = effectPool.Count > 0 ? effectPool.Dequeue() : Instantiate(containerResolveEffectPrefab);
-        obj.transform.SetParent(null);
+
         obj.transform.SetPositionAndRotation(position, rotation);
         obj.SetActive(true);
         return obj;
@@ -108,6 +125,13 @@ public class DamplingObjectPool : MonoBehaviour
         unit.SetActive(false);
         unit.transform.SetParent(unitRoot);
         unitPool.Enqueue(unit);
+    }
+
+    public void ReturnFrame(GameObject frame)
+    {
+        frame.SetActive(false);
+        frame.transform.SetParent(frameRoot);
+        framePool.Enqueue(frame);
     }
 
     public void ReturnContainer(GameObject container)

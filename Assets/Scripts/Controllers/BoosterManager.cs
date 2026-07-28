@@ -14,6 +14,8 @@ public class BoosterManager : MonoBehaviour
     [SerializeField] private RectTransform canvasContainer;
     [SerializeField] private List<BoosterButtonView> boosterButtons;
 
+    [SerializeField]MicroAgitationVolume microAgitationVolume;
+
     // Persistent Architecture Dependencies
     private GameManager gameManager;
     private BeltGenerator beltGenerator;
@@ -61,6 +63,7 @@ public class BoosterManager : MonoBehaviour
         gameCore = core;
         activeBoardReferences = boardRefs;
 
+        microAgitationVolume.Reset();
         PlayerData data = ModelManager.Instance.Data;
 
         foreach (var view in boosterButtons)
@@ -170,7 +173,7 @@ public class BoosterManager : MonoBehaviour
             GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, gameManager.transform);
             UnitView newUnitView = unitInstance.GetComponent<UnitView>();
 
-            GameManager.Instance.NotifyLevelVisualizerAboutNewUnits(unitInstance);
+            GameManager.Instance.NotifyLevelVisualizerAboutNewUnits(newUnitView);
 
             newUnitView.Initialize(newNode);
             activeBoardReferences.UnitViews[spawnCoords[i]] = newUnitView;
@@ -205,27 +208,52 @@ public class BoosterManager : MonoBehaviour
         float staggerInterval = 0.15f;
         int completedBallsFlight = 0;
 
-
         for (int i = 0; i < totalBalls; i++)
         {
             var dumpling = unitData.InteriorContents[i];
             int targetColor = dumpling.ColorIndex;
 
-            // Added !v.IsContainerFullyBooked() to bypass containers that reached capacity
-            var targetContainer = activeBoardReferences.ContainerViews.Values
-    .Where(v => v.gameObject.activeInHierarchy &&
-                v.CurrentRequiredColorIndex == targetColor &&
-                !v.IsContainerFullyBooked())
-    .OrderBy(v => v.transform.position.y)
-    .FirstOrDefault();
+            ContainerView targetContainer = null;
+            Transform targetSlot = null;
 
-            float currentDelay = baseDelay + (i * staggerInterval);
-
-            Vector3 targetPosition = targetContainer.GetNextAvailableSlotTransform().position;
-
-            targetedUnitView.FlyBallToTargetExtended(targetPosition, currentDelay, (ballView) =>
+            int maxDepth = 0;
+            foreach (var q in activeBoardReferences.ContainerQueues)
             {
-                targetContainer.OnBallAbsorbed(ballView);
+                if (q.Count > maxDepth) maxDepth = q.Count;
+            }
+
+            for (int depth = 0; depth < maxDepth; depth++)
+            {
+                foreach (var queue in activeBoardReferences.ContainerQueues)
+                {
+                    if (depth < queue.Count)
+                    {
+                        var container = queue[depth];
+                        if (container != null && container.gameObject.activeInHierarchy &&
+                            container.CurrentRequiredColorIndex == targetColor &&
+                            !container.IsContainerFullyBooked() && !container.IsResolved)
+                        {
+                            targetSlot = container.GetNextAvailableSlotTransform();
+                            if (targetSlot != null)
+                            {
+                                targetContainer = container;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (targetContainer != null) break;
+            }
+
+            
+            float currentDelay = baseDelay + (i * staggerInterval);
+            var capturedContainer = targetContainer;
+            var capturedSlot = targetSlot;
+
+            targetedUnitView.FlyBallToTargetExtended(capturedSlot.position, currentDelay, (ballView) =>
+            {
+                ballView.transform.SetParent(capturedContainer.transform);
+                capturedContainer.OnBallAbsorbed(ballView);
 
                 completedBallsFlight++;
 
@@ -233,40 +261,35 @@ public class BoosterManager : MonoBehaviour
                 {
                     targetedUnitView.FadeOutBox();
                 }
-
             });
         }
 
-        //targetedUnitView.gameObject.SetActive(false);
         gameManager.EvaluateLogicalWinState();
     }
 
     public void ExecuteShuffle(float speedMultiplier = 3f)
     {
-        var activeQueues = activeBoardReferences.ContainerViews.Values
-        .Where(v => v.gameObject.activeInHierarchy && !v.IsResolved) // <-- Add strict state exclusion here
-        .GroupBy(v => v.QueueIndex)
-        .ToList();
+        if (activeBoardReferences == null || activeBoardReferences.ContainerQueues == null) return;
 
-        foreach (var queue in activeQueues)
+        foreach (var queue in activeBoardReferences.ContainerQueues)
         {
-            var orderedColumn = queue.OrderBy(v => activeBoardReferences.logicalContainerPositions[v].y).ToList();
+            if (queue == null || queue.Count < 2) continue;
 
-            if (orderedColumn.Count < 2) continue;
+            var r1Container = queue[0];
+            var r2Container = queue[1];
 
-            var r1Container = orderedColumn[0];
-            var r2Container = orderedColumn[1];
+            if (r1Container == null || r2Container == null || r1Container.IsResolved || r2Container.IsResolved) continue;
 
-            ToggleColliders(r1Container, false);
-            ToggleColliders(r2Container, false);
+            r1Container.DisableEnableCollider(false);
+            r2Container.DisableEnableCollider(false);
 
             r1Container.SR.sortingOrder = 2;
 
-            Vector3 r1LogicalPos = activeBoardReferences.logicalContainerPositions[r1Container];
-            Vector3 r2LogicalPos = activeBoardReferences.logicalContainerPositions[r2Container];
+            Vector3 r1Pos = r1Container.transform.position;
+            Vector3 r2Pos = r2Container.transform.position;
 
-            activeBoardReferences.logicalContainerPositions[r1Container] = r2LogicalPos;
-            activeBoardReferences.logicalContainerPositions[r2Container] = r1LogicalPos;
+            queue[0] = r2Container;
+            queue[1] = r1Container;
 
             r1Container.transform.DOKill();
             r2Container.transform.DOKill();
@@ -274,34 +297,19 @@ public class BoosterManager : MonoBehaviour
             Sequence swapSequence = DOTween.Sequence();
             float animDuration = 0.4f * speedMultiplier;
 
-            swapSequence.Append(r1Container.transform.DOJump(r2LogicalPos, 0.75f, 1, animDuration)
-                .SetEase(Ease.InOutQuad)
-                .OnUpdate(r1Container.SyncSeatedBalls));
-
-            swapSequence.Join(r2Container.transform.DOMove(r1LogicalPos, animDuration)
-                .SetEase(Ease.InOutQuad)
-                .OnUpdate(r2Container.SyncSeatedBalls));
+            swapSequence.Append(r1Container.transform.DOJump(r2Pos, 0.75f, 1, animDuration).SetEase(Ease.InOutQuad));
+            swapSequence.Join(r2Container.transform.DOMove(r1Pos, animDuration).SetEase(Ease.InOutQuad));
 
             swapSequence.OnComplete(() =>
             {
-                ToggleColliders(r1Container, true);
-                ToggleColliders(r2Container, true);
+                r1Container.DisableEnableCollider(true);
+                r2Container.DisableEnableCollider(true);
 
                 r1Container.SR.sortingOrder = 1;
-
-                r1Container.SyncSeatedBalls();
-                r2Container.SyncSeatedBalls();
 
                 r2Container.RevealContainerColor();
             });
         }
     }
 
-    private void ToggleColliders(ContainerView containerView, bool state)
-    {
-        if (containerView != null)
-        {
-            containerView.DisableEnableCollider(state);
-        }
-    }
 }

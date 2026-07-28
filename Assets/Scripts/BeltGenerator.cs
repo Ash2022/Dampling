@@ -6,9 +6,9 @@ using UnityEngine;
 public class BeltGenerator : MonoBehaviour
 {
 
-    const float FAST_SPEED = 3f;
-    const float MAX_SPEED = 4f;
-    const float BELT_SPEED = 2f;
+    const float FAST_SPEED = 2.75f;
+    const float MAX_SPEED = 3.75f;
+    const float BELT_SPEED = 1.75f;
 
     [Header("Visual Configurations")]
     [SerializeField] Color lightBrown;
@@ -176,33 +176,31 @@ public class BeltGenerator : MonoBehaviour
     {
         int removedCount = 0;
 
-        // Iterate through your belt slots (Assuming you have a list or array of slots)
-        // Iterate backwards so removing items doesn't mess up the loop index if it shifts
         for (int i = slotViews.Count - 1; i >= 0; i--)
         {
             var slot = slotViews[i];
 
-            if (slot.IsOccupied && slot.OccupyingBall.ColorIndex == targetColorIndex)
+            if (slot.IsOccupied && slot.OccupyingBall != null && slot.OccupyingBall.ColorIndex == targetColorIndex)
             {
-                // 1. Return the visual ball to the object pool
-                GameManager.Instance.ballViews.Remove(slot.OccupyingBall);
+                BallView ball = slot.OccupyingBall;
 
-                DamplingObjectPool.Instance.ReturnBall(slot.OccupyingBall.gameObject);
+                GameManager.Instance.ballViews.Remove(ball);
 
-                
-                
-                // 2. Clear the slot data so it accepts new balls
-                slot.Release();                
-                
+                ball.ClearSlotReference();
+                DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
+
+                slot.Release();
+
                 removedCount++;
                 if (removedCount >= amountToRemove)
                     break;
-
             }
         }
 
         EvaluateBlinkStatus();
     }
+
+
 
     internal void ResumeBelt()
     {
@@ -255,13 +253,13 @@ public class BeltGenerator : MonoBehaviour
 
     internal void IncreaseBeltSpeed(bool topSpeed)
     {
-        
-        if(topSpeed)
+
+        if (topSpeed)
         {
             speed = MAX_SPEED;
             Debug.Log("Belt Speed Increased to Max");
         }
-        else if(speed < FAST_SPEED)
+        else if (speed < FAST_SPEED)
         {
             speed = FAST_SPEED;
             Debug.Log("Belt Speed Increased to Fast");

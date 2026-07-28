@@ -23,21 +23,14 @@ public class GameStateEvaluator
     {
         List<int> resolvableColors = new List<int>();
 
-        if (activeBoardReferences == null || activeBoardReferences.ContainerViews == null)
+        if (activeBoardReferences == null || activeBoardReferences.ContainerQueues == null)
             return resolvableColors;
 
-        var unresolvedContainers = activeBoardReferences.ContainerViews.Values
-            .Where(v => v != null && v.gameObject.activeInHierarchy && v.HasRoomLeft());
-
-        var visualQueues = unresolvedContainers.GroupBy(v => v.QueueIndex);
-
-        foreach (var queueGroup in visualQueues)
+        foreach (var queue in activeBoardReferences.ContainerQueues)
         {
-            var headContainer = queueGroup.OrderBy(v => v.transform.position.y).FirstOrDefault();
-
-            if (headContainer != null)
+            if (queue.Count > 0 && queue[0] != null && queue[0].gameObject.activeInHierarchy && !queue[0].IsResolved)
             {
-                resolvableColors.Add(headContainer.Model.ColorIndex);
+                resolvableColors.Add(queue[0].CurrentRequiredColorIndex);
             }
         }
 
@@ -76,11 +69,11 @@ public class GameStateEvaluator
 
     public bool CheckForVisualWin()
     {
-        if (activeBoardReferences == null || activeBoardReferences.ContainerViews == null) return false;
+        if (activeBoardReferences == null || activeBoardReferences.ContainerQueues == null) return false;
 
-        foreach (var container in activeBoardReferences.ContainerViews.Values)
+        foreach (var queue in activeBoardReferences.ContainerQueues)
         {
-            if (container != null && container.gameObject.activeInHierarchy && container.HasRoomLeft())
+            if (queue.Count > 0)
             {
                 return false;
             }

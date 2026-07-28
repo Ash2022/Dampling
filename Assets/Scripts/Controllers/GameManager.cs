@@ -350,8 +350,8 @@ public class GameManager : MonoBehaviour
                     // 3. Spawn unit from pool at the pipe's mouth
                     GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(startPosition, Quaternion.identity, transform);
                     UnitView newUnitView = unitInstance.GetComponent<UnitView>();
-                    NotifyLevelVisualizerAboutNewUnits(unitInstance);
-
+                    NotifyLevelVisualizerAboutNewUnits(newUnitView);
+                    
                     // Prepare unit visuals/contents but keep interactivity disabled during transit
                     var emittedNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == spawnCoord.x && c.Position.Y == spawnCoord.y);
                     //newUnitView.Initialize(emittedNode);
@@ -377,9 +377,9 @@ public class GameManager : MonoBehaviour
         currentState = GameState.ReadyToPlay;
     }
 
-    public void NotifyLevelVisualizerAboutNewUnits(GameObject unitInstance)
+    public void NotifyLevelVisualizerAboutNewUnits(UnitView unitView)
     {
-        levelVisualization.AddPipeElement(unitInstance);
+        levelVisualization.AddPipeElement(unitView);
     }
 
     private void CheckAllUnitsPlayed()
@@ -428,6 +428,20 @@ public class GameManager : MonoBehaviour
 
     public void AdvanceContainerQueue(int queueIndex, ContainerView resolvedView)
     {
+
+        levelVisualization.AdvanceContainerQueue(queueIndex, resolvedView);
+
+        // Check for game over win
+        if (gameStateEvaluator.CheckForVisualWin())
+        {
+            Debug.Log("VISUAL WIN! All containers resolved. Loading next level...");
+            ResumeGameOver(true);
+            return;
+        }
+
+        //)
+        /*
+
         // Check for game over win
         if (gameStateEvaluator.CheckForVisualWin())
         {
@@ -479,7 +493,7 @@ public class GameManager : MonoBehaviour
                 }
 
             }
-        }
+        }*/
     }
 
     /// <summary>

@@ -157,6 +157,10 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         linkSpriteRenderer.transform.rotation = Quaternion.Euler(0f, 0f, angle);
 
+        bool diagonal = model.Position.X != partnerView.model.Position.X && model.Position.Y != partnerView.model.Position.Y;
+
+        linkSpriteRenderer.size = new Vector2(diagonal ? 1.6f:1.2f,1.2f);
+
         linkSpriteRenderer.gameObject.SetActive(true);
     }
 
@@ -172,7 +176,12 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         iceOverlayRenderer.gameObject.SetActive(false);
         pipeTextDisplay.gameObject.SetActive(false);
         linkSpriteRenderer.gameObject.SetActive(false);
+        linkSpriteRenderer.color = Color.white;
         iceOverlayRenderer.GetComponent<SpriteRenderer>().color = Color.white;
+
+        keyIndicatorRenderer.transform.localPosition = Vector3.zero;
+        keyIndicatorRenderer.transform.localEulerAngles = Vector3.zero;
+        keyIndicatorRenderer.transform.localScale = Vector3.one;  
 
         spriteRenderer.color = Color.white;
         lidRenderer.color = Color.white;
@@ -285,6 +294,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     public void LinkedUnitPlayed()
     {
+        if(IsLidOn())
+            RemoveLidCover();
+
         ExecuteReleaseUnitContents();
     }
 
@@ -312,20 +324,17 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     private void ExecuteKeyUnlockSequence(UnitView lockView)
     {
-        keyIndicatorRenderer.transform.SetParent(null);
-        keyIndicatorRenderer.sortingOrder = 50;
+        Vector3 targetLocalPos = transform.InverseTransformPoint(lockView.lockOverlayRenderer.transform.position);
 
         Sequence keySeq = DOTween.Sequence();
 
         SoundsManager.Instance.KeyAndLock();
 
-        keySeq.Append(keyIndicatorRenderer.transform.DOMove(lockView.lockOverlayRenderer.transform.position, 0.4f).SetEase(Ease.InOutSine));
+        keySeq.Append(keyIndicatorRenderer.transform.DOLocalMove(targetLocalPos, 0.4f).SetEase(Ease.InOutSine));
         keySeq.Join(keyIndicatorRenderer.transform.DOScale(1.25f, 0.2f).SetLoops(2, LoopType.Yoyo));
 
         keySeq.OnComplete(() =>
         {
-            // GameManager.Instance.PlaySFX("Unlock"); // Trigger SFX here
-
             Sequence fadeSeq = DOTween.Sequence();
             fadeSeq.Append(keyIndicatorRenderer.DOFade(0f, 0.2f));
             fadeSeq.Join(lockView.lockOverlayRenderer.DOFade(0f, 0.2f));
@@ -345,6 +354,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     private void ExecuteReleaseUnitContents()
     {
+        isMagnetBlocked = true;
+        
         if (releaseSequence != null && releaseSequence.IsActive())
             releaseSequence.Kill();
 
@@ -571,7 +582,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         flySeq.AppendCallback(() =>
         {
-            ball.transform.SetParent(null);
+            //ball.transform.SetParent(null);
             ball.SR.sortingOrder = 36;
         });
 
@@ -624,6 +635,12 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         iceOverlayRenderer.gameObject.SetActive(false);
         pipeTextDisplay.gameObject.SetActive(false);
         linkSpriteRenderer.gameObject.SetActive(false);
+        linkSpriteRenderer.color = Color.white;
+
+        keyIndicatorRenderer.transform.localPosition = Vector3.zero;
+        keyIndicatorRenderer.transform.localEulerAngles = Vector3.zero;
+        keyIndicatorRenderer.transform.localScale = Vector3.one;    
+       
 
         spriteRenderer.color = Color.white;
         lidRenderer.color = Color.white;

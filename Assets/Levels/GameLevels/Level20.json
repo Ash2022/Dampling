@@ -898,7 +898,7 @@
         "IsPlayablePath": true,
         "OccupyingUnit": {
           "UnitId": 6,
-          "IsHiddenUntilUnblocked": false,
+          "IsHiddenUntilUnblocked": true,
           "InteriorContents": [
             {
               "ColorIndex": 4
@@ -1132,7 +1132,7 @@
         "IsPlayablePath": true,
         "OccupyingUnit": {
           "UnitId": 11,
-          "IsHiddenUntilUnblocked": false,
+          "IsHiddenUntilUnblocked": true,
           "InteriorContents": [
             {
               "ColorIndex": 5
@@ -1209,7 +1209,7 @@
           ],
           "ExplicitlyBlockedByUnitIds": [],
           "LinkedUnitIds": [],
-          "IceLayers": 0,
+          "IceLayers": 3,
           "KeyLockPairIndex": -1
         },
         "ContinuousPipe": null
@@ -1222,7 +1222,7 @@
         "IsPlayablePath": true,
         "OccupyingUnit": {
           "UnitId": 13,
-          "IsHiddenUntilUnblocked": false,
+          "IsHiddenUntilUnblocked": true,
           "InteriorContents": [
             {
               "ColorIndex": 4
@@ -1456,7 +1456,7 @@
         "IsPlayablePath": true,
         "OccupyingUnit": {
           "UnitId": 18,
-          "IsHiddenUntilUnblocked": false,
+          "IsHiddenUntilUnblocked": true,
           "InteriorContents": [
             {
               "ColorIndex": 4

@@ -2,13 +2,11 @@ using UnityEngine;
 using System.Collections.Generic;
 using DG.Tweening;
 using static GameLevelSchema;
-using System;
 
 public class ContainerView : MonoBehaviour
 {
     [SerializeField] private SpriteRenderer spriteRenderer;
-    [SerializeField] private Transform[] localBallTargetSlots; // Assign 3 local attachment transforms in inspector
-
+    [SerializeField] private Transform[] localBallTargetSlots;
     [SerializeField] private Collider2D contCollider;
 
     public SpriteRenderer SR => spriteRenderer;
@@ -17,32 +15,29 @@ public class ContainerView : MonoBehaviour
 
     private List<BallView> absorbedBallViews = new List<BallView>();
     private ContainerData dataModel;
-    private int reservedSlotsCount = 0; // Guard variable to prevent double-claiming on the same frame
+    private int reservedSlotsCount = 0;
 
-    public GameObject containerResolveEffect=null;
+    public GameObject containerResolveEffect;
 
-    public int CurrentRequiredColorIndex => dataModel != null ? dataModel.ColorIndex : -1;
+    public int CurrentRequiredColorIndex => dataModel.ColorIndex;
     public ContainerData Model => dataModel;
-
     public bool IsResolved { get; private set; }
-
 
     public void Initialize(ContainerData containerData, int orgQueueIndex)
     {
         dataModel = containerData;
-        reservedSlotsCount = dataModel.FilledSlotsCount; // Synchronize with data layer state
+        reservedSlotsCount = dataModel.FilledSlotsCount;
         QueueIndex = orgQueueIndex;
         absorbedBallViews.Clear();
-        containerResolveEffect=null;
+        containerResolveEffect = null;
         
         IsResolved = false;
 
-        if(containerData.startHidden)
+        if (containerData.startHidden)
             spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(-1);
         else
             spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(containerData.ColorIndex);
 
-        // Reset visual alphas/scales back to normal defaults when pulled from pool
         spriteRenderer.DOComplete();
         spriteRenderer.color = new Color(spriteRenderer.color.r, spriteRenderer.color.g, spriteRenderer.color.b, 1f);
         transform.localScale = Vector3.one;
@@ -51,49 +46,27 @@ public class ContainerView : MonoBehaviour
 
     public void RevealContainerColor()
     {
-        if(dataModel.startHidden)
+        if (dataModel.startHidden)
         {
             dataModel.startHidden = false;
             spriteRenderer.sprite = VisualsManager.Instance.GetContainerSprite(dataModel.ColorIndex);
         }
-
     }
 
-    /// <summary>
-    /// Checks if the container can accept a ball and reserves a visual slot atomically.
-    /// </summary>
     public bool TryReserveTargetSlot(out Transform targetSlotTransform)
     {
         targetSlotTransform = null;
 
-        if (dataModel == null || reservedSlotsCount >= dataModel.Capacity)
+        if (reservedSlotsCount >= dataModel.Capacity)
             return false;
 
-        // Use local attachment references, fallback to math offsets if slots aren't manually assigned
-        if (localBallTargetSlots != null && reservedSlotsCount < localBallTargetSlots.Length)
-        {
-            targetSlotTransform = localBallTargetSlots[reservedSlotsCount];
-        }
-        else
-        {
-            // This fallback is problematic as it doesn't provide a transform to follow.
-            // This indicates a setup issue. For now, we will fail the reservation.
-            Debug.LogError($"Container '{contName}' is missing a reference for localBallTargetSlots[{reservedSlotsCount}]. Cannot reserve a slot.", gameObject);
-            return false;
-        }
-
+        targetSlotTransform = localBallTargetSlots[reservedSlotsCount];
         reservedSlotsCount++;
         return true;
     }
 
-    /// <summary>
-    /// Atomically updates the raw backend data model layer state once the ball physically lands.
-    /// </summary>
     public void OnBallAbsorbed(BallView ballView)
     {
-        if (dataModel == null || ballView == null) return;
-
-        // Track the component directly—no runtime lookups needed
         absorbedBallViews.Add(ballView);
         dataModel.FilledSlotsCount++;
 
@@ -114,34 +87,26 @@ public class ContainerView : MonoBehaviour
 
     public bool HasRoomLeft()
     {
-        return dataModel != null && dataModel.FilledSlotsCount < dataModel.Capacity;
+        return dataModel.FilledSlotsCount < dataModel.Capacity;
     }
 
     private void ExecuteFulfillmentSequence()
     {
-        // Ensure absorb animation is halted before fulfillment starts
         transform.DOKill(true);
-
         IsResolved = true;
+        
         Sequence clearSeq = DOTween.Sequence();
-
-        // --- CONFIGURATION PARAMS ---
         float animDuration = 0.25f;
         float upwardTravelDistance = 0.5f;
 
         spriteRenderer.sortingOrder = 2;
 
-        // Phase 1: Move upwards first
-        clearSeq.Append(transform.DOMoveY(transform.position.y + upwardTravelDistance, animDuration).SetEase(Ease.InSine).OnUpdate(() =>
+        clearSeq.Append(transform.DOMoveY(transform.position.y + upwardTravelDistance, animDuration).SetEase(Ease.InSine).OnComplete(() =>
         {
-            SyncSeatedBalls();
-        }).OnComplete(() =>
-        {
-            SoundsManager.Instance.ContainerResolved();            // Spawn the resolution effect at the container's final position before it is recycled
+            SoundsManager.Instance.ContainerResolved();
             containerResolveEffect = DamplingObjectPool.Instance.GetContainerResolveEffect(transform.position, Quaternion.identity);
         }));
 
-        // Phase 2: Scale down and fade out concurrently after the upward motion completes
         clearSeq.Append(transform.DOScale(Vector3.zero, animDuration).SetEase(Ease.InSine));
         clearSeq.Join(spriteRenderer.DOFade(0f, animDuration));
 
@@ -151,16 +116,10 @@ public class ContainerView : MonoBehaviour
         }
 
         clearSeq.OnComplete(() =>
-        {            
-            //absorbedBallViews.Clear();
-
+        {
+            DamplingObjectPool.Instance.ReturnContainerResolveEffect(containerResolveEffect);
             GameManager.Instance.AdvanceContainerQueue(QueueIndex, this);
-
-            //DamplingObjectPool.Instance.ReturnContainer(gameObject);
-
         });
-
-        clearSeq.Play();
     }
 
     public void DisableEnableCollider(bool colState)
@@ -168,24 +127,9 @@ public class ContainerView : MonoBehaviour
         contCollider.enabled = colState;
     }
 
-
-
-    // This forces the unparented balls to perfectly stick to the container's slots
-    public void SyncSeatedBalls()
-    {
-        for (int i = 0; i < absorbedBallViews.Count; i++)
-        {
-            // Ensure the ball exists and we have a corresponding target slot
-            if (absorbedBallViews[i] != null && localBallTargetSlots != null && i < localBallTargetSlots.Length)
-            {
-                absorbedBallViews[i].transform.position = localBallTargetSlots[i].position;
-            }
-        }
-    }
-
     public Transform GetNextAvailableSlotTransform()
     {
-        if (localBallTargetSlots == null || reservedSlotsCount >= localBallTargetSlots.Length)
+        if (reservedSlotsCount >= localBallTargetSlots.Length)
             return null;
 
         Transform slot = localBallTargetSlots[reservedSlotsCount];

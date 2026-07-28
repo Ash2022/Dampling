@@ -637,7 +637,7 @@
         "IsPlayablePath": true,
         "OccupyingUnit": {
           "UnitId": 6,
-          "IsHiddenUntilUnblocked": false,
+          "IsHiddenUntilUnblocked": true,
           "InteriorContents": [
             {
               "ColorIndex": 2
@@ -727,7 +727,7 @@
         "IsPlayablePath": true,
         "OccupyingUnit": {
           "UnitId": 8,
-          "IsHiddenUntilUnblocked": false,
+          "IsHiddenUntilUnblocked": true,
           "InteriorContents": [
             {
               "ColorIndex": 3
@@ -853,7 +853,7 @@
         "IsPlayablePath": true,
         "OccupyingUnit": {
           "UnitId": 10,
-          "IsHiddenUntilUnblocked": false,
+          "IsHiddenUntilUnblocked": true,
           "InteriorContents": [
             {
               "ColorIndex": 3

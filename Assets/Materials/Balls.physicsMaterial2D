@@ -9,6 +9,6 @@ PhysicsMaterial2D:
   m_Name: Balls
   serializedVersion: 2
   friction: 0.05
-  bounciness: 0.1
+  bounciness: 0.05
   m_FrictionCombine: 3
-  m_BounceCombine: 4
+  m_BounceCombine: 0

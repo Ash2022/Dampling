@@ -62,7 +62,7 @@ public class GameLevelSchema
         // Pipe/Dispenser Behavior: If assigned, this cell behaves as an infinite or finite generator
         public PipeGenerator ContinuousPipe { get; set; }
 
-     
+
     }
 
     public class GridUnit
@@ -110,7 +110,6 @@ public class GameLevelSchema
     {
         public Dictionary<Vector2Int, UnitView> UnitViews { get; set; } = new Dictionary<Vector2Int, UnitView>();
         public Dictionary<int, ContainerView> ContainerViews { get; set; } = new Dictionary<int, ContainerView>();
-
-        public Dictionary<ContainerView, Vector3> logicalContainerPositions = new Dictionary<ContainerView, Vector3>();
+        public List<List<ContainerView>> ContainerQueues { get; set; } = new List<List<ContainerView>>();
     }
 }

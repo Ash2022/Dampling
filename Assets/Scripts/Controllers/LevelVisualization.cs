@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
 using static GameLevelSchema;
 
 public class LevelVisualization : MonoBehaviour
@@ -13,54 +14,54 @@ public class LevelVisualization : MonoBehaviour
     [Header("Manual Y-Axis Baselines")]
     public float QueueBottomY = 3.0f;
     public float GridTopY = -1.0f;
+    public float ContainerSpacingY = 0.57f; 
 
-    float ScaleFactor = 1.1f;
-    private List<GameObject> spawnedVisualElements = new List<GameObject>();
+    private float ScaleFactor = 1.1f;
+
+    private List<UnitView> activeUnits = new List<UnitView>();
+    private List<FrameView> activeFrames = new List<FrameView>();
+    private List<ContainerView> activeContainers = new List<ContainerView>();
+
+    BoardVisualReferences references;
 
     public BoardVisualReferences RenderInitialBoard(GameLevelSchema levelData)
     {
         ClearCurrentVisualization();
 
-        // Instantiate the packet to return tracking data straight to GameManager
-        BoardVisualReferences references = new BoardVisualReferences();
+        references = new BoardVisualReferences();
+        references.ContainerQueues = new List<List<ContainerView>>();
 
-        Vector2 unitSize = GetPrefabSize(UnitPrefab)*ScaleFactor;
+        Vector2 unitSize = GetPrefabSize(UnitPrefab) * ScaleFactor;
         Vector2 containerSize = GetPrefabSize(ContainerPrefab);
         float containerSpacingX = 0.1f;
 
-        // 1. GENERATE AND CENTER DEMAND QUEUES
         int totalQueues = levelData.ResolutionQueues.Count;
-        
-        // Center calculation based purely on layout column counts and padding intervals
         float queueStartX = -((totalQueues - 1) * (containerSize.x + containerSpacingX)) / 2f;
 
         for (int q = 0; q < totalQueues; q++)
         {
+            var viewQueue = new List<ContainerView>();
             float targetX = queueStartX + (q * (containerSize.x + containerSpacingX));
             var activeQueueList = levelData.ResolutionQueues[q];
 
             for (int c = 0; c < activeQueueList.Count; c++)
             {
-                float targetY = QueueBottomY + (c * containerSize.y);
+                float targetY = QueueBottomY + (c * ContainerSpacingY);
                 Vector3 spawnPosition = new Vector3(targetX, targetY, 0f);
 
                 GameObject containerInstance = DamplingObjectPool.Instance.GetContainer(spawnPosition, Quaternion.identity, transform);
-                spawnedVisualElements.Add(containerInstance);
-
                 ContainerView containerView = containerInstance.GetComponent<ContainerView>();
+                
                 containerView.Initialize(activeQueueList[c], q);
-
                 containerInstance.name = $"Container_Q{q}_Idx{c}_{activeQueueList[c].ColorIndex}";
 
-                references.ContainerViews.Add(activeQueueList[c].Id, containerView);
-                references.logicalContainerPositions.Add(containerView, containerInstance.transform.position);
+                activeContainers.Add(containerView);
+                viewQueue.Add(containerView);
             }
+            references.ContainerQueues.Add(viewQueue);
         }
 
-        // 2. GENERATE AND CENTER SUPPLY GRID MAP
         int columns = levelData.Grid.Columns;
-
-        // A. Dynamically scan the active matrix to find the true physical layout edges
         int minX = int.MaxValue;
         int maxX = int.MinValue;
 
@@ -70,10 +71,8 @@ public class LevelVisualization : MonoBehaviour
             if (cellNode.Position.X > maxX) maxX = cellNode.Position.X;
         }
 
-        // If the grid matrix is empty, fallback safely to standard behavior
         if (minX == int.MaxValue) { minX = 0; maxX = columns - 1; }
 
-        // B. Calculate the true center based on actual active span
         float physicalWidth = (maxX - minX) * unitSize.x;
         float gridStartX = -(physicalWidth / 2f) - (minX * unitSize.x);
 
@@ -87,61 +86,45 @@ public class LevelVisualization : MonoBehaviour
             float worldY = GridTopY - (gridY * unitSize.y);
             Vector3 spawnPosition = new Vector3(worldX, worldY, 0f);
 
-            // 1. If it's a valid playable path, spawn the active game units or pipes
             if (cellNode.IsPlayablePath)
             {
                 GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
-                spawnedVisualElements.Add(unitInstance);
-
                 UnitView unitView = unitInstance.GetComponent<UnitView>();
+                
                 unitView.Initialize(cellNode);
-
                 unitInstance.name = cellNode.ContinuousPipe != null ? $"PipeUnit_({gridX},{gridY})" :
                                     cellNode.OccupyingUnit != null ? $"StandardUnit_({gridX},{gridY})" :
                                     $"EmptyCell_({gridX},{gridY})";
 
-                // Map reference by space tracking coordinate for later link-rendering pass
+                activeUnits.Add(unitView);
                 references.UnitViews.Add(coord, unitView);
-            }
-            // 2. If it's NOT a playable path (blocked gap/hole), inline spawn the structural EmptyUnit instead
-            else
-            {
-
             }
         }
 
-        // --- SAFE SECOND PASS: Handshake and view lookup happen entirely here ---
         foreach (var cellNode in levelData.Grid.Matrix)
         {
-            // Skip if empty space, blocker, or if the unit has no links
-            if (!cellNode.IsPlayablePath || cellNode.OccupyingUnit == null) continue;
-            if (cellNode.OccupyingUnit.LinkedUnitIds == null || cellNode.OccupyingUnit.LinkedUnitIds.Count == 0) continue;
+            if (!cellNode.IsPlayablePath || cellNode.OccupyingUnit == null ||
+             cellNode.OccupyingUnit.LinkedUnitIds == null ||
+              cellNode.OccupyingUnit.LinkedUnitIds.Count == 0) continue;
 
             Vector2Int coord = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
-            if (references.UnitViews.TryGetValue(coord, out UnitView myView) && myView != null)
-            {
-                foreach (var partnerId in cellNode.OccupyingUnit.LinkedUnitIds)
-                {
-                    // 1. Strict integer handshake check
-                    if (cellNode.OccupyingUnit.UnitId > partnerId)
-                    {
-                        // 2. Find the partner view right here using the local parameter
-                        UnitView partnerView = null;
-                        foreach (var view in references.UnitViews.Values)
-                        {
-                            if (view != null && view.UnitId == partnerId)
-                            {
-                                partnerView = view;
-                                break;
-                            }
-                        }
+            UnitView myView = references.UnitViews[coord];
 
-                        // 3. Only call the view if the partner actually exists on the board
-                        if (partnerView != null)
+            foreach (var partnerId in cellNode.OccupyingUnit.LinkedUnitIds)
+            {
+                if (cellNode.OccupyingUnit.UnitId > partnerId)
+                {
+                    UnitView partnerView = null;
+                    foreach (var view in references.UnitViews.Values)
+                    {
+                        if (view.UnitId == partnerId)
                         {
-                            myView.RenderLinkLines(partnerView);
+                            partnerView = view;
+                            break;
                         }
                     }
+
+                    myView.RenderLinkLines(partnerView);
                 }
             }
         }
@@ -153,44 +136,32 @@ public class LevelVisualization : MonoBehaviour
 
     public void ClearCurrentVisualization()
     {
-        foreach (var element in spawnedVisualElements)
+        foreach (var unit in activeUnits)
         {
-            if (element != null)
-            {
-                // SWAPPED: Destroy/DestroyImmediate calls replaced with pool recycling
-                if (element.GetComponent<UnitView>() != null)
-                {
-                    DamplingObjectPool.Instance.ReturnUnit(element);
-                }
-                else if (element.GetComponent<ContainerView>() != null)
-                {
-                    DamplingObjectPool.Instance.ReturnContainerResolveEffect(element.GetComponent<ContainerView>().containerResolveEffect);
-                    DamplingObjectPool.Instance.ReturnContainer(element);
-                }
-                else
-                {
-                    if (Application.isPlaying) Destroy(element);
-                    else DestroyImmediate(element);
-                }
-            }
+            DamplingObjectPool.Instance.ReturnUnit(unit.gameObject);
         }
-        spawnedVisualElements.Clear();
+        activeUnits.Clear();
+
+        foreach (var container in activeContainers)
+        {
+            DamplingObjectPool.Instance.ReturnContainer(container.gameObject);
+        }
+        activeContainers.Clear();
+
+        foreach (var frame in activeFrames)
+        {
+            DamplingObjectPool.Instance.ReturnFrame(frame.gameObject);
+        }
+        activeFrames.Clear();
     }
 
     private Vector2 GetPrefabSize(GameObject prefab)
     {
-        if (prefab == null) return Vector2.one;
-        var spriteRenderer = prefab.GetComponent<SpriteRenderer>();
-        if (spriteRenderer != null && spriteRenderer.sprite != null)
-        {
-            return spriteRenderer.bounds.size;
-        }
-        return Vector2.one;
+        return prefab.GetComponent<SpriteRenderer>().bounds.size;
     }
 
     private void GenerateFramePass(GameLevelSchema levelData, Vector2 unitSize)
     {
-        
         HashSet<Vector2Int> playableMap = new HashSet<Vector2Int>();
         int minX = int.MaxValue, maxX = int.MinValue, minY = 0, maxY = int.MinValue;
 
@@ -208,8 +179,7 @@ public class LevelVisualization : MonoBehaviour
         float physicalWidth = (maxX - minX) * unitSize.x;
         float gridStartX = -(physicalWidth / 2f) - (minX * unitSize.x);
 
-        // NEW: Dictionary to keep track of the frames we spawn for the post-pass
-        Dictionary<Vector2Int, FrameView> activeFrames = new Dictionary<Vector2Int, FrameView>();
+        Dictionary<Vector2Int, FrameView> currentPassFrames = new Dictionary<Vector2Int, FrameView>();
 
         for (int x = -3; x < 10; x++)
         {
@@ -223,60 +193,73 @@ public class LevelVisualization : MonoBehaviour
                     float worldY = GridTopY - (y * unitSize.y);
                     Vector3 spawnPos = new Vector3(worldX, worldY, 0f);
 
-                    GameObject frameInstance = Instantiate(FramePrefab, spawnPos, Quaternion.identity, transform);
-                    
-                    frameInstance.transform.localScale*=ScaleFactor;
-
-                    spawnedVisualElements.Add(frameInstance);
+                    GameObject frameInstance = DamplingObjectPool.Instance.GetFrame(spawnPos, Quaternion.identity, transform);
+                    frameInstance.transform.localScale = FramePrefab.transform.localScale * ScaleFactor;
 
                     FrameView fv = frameInstance.GetComponent<FrameView>();
-                    if (fv != null)
-                    {
-                        bool left = !playableMap.Contains(new Vector2Int(x - 1, y));
-                        bool right = !playableMap.Contains(new Vector2Int(x + 1, y));
-                        bool up = !playableMap.Contains(new Vector2Int(x, y - 1));
-                        bool down = !playableMap.Contains(new Vector2Int(x, y + 1));
-                        bool upLeft = !playableMap.Contains(new Vector2Int(x - 1, y - 1));
-                        bool upRight = !playableMap.Contains(new Vector2Int(x + 1, y - 1));
-                        bool downLeft = !playableMap.Contains(new Vector2Int(x - 1, y + 1));
-                        bool downRight = !playableMap.Contains(new Vector2Int(x + 1, y + 1));
+                    
+                    bool left = !playableMap.Contains(new Vector2Int(x - 1, y));
+                    bool right = !playableMap.Contains(new Vector2Int(x + 1, y));
+                    bool up = !playableMap.Contains(new Vector2Int(x, y - 1));
+                    bool down = !playableMap.Contains(new Vector2Int(x, y + 1));
+                    bool upLeft = !playableMap.Contains(new Vector2Int(x - 1, y - 1));
+                    bool upRight = !playableMap.Contains(new Vector2Int(x + 1, y - 1));
+                    bool downLeft = !playableMap.Contains(new Vector2Int(x - 1, y + 1));
+                    bool downRight = !playableMap.Contains(new Vector2Int(x + 1, y + 1));
 
-                        fv.ApplyFrameMask(left, right, up, down, upLeft, upRight, downLeft, downRight);
+                    fv.ApplyFrameMask(left, right, up, down, upLeft, upRight, downLeft, downRight);
 
-                        // Add it to our dictionary
-                        activeFrames[coord] = fv;
-                    }
+                    currentPassFrames[coord] = fv;
+                    activeFrames.Add(fv);
                 }
             }
         }
 
-        // NEW: Run the post-pass fix
-        ApplyTopRowCaps(activeFrames, playableMap, -3, 11, minY);
+        ApplyTopRowCaps(currentPassFrames, playableMap, -3, 11, minY);
     }
 
-    private void ApplyTopRowCaps(Dictionary<Vector2Int, FrameView> activeFrames, HashSet<Vector2Int> playableMap, int minX, int maxX, int topY)
+    private void ApplyTopRowCaps(Dictionary<Vector2Int, FrameView> frameDict, HashSet<Vector2Int> playableMap, int minX, int maxX, int topY)
     {
-        // Iterate purely across the top row of the grid
         for (int x = minX - 1; x <= maxX + 1; x++)
         {
             Vector2Int coord = new Vector2Int(x, topY);
 
-            if (activeFrames.TryGetValue(coord, out FrameView fv))
+            if (frameDict.TryGetValue(coord, out FrameView fv))
             {
-                // Check if there are playable paths flanking this frame block
-                // (Contains == true means there IS a path)
                 bool pathLeft = playableMap.Contains(new Vector2Int(x - 1, topY));
                 bool pathRight = playableMap.Contains(new Vector2Int(x + 1, topY));
-
-                // Force the cap logic
                 fv.ApplyTopRowOverride(pathLeft, pathRight);
             }
         }
     }
 
-    public void AddPipeElement(GameObject gameObject)
+    public void AdvanceContainerQueue(int queueIndex, ContainerView resolvedView)
     {
-        spawnedVisualElements.Add(gameObject);
+        List<ContainerView> targetQueue = references.ContainerQueues[queueIndex];
+        
+        targetQueue.Remove(resolvedView);
+        activeContainers.Remove(resolvedView);
+        DamplingObjectPool.Instance.ReturnContainer(resolvedView.gameObject);
+
+        for (int i = 0; i < targetQueue.Count; i++)
+        {
+            ContainerView container = targetQueue[i];
+            float targetY = QueueBottomY + (i * ContainerSpacingY);
+            Vector3 newTargetPos = new Vector3(container.transform.position.x, targetY, 0f);
+
+            container.transform.DOKill();
+            container.transform.DOMove(newTargetPos, 0.3f).SetEase(Ease.OutBack);
+
+            if (i == 0)
+            {
+                container.RevealContainerColor();
+            }
+        }
     }
 
+    internal void AddPipeElement(UnitView unitView)
+    {
+        //we added a unit from the revive flow 
+        activeUnits.Add(unitView);    
+    }
 }
