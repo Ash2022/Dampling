@@ -14,7 +14,7 @@ public class BoosterManager : MonoBehaviour
     [SerializeField] private RectTransform canvasContainer;
     [SerializeField] private List<BoosterButtonView> boosterButtons;
 
-    [SerializeField]MicroAgitationVolume microAgitationVolume;
+    [SerializeField] MicroAgitationVolume microAgitationVolume;
 
     // Persistent Architecture Dependencies
     private GameManager gameManager;
@@ -141,23 +141,37 @@ public class BoosterManager : MonoBehaviour
         int currentCount = type == BoosterButtonView.BoosterType.Magnet ? data.MagnetBoosterCount : data.ShuffleBoosterCount;
         view.Setup(true, currentCount, HandleBoosterClick);
     }
-
     public void ExecuteRevive()
     {
         List<int> beltColors = beltGenerator.GetBeltsColors();
 
         var topColors = beltColors.GroupBy(c => c)
-                                  .OrderByDescending(g => g.Count())
-                                  .Select(g => new { ColorIndex = g.Key, Count = g.Count() })
-                                  .Take(2)
-                                  .ToList();
+                            .OrderByDescending(g => g.Count())
+                            .Select(g => new { ColorIndex = g.Key, Count = g.Count() })
+                            .Take(2)
+                            .ToList();
 
         if (topColors.Count == 0) return;
 
-        Vector2Int[] spawnCoords = { new Vector2Int(3, -1), new Vector2Int(4, -1) };
+        Vector2Int[] candidatePairs = {
+        new Vector2Int(2, 3),
+        new Vector2Int(1, 4),
+        new Vector2Int(0, 5)
+    };
 
-        float xPosWorld = 0.33792f;
-        float yPosWorld = -0.32416f;
+        Vector2Int[] spawnCoords = null;
+
+        foreach (var pair in candidatePairs)
+        {
+            if (!activeBoardReferences.UnitViews.ContainsKey(new Vector2Int(pair.x, -1)) &&
+                !activeBoardReferences.UnitViews.ContainsKey(new Vector2Int(pair.y, -1)))
+            {
+                spawnCoords = new Vector2Int[] { new Vector2Int(pair.x, -1), new Vector2Int(pair.y, -1) };
+                break;
+            }
+        }
+
+        if (spawnCoords == null) return;
 
         for (int i = 0; i < topColors.Count; i++)
         {
@@ -168,7 +182,7 @@ public class BoosterManager : MonoBehaviour
 
             var newNode = gameCore.InjectReviveUnit(spawnCoords[i].x, spawnCoords[i].y, color, ballsToExtract);
 
-            Vector3 spawnPosition = i == 0 ? new Vector2(-xPosWorld, yPosWorld) : new Vector2(xPosWorld, yPosWorld);
+            Vector3 spawnPosition = GameManager.Instance.GetWorldPositionOnGrid(spawnCoords[i].x, spawnCoords[i].y);
 
             GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, gameManager.transform);
             UnitView newUnitView = unitInstance.GetComponent<UnitView>();
@@ -245,7 +259,7 @@ public class BoosterManager : MonoBehaviour
                 if (targetContainer != null) break;
             }
 
-            
+
             float currentDelay = baseDelay + (i * staggerInterval);
             var capturedContainer = targetContainer;
             var capturedSlot = targetSlot;

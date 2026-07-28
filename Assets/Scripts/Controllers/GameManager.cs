@@ -105,11 +105,13 @@ public class GameManager : MonoBehaviour
         await DamplingObjectPool.Instance.InitializePoolsAsync();
         // Step 2: Proceed with standard model loading and data processing now that objects are ready
         ModelManager.Instance.Initialize();
+
+
     }
 
     public void ClearActiveBoard()
     {
-        
+
 
         foreach (var ball in ballViews)
             DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
@@ -185,7 +187,7 @@ public class GameManager : MonoBehaviour
                 currentState = GameState.BeltJammed;
                 beltGenerator.StopBeltMovement();
 
-                if(ModelManager.Instance.GetBalance()>=ModelManager.Instance.GetReviveCost())
+                if (ModelManager.Instance.GetBalance() >= ModelManager.Instance.GetReviveCost())
                 {
                     //offer the revive
                     reviveView.ShowRevive((answerBack) =>
@@ -253,7 +255,7 @@ public class GameManager : MonoBehaviour
         boosterManager.InitLevel(gameCore, activeBoardReferences, CurrentLevelIndex);
 
         uiManager.InitLevel(CurrentLevelIndex, ModelManager.Instance.GetBalance()
-        ,unlockedIndex, currentLevelData.HardLevel, showTutorial);
+        , unlockedIndex, currentLevelData.HardLevel, showTutorial);
 
 
         beltGenerator.StartBeltMovement();
@@ -262,7 +264,12 @@ public class GameManager : MonoBehaviour
             currentState = GameState.ShowingTut;
         else
             currentState = GameState.ReadyToPlay;
+
+        levelVisualization.GetUnitWorldPosition(3, -1, currentLevelData);
+        levelVisualization.GetUnitWorldPosition(4, -1, currentLevelData);
     }
+
+    
 
     internal void TutorialClicked()
     {
@@ -296,7 +303,7 @@ public class GameManager : MonoBehaviour
 
     public void OnUnitElementClicked(Vector2Int coordinate)
     {
-        if (currentState != GameState.ReadyToPlay) 
+        if (currentState != GameState.ReadyToPlay)
         {
             Debug.Log("Unit Not PLyaed");
             return;
@@ -351,7 +358,7 @@ public class GameManager : MonoBehaviour
                     GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(startPosition, Quaternion.identity, transform);
                     UnitView newUnitView = unitInstance.GetComponent<UnitView>();
                     NotifyLevelVisualizerAboutNewUnits(newUnitView);
-                    
+
                     // Prepare unit visuals/contents but keep interactivity disabled during transit
                     var emittedNode = gameCore.ActiveLevelData.Grid.Matrix.Find(c => c.Position.X == spawnCoord.x && c.Position.Y == spawnCoord.y);
                     //newUnitView.Initialize(emittedNode);
@@ -390,7 +397,7 @@ public class GameManager : MonoBehaviour
 
         if (!hasRemainingUnits)
             beltGenerator.IncreaseBeltSpeed(false);
-        
+
     }
 
 
@@ -652,6 +659,10 @@ public class GameManager : MonoBehaviour
 
         beltGenerator.StopBeltMovement();
         ResumeGameOver(true);
+    }
 
+    public Vector3 GetWorldPositionOnGrid(int x, int y)
+    {
+        return levelVisualization.GetUnitWorldPosition(x, y, currentLevelData);
     }
 }

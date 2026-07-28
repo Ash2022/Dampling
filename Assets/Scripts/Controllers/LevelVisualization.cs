@@ -14,7 +14,7 @@ public class LevelVisualization : MonoBehaviour
     [Header("Manual Y-Axis Baselines")]
     public float QueueBottomY = 3.0f;
     public float GridTopY = -1.0f;
-    public float ContainerSpacingY = 0.57f; 
+    public float ContainerSpacingY = 0.57f;
 
     private float ScaleFactor = 1.1f;
 
@@ -51,7 +51,7 @@ public class LevelVisualization : MonoBehaviour
 
                 GameObject containerInstance = DamplingObjectPool.Instance.GetContainer(spawnPosition, Quaternion.identity, transform);
                 ContainerView containerView = containerInstance.GetComponent<ContainerView>();
-                
+
                 containerView.Initialize(activeQueueList[c], q);
                 containerInstance.name = $"Container_Q{q}_Idx{c}_{activeQueueList[c].ColorIndex}";
 
@@ -90,7 +90,7 @@ public class LevelVisualization : MonoBehaviour
             {
                 GameObject unitInstance = DamplingObjectPool.Instance.GetUnit(spawnPosition, Quaternion.identity, transform);
                 UnitView unitView = unitInstance.GetComponent<UnitView>();
-                
+
                 unitView.Initialize(cellNode);
                 unitInstance.name = cellNode.ContinuousPipe != null ? $"PipeUnit_({gridX},{gridY})" :
                                     cellNode.OccupyingUnit != null ? $"StandardUnit_({gridX},{gridY})" :
@@ -197,7 +197,7 @@ public class LevelVisualization : MonoBehaviour
                     frameInstance.transform.localScale = FramePrefab.transform.localScale * ScaleFactor;
 
                     FrameView fv = frameInstance.GetComponent<FrameView>();
-                    
+
                     bool left = !playableMap.Contains(new Vector2Int(x - 1, y));
                     bool right = !playableMap.Contains(new Vector2Int(x + 1, y));
                     bool up = !playableMap.Contains(new Vector2Int(x, y - 1));
@@ -236,7 +236,7 @@ public class LevelVisualization : MonoBehaviour
     public void AdvanceContainerQueue(int queueIndex, ContainerView resolvedView)
     {
         List<ContainerView> targetQueue = references.ContainerQueues[queueIndex];
-        
+
         targetQueue.Remove(resolvedView);
         activeContainers.Remove(resolvedView);
         DamplingObjectPool.Instance.ReturnContainer(resolvedView.gameObject);
@@ -260,6 +260,36 @@ public class LevelVisualization : MonoBehaviour
     internal void AddPipeElement(UnitView unitView)
     {
         //we added a unit from the revive flow 
-        activeUnits.Add(unitView);    
+        activeUnits.Add(unitView);
+    }
+
+    public Vector3 GetUnitWorldPosition(int gridX, int gridY, GameLevelSchema levelData)
+    {
+        
+        Vector2 unitSize = GetPrefabSize(UnitPrefab) * ScaleFactor;
+
+        int minX = int.MaxValue;
+        int maxX = int.MinValue;
+
+        foreach (var cellNode in levelData.Grid.Matrix)
+        {
+            if (cellNode.Position.X < minX) minX = cellNode.Position.X;
+            if (cellNode.Position.X > maxX) maxX = cellNode.Position.X;
+        }
+
+        if (minX == int.MaxValue)
+        {
+            minX = 0;
+            maxX = levelData.Grid.Columns - 1;
+        }
+
+        float physicalWidth = (maxX - minX) * unitSize.x;
+        float gridStartX = -(physicalWidth / 2f) - (minX * unitSize.x);
+
+        float worldX = gridStartX + (gridX * unitSize.x);
+        float worldY = GridTopY - (gridY * unitSize.y);
+
+
+        return new Vector3(worldX, worldY, 0f);
     }
 }

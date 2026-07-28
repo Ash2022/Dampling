@@ -6,421 +6,377 @@ using UnityEditor;
 using UnityEngine;
 using Newtonsoft.Json;
 
-public class LevelBatchBuilderWindow : EditorWindow
+public class EndgameLevelGeneratorWindow : EditorWindow
 {
-    private int startLevel = 1;
-    private int endLevel = 100;
-    private int levelStepInterval = 1; // NEW: Skip levels for rapid generation
-    private string outputFolderPath = "Assets/Resources/BakedLevels";
+    private int levelsToGenerate = 5;
+    private float minTargetWinRate = 0.005f;
+    private float maxTargetWinRate = 0.25f;
+    private float minColorsFloat = 5f;
+    private float maxColorsFloat = 8f;
+    
+    private int maxGridCols = 7;
+    private int maxGridRows = 6;
+    private int maxAttempts = 100;
 
+    private float oddsIce = 0.10f;
+    private float oddsHidden = 0.05f;
+    private float oddsLink = 0.10f;
+    private float oddsLock = 0.05f;
+    private float oddsKey = 0.05f;
+
+    private string outputFolderPath = "Assets/Resources/EndgameLevels";
     private bool isProcessing = false;
-    private int currentProcessingLevel = 1;
+    private int currentLevelIndex = 1;
     private int currentAttempt = 0;
-    private int maxAttemptsPerLevel = 50;
     private const int DUMPLINGS_PER_UNIT = 9;
-
-    private GameLevelSchema bestCandidateLevel;
-    private float bestCandidateDiff = float.MaxValue;
-    private float bestCandidateWinRate = 0f;
 
     private DamplingSimulationAgent botAgent;
     private System.Random rng;
+    private readonly int[] MasterPalette = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
-    private readonly int[] MasterColorPalette = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    [MenuItem("Tools/Endgame Level Generator")]
+    public static void ShowWindow() => GetWindow<EndgameLevelGeneratorWindow>("Endgame Generator");
 
-    [MenuItem("Tools/Level Batch Builder")]
-    public static void ShowWindow() { GetWindow<LevelBatchBuilderWindow>("Level Builder"); }
-
-    private void OnEnable() { EditorApplication.update += OnUpdateTick; }
-    private void OnDisable() { EditorApplication.update -= OnUpdateTick; if (isProcessing) CancelProcessing(); }
+    private void OnEnable() => EditorApplication.update += OnUpdateTick;
+    private void OnDisable() { EditorApplication.update -= OnUpdateTick; isProcessing = false; }
 
     private void OnGUI()
     {
-        GUILayout.Label("Dynamic Level Factory", EditorStyles.boldLabel);
-        EditorGUILayout.Space();
-        GUI.enabled = !isProcessing;
+        EditorGUI.BeginChangeCheck();
 
-        startLevel = EditorGUILayout.IntField("Start Level", startLevel);
-        endLevel = EditorGUILayout.IntField("End Level", endLevel);
-        levelStepInterval = Mathf.Max(1, EditorGUILayout.IntField("Step Interval (Skip X)", levelStepInterval));
+        GUILayout.Label("Endgame Level Parameters", EditorStyles.boldLabel);
+        
+        levelsToGenerate = EditorGUILayout.IntSlider("Levels to Generate", levelsToGenerate, 5, 500);
+        maxAttempts = EditorGUILayout.IntSlider("Max Attempts Per Level", maxAttempts, 1, 1000);
+        
+        EditorGUILayout.LabelField($"Win Rate Range ({minTargetWinRate:P1} - {maxTargetWinRate:P1})");
+        EditorGUILayout.MinMaxSlider(ref minTargetWinRate, ref maxTargetWinRate, 0.005f, 0.99f);
+        
+        EditorGUILayout.LabelField($"Color Count Range ({(int)minColorsFloat} - {(int)maxColorsFloat})");
+        EditorGUILayout.MinMaxSlider(ref minColorsFloat, ref maxColorsFloat, 5f, 8f);
 
-        maxAttemptsPerLevel = Mathf.Max(1, EditorGUILayout.IntField("Max Attempts Per Level", maxAttemptsPerLevel));
+        GUILayout.Space(10);
+        GUILayout.Label("Mechanic Odds", EditorStyles.boldLabel);
+        oddsIce = EditorGUILayout.Slider("Ice Odds", oddsIce, 0f, 1f);
+        oddsHidden = EditorGUILayout.Slider("Hidden Odds", oddsHidden, 0f, 1f);
+        oddsLink = EditorGUILayout.Slider("Link Odds", oddsLink, 0f, 1f);
+        oddsLock = EditorGUILayout.Slider("Lock Odds", oddsLock, 0f, 1f);
+        oddsKey = EditorGUILayout.Slider("Key Odds", oddsKey, 0f, 1f);
+        GUILayout.Space(10);
 
-        EditorGUILayout.BeginHorizontal();
         outputFolderPath = EditorGUILayout.TextField("Output Path", outputFolderPath);
-        if (GUILayout.Button("Browse", GUILayout.Width(70)))
+
+        if (!isProcessing && GUILayout.Button("Start Generation")) StartBatch();
+        if (isProcessing && GUILayout.Button("Stop Generation")) 
         {
-            string path = EditorUtility.OpenFolderPanel("Select Output Folder", "Assets", "");
-            if (!string.IsNullOrEmpty(path)) outputFolderPath = path;
+            isProcessing = false;
+            EditorUtility.ClearProgressBar();
         }
-        EditorGUILayout.EndHorizontal();
 
-        EditorGUILayout.Space();
-
-        if (!isProcessing && GUILayout.Button("Generate Batch", GUILayout.Height(40))) StartProcessing();
-        else if (isProcessing) { GUI.enabled = true; if (GUILayout.Button("CANCEL GENERATION", GUILayout.Height(40))) CancelProcessing(); }
-
-        if (isProcessing)
-        {
-            EditorGUILayout.Space();
-            GUILayout.Label("--- LIVE PROGRESS ---", EditorStyles.boldLabel);
-            GUILayout.Label($"Baking Level: {currentProcessingLevel} / {endLevel}");
-            GUILayout.Label($"Attempt: {currentAttempt} / {maxAttemptsPerLevel}");
-            Repaint();
-        }
+        if (EditorGUI.EndChangeCheck()) Repaint();
     }
 
-    private void StartProcessing()
+    private void StartBatch()
     {
-        if (startLevel > endLevel) return;
-        if (!Directory.Exists(outputFolderPath)) Directory.CreateDirectory(outputFolderPath);
+        Directory.CreateDirectory(outputFolderPath);
         botAgent = new DamplingSimulationAgent();
         rng = new System.Random();
-        currentProcessingLevel = startLevel;
+        currentLevelIndex = 1;
         currentAttempt = 0;
-        bestCandidateLevel = null;
-        bestCandidateDiff = float.MaxValue;
-        bestCandidateWinRate = 0f;
         isProcessing = true;
-    }
-
-    private void CancelProcessing()
-    {
-        isProcessing = false;
-        EditorUtility.ClearProgressBar();
-        Debug.LogWarning("Level Generation Canceled.");
     }
 
     private void OnUpdateTick()
     {
         if (!isProcessing) return;
 
-        // Accurate math for the step interval progress bar
-        float totalLevels = Mathf.Ceil((endLevel - startLevel + 1f) / levelStepInterval);
-        float levelsProcessed = (currentProcessingLevel - startLevel) / (float)levelStepInterval;
-        float attemptFraction = ((float)currentAttempt / maxAttemptsPerLevel) * (1f / totalLevels);
+        float progress = (float)currentLevelIndex / levelsToGenerate;
+        EditorUtility.DisplayProgressBar("Generating Endgame", $"Level {currentLevelIndex} - Attempt {currentAttempt}/{maxAttempts}", progress);
 
-        EditorUtility.DisplayProgressBar("Baking Levels...", $"Calibrating Level {currentProcessingLevel} (Attempt {currentAttempt})", (levelsProcessed / totalLevels) + attemptFraction);
+        currentAttempt++;
+        GameLevelSchema candidate = GenerateCandidate();
+        
+        var report = botAgent.RunBatchSimulation(candidate, 100);
+        float actualWinRate = report.WinRatePercentage / 100f;
 
-        ProcessSingleAttempt();
+        if ((actualWinRate >= minTargetWinRate && actualWinRate <= maxTargetWinRate) || currentAttempt >= maxAttempts)
+        {
+            SaveLevel(candidate, currentLevelIndex, actualWinRate);
+            currentLevelIndex++;
+            currentAttempt = 0;
+        }
 
-        if (currentProcessingLevel > endLevel)
+        if (currentLevelIndex > levelsToGenerate)
         {
             isProcessing = false;
             EditorUtility.ClearProgressBar();
-            Debug.Log("<color=green><b>BATCH GENERATION COMPLETE!</b></color>");
         }
     }
 
-    private void ProcessSingleAttempt()
+    private GameLevelSchema GenerateCandidate()
     {
-        currentAttempt++;
-        var rules = LevelGeneratorConfig.GetRulesForLevel(currentProcessingLevel);
-        GameLevelSchema candidate = GenerateCandidateLevel(rules, currentProcessingLevel);
-
-        float progressToMax = Mathf.Clamp01((float)currentProcessingLevel / LevelGeneratorConfig.MAX_DIFFICULTY_LEVEL);
-        float currentTolerance = Mathf.Lerp(0.05f, 0.30f, progressToMax);
-
-        // 1. EARLY EXIT CULL
-        var earlyReport = botAgent.RunBatchSimulation(candidate, 20);
-        float earlyWinRate = earlyReport.WinRatePercentage / 100f;
-
-        bool isHopeless = Mathf.Abs(rules.TargetWinRate - earlyWinRate) > (currentTolerance * 2f);
-
-        // 2. FULL STRESS TEST (Only if not hopeless)
-        float actualWinRate = 0f;
-        if (!isHopeless)
-        {
-            var report = botAgent.RunBatchSimulation(candidate, 200);
-            actualWinRate = report.WinRatePercentage / 100f;
-
-            float distanceFromTarget = Mathf.Abs(rules.TargetWinRate - actualWinRate);
-            if (distanceFromTarget < bestCandidateDiff)
-            {
-                bestCandidateDiff = distanceFromTarget;
-                bestCandidateLevel = candidate;
-                bestCandidateWinRate = actualWinRate;
-            }
-
-            // SUCCESS
-            if (distanceFromTarget <= currentTolerance)
-            {
-                Debug.Log($"<color=cyan>Level {currentProcessingLevel}</color> baked. [Target: {rules.TargetWinRate:P0} | Actual: {actualWinRate:P0}]");
-                SaveLevelToJson(candidate, currentProcessingLevel, outputFolderPath, rules.MaxColors, actualWinRate,rules.TargetWinRate);
-                MoveToNextLevel();
-                return;
-            }
-        }
-
-        // 3. FAIL CONDITION (Hit Limit)
-        // This now triggers regardless of whether the level was "culled" or just failed the stress test
-        if (currentAttempt >= maxAttemptsPerLevel)
-        {
-            Debug.LogWarning($"<color=yellow>Level {currentProcessingLevel}</color> timeout. Saving BEST attempt. [Target: {rules.TargetWinRate:P0} | Actual: {bestCandidateWinRate:P0}]");
-
-            // Fallback: If bestCandidateLevel is null (because every attempt was "hopeless"), use the last candidate
-            SaveLevelToJson(bestCandidateLevel ?? candidate, currentProcessingLevel, outputFolderPath, rules.MaxColors, bestCandidateWinRate,rules.TargetWinRate);
-
-            MoveToNextLevel();
-            return;
-        }
-    }
-
-    private void MoveToNextLevel()
-    {
-        currentProcessingLevel += levelStepInterval; // Move by step amount
-        currentAttempt = 0;
-        bestCandidateDiff = float.MaxValue;
-        bestCandidateLevel = null;
-    }
-
-    private GameLevelSchema GenerateCandidateLevel(LevelGeneratorConfig.LevelRuleset rules, int levelIndex)
-    {
-        int width = rng.Next(rules.MinGridSize, rules.MaxGridSize + 1);
-        int height = rng.Next(rules.MinGridSize, rules.MaxGridSize + 1);
+        int cols = maxGridCols;
+        int rows = maxGridRows;
+        int minC = Mathf.RoundToInt(minColorsFloat);
+        int maxC = Mathf.RoundToInt(maxColorsFloat);
+        if (minC > maxC) minC = maxC; 
+        
+        int colorCount = rng.Next(minC, maxC + 1);
+        List<int> activeColors = MasterPalette.Take(colorCount).ToList();
 
         GameLevelSchema level = new GameLevelSchema
         {
-            LevelId = levelIndex,
-            LevelName = $"Generated_{levelIndex}",
-            ConveyorBeltMaxCapacity = 28,
-            Grid = new GameLevelSchema.GridTopology { Columns = width, Rows = height, Matrix = new List<GameLevelSchema.CellNode>() },
+            LevelId = currentLevelIndex,
+            LevelName = $"Endgame_{currentLevelIndex}",
+            ConveyorBeltMaxCapacity = 30,
+            Grid = new GameLevelSchema.GridTopology { Columns = cols, Rows = rows, Matrix = new List<GameLevelSchema.CellNode>() },
             ResolutionQueues = new List<List<GameLevelSchema.ContainerData>>()
         };
 
-        List<int> activeColors = MasterColorPalette.Take(rules.MaxColors).ToList();
-        Dictionary<int, int> totalUnitColorCounts = new Dictionary<int, int>();
-        foreach (var c in activeColors) totalUnitColorCounts[c] = 0;
+        HashSet<Vector2Int> playableCells = GenerateAsymmetricalShape(cols, rows);
 
-        int globalUnitIdCounter = 0;
-        float blockedCellChance = (width * height >= 36) ? 0.25f : 0.1f;
+        int unitIdCounter = 0;
+        Dictionary<int, int> colorDistribution = activeColors.ToDictionary(c => c, c => 0);
+        HashSet<Vector2Int> pipeExits = new HashSet<Vector2Int>();
+        List<Vector2Int> pipeLocations = new List<Vector2Int>();
 
-        for (int y = 0; y < height; y++)
+        int pipeCount = rng.Next(1, 3);
+        
+        // 1. No pipes in the top row (Assumes rows - 1 is visually top)
+        var validPipeCandidates = playableCells.Where(p => p.y < rows - 1).OrderBy(p => rng.Next()).ToList();
+        HashSet<int> usedPipeColumns = new HashSet<int>();
+
+        for (int i = 0; i < pipeCount && validPipeCandidates.Count > 0; i++)
         {
-            for (int x = 0; x < width; x++)
+            var chosenPos = validPipeCandidates.First();
+            validPipeCandidates.Remove(chosenPos);
+
+            // 2. No pipe above pipe (Enforced by allowing strictly one pipe per column)
+            if (usedPipeColumns.Contains(chosenPos.x)) continue;
+            
+            usedPipeColumns.Add(chosenPos.x);
+            pipeLocations.Add(chosenPos);
+            pipeExits.Add(new Vector2Int(chosenPos.x, chosenPos.y - 1));
+        }
+
+        List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>> availableUnitsForLinks = new List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>>();
+        List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>> lockKeyCandidates = new List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>>();
+
+        for (int y = 0; y < rows; y++)
+        {
+            for (int x = 0; x < cols; x++)
             {
-                var node = new GameLevelSchema.CellNode
-                {
-                    Position = new GameLevelSchema.Coordinate(x, y),
-                    IsPlayablePath = true
+                Vector2Int currentPos = new Vector2Int(x, y);
+                var node = new GameLevelSchema.CellNode { Position = new GameLevelSchema.Coordinate(x, y), IsPlayablePath = true };
 
-                };
-
-                // --- CHANGE: Added condition to ensure BlockedCell is never on the bottom row (y == height - 1)
-                if (rules.AllowedMechanics.Contains(UnlockableFeature.BlockedCell) && y < (height - 1) && rng.NextDouble() < blockedCellChance)
+                if (!playableCells.Contains(currentPos))
                 {
                     node.IsPlayablePath = false;
+                    level.Grid.Matrix.Add(node);
+                    continue;
+                }
+
+                if (pipeLocations.Contains(currentPos))
+                {
+                    int emissions = rng.Next(3, 5);
+                    node.ContinuousPipe = new GameLevelSchema.PipeGenerator { MaxTotalEmissions = emissions, ReservoirQueue = new List<GameLevelSchema.GridUnit>() };
+                    
+                    for (int e = 0; e < emissions; e++)
+                    {
+                        int c = activeColors[rng.Next(activeColors.Count)];
+                        var pu = new GameLevelSchema.GridUnit { UnitId = unitIdCounter++, InteriorContents = new List<GameLevelSchema.DumplingItem>() };
+                        for (int d = 0; d < DUMPLINGS_PER_UNIT; d++) pu.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = c });
+                        node.ContinuousPipe.ReservoirQueue.Add(pu);
+                        colorDistribution[c]++;
+                    }
                 }
                 else
                 {
-                    int randomColor = activeColors[rng.Next(activeColors.Count)];
-                    var newUnit = new GameLevelSchema.GridUnit
-                    {
-                        UnitId = globalUnitIdCounter++,
+                    int c = activeColors[rng.Next(activeColors.Count)];
+                    var unit = new GameLevelSchema.GridUnit 
+                    { 
+                        UnitId = unitIdCounter++, 
+                        IsHiddenUntilUnblocked = false,
                         IceLayers = 0,
-                        InteriorContents = new List<GameLevelSchema.DumplingItem>()
+                        KeyLockPairIndex = -1,
+                        InteriorContents = new List<GameLevelSchema.DumplingItem>(),
+                        ExplicitlyBlockedByUnitIds = new List<int>(),
+                        LinkedUnitIds = new List<int>()
                     };
 
-                    for (int d = 0; d < DUMPLINGS_PER_UNIT; d++)
-                        newUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = randomColor });
+                    for (int d = 0; d < DUMPLINGS_PER_UNIT; d++) 
+                    {
+                        unit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = c });
+                    }
+                    
+                    node.OccupyingUnit = unit;
+                    colorDistribution[c]++;
 
-                    node.OccupyingUnit = newUnit;
-                    totalUnitColorCounts[randomColor]++;
+                    if (!pipeExits.Contains(currentPos))
+                    {
+                        int adjacentStandardUnits = CountAdjacentStandardUnits(currentPos, playableCells, pipeLocations);
+
+                        // 3. Ice only placed if viable standard units are adjacent to crack it
+                        if (rng.NextDouble() < oddsIce && adjacentStandardUnits >= 1) 
+                        { 
+                            unit.IceLayers = rng.Next(1, Mathf.Min(4, adjacentStandardUnits + 1)); 
+                        }
+                        // 4. No hidden in the top row (Assumes rows - 1 is visually top)
+                        else if (y < rows - 1 && rng.NextDouble() < oddsHidden) 
+                        { 
+                            unit.IsHiddenUntilUnblocked = true; 
+                        }
+                        else if (rng.NextDouble() < oddsLink) 
+                        { 
+                            availableUnitsForLinks.Add(new KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>(currentPos, unit)); 
+                        }
+                        else if (rng.NextDouble() < oddsLock || rng.NextDouble() < oddsKey) 
+                        { 
+                            lockKeyCandidates.Add(new KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>(currentPos, unit)); 
+                        }
+                    }
                 }
                 level.Grid.Matrix.Add(node);
             }
         }
 
-        // Passed LevelIndex to track feature Debuts
-        ApplyMechanics(level, rules, activeColors, totalUnitColorCounts, width, height, ref globalUnitIdCounter, levelIndex);
-        GenerateResolutionQueues(level, totalUnitColorCounts);
+        var unlinked = availableUnitsForLinks.OrderBy(u => rng.Next()).ToList();
+        HashSet<int> processedLinks = new HashSet<int>();
 
-        return level;
-    }
-
-    private void ApplyMechanics(GameLevelSchema level, LevelGeneratorConfig.LevelRuleset rules, List<int> activeColors, Dictionary<int, int> colorTracker, int width, int height, ref int unitIdCounter, int levelIndex)
-    {
-        // Helper function for the "Debut Guarantee & Probability Ramp"
-        bool ShouldApply(UnlockableFeature feature)
+        for (int i = 0; i < unlinked.Count; i++)
         {
-            if (!rules.AllowedMechanics.Contains(feature)) return false;
-            int debut = LevelGeneratorConfig.FeatureDebutLevels.ContainsKey(feature) ? LevelGeneratorConfig.FeatureDebutLevels[feature] : 1;
+            if (processedLinks.Contains(unlinked[i].Value.UnitId)) continue;
+            var unitA = unlinked[i];
 
-            if (levelIndex == debut) return true; // 100% Guaranteed on Debut
-
-            // Starts at 25% chance and slowly ramps to 85% as game progresses
-            float chance = Mathf.Clamp(0.25f + ((levelIndex - debut) * 0.015f), 0.25f, 0.85f);
-            return rng.NextDouble() < chance;
-        }
-
-        // PIPES - Volume Scaled Multiple
-        if (ShouldApply(UnlockableFeature.Pipes))
-        {
-            int maxPipes = (width * height >= 36) ? 3 : (width * height >= 16) ? 2 : 1;
-            int pipeCount = rng.Next(1, maxPipes + 1);
-
-            // Pick non-overlapping columns for pipes
-            var availableX = Enumerable.Range(0, width).OrderBy(x => rng.Next()).ToList();
-
-            for (int i = 0; i < Math.Min(pipeCount, availableX.Count); i++)
+            for (int j = i + 1; j < unlinked.Count; j++)
             {
-                int pipeX = availableX[i];
-                var pipeNode = level.Grid.Matrix.FirstOrDefault(n => n.Position.X == pipeX && n.Position.Y > 0);
+                if (processedLinks.Contains(unlinked[j].Value.UnitId)) continue;
+                var unitB = unlinked[j];
+                
+                int dx = Mathf.Abs(unitA.Key.x - unitB.Key.x);
+                int dy = Mathf.Abs(unitA.Key.y - unitB.Key.y);
 
-                if (pipeNode != null && pipeNode.IsPlayablePath)
+                if (dx <= 1 && dy <= 1 && (dx + dy > 0))
                 {
-                    // --- THE BUG FIX: Decrement tracker before destroying the unit ---
-                    if (pipeNode.OccupyingUnit != null && pipeNode.OccupyingUnit.InteriorContents.Count > 0)
-                    {
-                        // Grab the color id of the dumpling inside the unit we are about to erase
-                        int colorToDeduct = pipeNode.OccupyingUnit.InteriorContents[0].ColorIndex;
-                        if (colorTracker.ContainsKey(colorToDeduct))
-                        {
-                            colorTracker[colorToDeduct]--;
-                        }
-                    }
-
-                    pipeNode.OccupyingUnit = null; // Safe to erase now
-                    int emissionCount = rng.Next(3, 6);
-
-                    pipeNode.ContinuousPipe = new GameLevelSchema.PipeGenerator
-                    {
-                        MaxTotalEmissions = emissionCount,
-                        ReservoirQueue = new List<GameLevelSchema.GridUnit>()
-                    };
-
-                    for (int e = 0; e < emissionCount; e++)
-                    {
-                        int randomColor = activeColors[rng.Next(activeColors.Count)];
-                        var queuedUnit = new GameLevelSchema.GridUnit
-                        {
-                            UnitId = unitIdCounter++,
-                            IceLayers = 0,
-                            InteriorContents = new List<GameLevelSchema.DumplingItem>()
-                        };
-
-                        for (int d = 0; d < DUMPLINGS_PER_UNIT; d++)
-                            queuedUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = randomColor });
-
-                        pipeNode.ContinuousPipe.ReservoirQueue.Add(queuedUnit);
-                        colorTracker[randomColor]++;
-                    }
+                    unitA.Value.LinkedUnitIds.Add(unitB.Value.UnitId);
+                    unitB.Value.LinkedUnitIds.Add(unitA.Value.UnitId);
+                    processedLinks.Add(unitA.Value.UnitId);
+                    processedLinks.Add(unitB.Value.UnitId);
+                    break;
                 }
             }
         }
 
-        // ICE LAYERS
-        if (ShouldApply(UnlockableFeature.IceLayers))
+        var pairedCandidates = lockKeyCandidates.OrderBy(c => rng.Next()).ToList();
+        int lockKeyPairs = Mathf.Min(3, pairedCandidates.Count / 2);
+        
+        for (int i = 0; i < lockKeyPairs; i++)
         {
-            var activeUnits = level.Grid.Matrix.Where(n => n.OccupyingUnit != null).ToList();
-            if (activeUnits.Count > 0)
-            {
-                int numIced = rng.Next(1, activeUnits.Count / 3 + 1);
-                for (int i = 0; i < numIced; i++) activeUnits[rng.Next(activeUnits.Count)].OccupyingUnit.IceLayers = rng.Next(1, 3);
-            }
+            var item1 = pairedCandidates[i * 2];
+            var item2 = pairedCandidates[i * 2 + 1];
+
+            if (item1.Key.y == item2.Key.y) continue;
+
+            // 5. Locks are higher up (closer to top). In Unity coordinates, closer to top usually means larger Y.
+            var lockNode = item1.Key.y > item2.Key.y ? item1 : item2;
+            var keyNode = item1.Key.y < item2.Key.y ? item1 : item2;
+
+            int pairId = i + 1;
+            lockNode.Value.ExplicitlyBlockedByUnitIds.Add(keyNode.Value.UnitId);
+            lockNode.Value.KeyLockPairIndex = pairId;
+            keyNode.Value.KeyLockPairIndex = pairId;
         }
 
-        // LINKED UNITS - Volume Scaled Multiple Pairs
-        if (ShouldApply(UnlockableFeature.LinkedUnits))
+        List<GameLevelSchema.ContainerData> flatContainers = new List<GameLevelSchema.ContainerData>();
+        int containerIdCounter = 0;
+        foreach (var kvp in colorDistribution)
         {
-            // Shuffle all units so we can pick unique pairs sequentially
-            var units = level.Grid.Matrix.Where(n => n.OccupyingUnit != null).Select(n => n.OccupyingUnit).OrderBy(u => rng.Next()).ToList();
-
-            // 1 pair per 12 tiles (e.g. 3 pairs on a 6x6)
-            int pairsToMake = Math.Max(1, (width * height) / 12);
-
-            for (int i = 0; i < pairsToMake && (i * 2 + 1) < units.Count; i++)
+            int remainingDumplings = kvp.Value * DUMPLINGS_PER_UNIT;
+            int infiniteLoopGuard = 1000;
+            
+            while (remainingDumplings > 0 && infiniteLoopGuard-- > 0)
             {
-                var u1 = units[i * 2];
-                var u2 = units[i * 2 + 1];
-                u1.LinkedUnitIds.Add(u2.UnitId);
-                u2.LinkedUnitIds.Add(u1.UnitId);
-            }
-        }
-
-        // LOCKS AND KEYS - Row Biased & Volume Scaled
-        if (ShouldApply(UnlockableFeature.LocksAndKeys))
-        {
-            var activeNodes = level.Grid.Matrix.Where(n => n.OccupyingUnit != null).ToList();
-
-            // Strict split: Locks on Top, Keys on Bottom
-            var topHalf = activeNodes.Where(n => n.Position.Y < height / 2.0f).Select(n => n.OccupyingUnit).OrderBy(u => rng.Next()).ToList();
-            var bottomHalf = activeNodes.Where(n => n.Position.Y >= height / 2.0f).Select(n => n.OccupyingUnit).OrderBy(u => rng.Next()).ToList();
-
-            int pairsToMake = Math.Max(1, (width * height) / 20);
-
-            for (int i = 0; i < pairsToMake && i < topHalf.Count && i < bottomHalf.Count; i++)
-            {
-                var lockUnit = topHalf[i];
-                var keyUnit = bottomHalf[i];
-                lockUnit.ExplicitlyBlockedByUnitIds.Add(keyUnit.UnitId);
-            }
-        }
-    }
-
-    private void GenerateResolutionQueues(GameLevelSchema level, Dictionary<int, int> totalUnitColorCounts)
-    {
-        var flatContainersList = new List<GameLevelSchema.ContainerData>();
-
-        foreach (var kvp in totalUnitColorCounts)
-        {
-            int color = kvp.Key;
-            int totalDumplingsOfColor = kvp.Value * DUMPLINGS_PER_UNIT;
-
-            while (totalDumplingsOfColor > 0)
-            {
-                int capacity = Math.Min(totalDumplingsOfColor, 3);
-                flatContainersList.Add(new GameLevelSchema.ContainerData
-                {
-                    ColorIndex = color,
-                    Capacity = capacity,
-                    FilledSlotsCount = 0
+                int cap = Mathf.Min(remainingDumplings, 3);
+                flatContainers.Add(new GameLevelSchema.ContainerData 
+                { 
+                    Id = containerIdCounter++,
+                    ColorIndex = kvp.Key, 
+                    Capacity = cap, 
+                    FilledSlotsCount = 0,
+                    startHidden = false
                 });
-                totalDumplingsOfColor -= capacity;
+                remainingDumplings -= cap;
             }
         }
 
-        flatContainersList = flatContainersList.OrderBy(x => rng.Next()).ToList();
-
-        int numQueues = 4;
-        for (int i = 0; i < numQueues; i++) level.ResolutionQueues.Add(new List<GameLevelSchema.ContainerData>());
-        for (int i = 0; i < flatContainersList.Count; i++) level.ResolutionQueues[i % numQueues].Add(flatContainersList[i]);
-
-        int strictIdCounter = 0;
-        foreach (var queue in level.ResolutionQueues)
+        flatContainers = flatContainers.OrderBy(x => rng.Next()).ToList();
+        for (int i = 0; i < 4; i++) level.ResolutionQueues.Add(new List<GameLevelSchema.ContainerData>());
+        for (int i = 0; i < flatContainers.Count; i++)
         {
-            foreach (var container in queue) container.Id = strictIdCounter++;
+            level.ResolutionQueues[i % 4].Add(flatContainers[i]);
         }
+
+        return level;
     }
 
-    // NEW: Accepts maxColors and WinRate for the filename formatting
-    private void SaveLevelToJson(GameLevelSchema level, int index, string path, int maxColors, float actualWinRate, float targetWinRate)
+    // Subtractive Geometric Generation (Eliminates Organic Flood Fill Limits)
+    private HashSet<Vector2Int> GenerateAsymmetricalShape(int cols, int rows)
     {
-        int actualWinRateInt = Mathf.RoundToInt(actualWinRate * 100);
-        int targetWinRateInt = Mathf.RoundToInt(targetWinRate * 100);
+        HashSet<Vector2Int> shape = new HashSet<Vector2Int>();
+        
+        // Populate valid base grid (Padding sides)
+        for (int x = 1; x < cols - 1; x++)
+        {
+            for (int y = 0; y < rows; y++)
+            {
+                shape.Add(new Vector2Int(x, y));
+            }
+        }
 
-        // Tally features directly from the finalized schema
-        int blockersCount = level.Grid.Matrix.Count(n => !n.IsPlayablePath);
-        int pipesCount = level.Grid.Matrix.Count(n => n.ContinuousPipe != null);
+        // Subtractive mask: Punch random structural holes
+        int chunksToRemove = rng.Next(1, 4);
+        for (int i = 0; i < chunksToRemove; i++)
+        {
+            int cx = rng.Next(1, cols - 1);
+            int cy = rng.Next(0, rows);
+            int w = rng.Next(1, 4);
+            int h = rng.Next(1, 4);
+            
+            for (int x = cx; x < cx + w; x++)
+            {
+                for (int y = cy; y < cy + h; y++)
+                {
+                    shape.Remove(new Vector2Int(x, y));
+                }
+            }
+        }
 
-        int linksCount = level.Grid.Matrix
-            .Where(n => n.OccupyingUnit != null)
-            .Sum(n => n.OccupyingUnit.LinkedUnitIds.Count) / 2; // Divided by 2 since links are bidirectional references
+        // Failsafe: Rebuild if masking destroyed too much density
+        if (shape.Count < 12) return GenerateAsymmetricalShape(cols, rows);
+        
+        return shape;
+    }
 
-        int iceCount = level.Grid.Matrix
-            .Where(n => n.OccupyingUnit != null && n.OccupyingUnit.IceLayers > 0)
-            .Sum(n => n.OccupyingUnit.IceLayers);
+    private int CountAdjacentStandardUnits(Vector2Int pos, HashSet<Vector2Int> playable, List<Vector2Int> pipes)
+    {
+        int count = 0;
+        for (int dx = -1; dx <= 1; dx++)
+        {
+            for (int dy = -1; dy <= 1; dy++)
+            {
+                if (dx == 0 && dy == 0) continue;
+                Vector2Int neighbor = new Vector2Int(pos.x + dx, pos.y + dy);
+                if (playable.Contains(neighbor) && !pipes.Contains(neighbor)) count++;
+            }
+        }
+        return count;
+    }
 
-        int locksCount = level.Grid.Matrix
-            .Where(n => n.OccupyingUnit != null)
-            .Sum(n => n.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count);
-
-        // Format: Lvl_001_WR[Actual]_[Target]_Cols_3_B_2_P_1_L_2_I_3_K_1.json
-        string fileName = $"Lvl_{index:000}_WR{actualWinRateInt}_{targetWinRateInt}_Cols_{maxColors}_B_{blockersCount}_P_{pipesCount}_L_{linksCount}_I_{iceCount}_K_{locksCount}.json";
-        string fullPath = Path.Combine(path, fileName);
-
-        var settings = new JsonSerializerSettings { Formatting = Formatting.Indented };
-        string json = JsonConvert.SerializeObject(level, settings);
-        File.WriteAllText(fullPath, json);
+    private void SaveLevel(GameLevelSchema level, int index, float winRate)
+    {
+        int wrInt = Mathf.RoundToInt(winRate * 100);
+        string file = $"Endgame_{index:000}_WR_{wrInt}.json";
+        string json = JsonConvert.SerializeObject(level, new JsonSerializerSettings { Formatting = Formatting.Indented });
+        File.WriteAllText(Path.Combine(outputFolderPath, file), json);
     }
 }
