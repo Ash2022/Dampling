@@ -131,33 +131,32 @@ public class DamplingSimulationAgent
     private List<GameLevelSchema.Coordinate> GetPlayableMoves(DamplingGameCore engine)
     {
         List<GameLevelSchema.Coordinate> activeOptionsPool = new List<GameLevelSchema.Coordinate>();
-
-        // We use this to prevent the bot from adding multiple coordinates of the SAME linked cluster 
-        // to the options pool, which would skew the random selection weight.
         HashSet<int> alreadyEvaluatedClusterIds = new HashSet<int>();
 
         foreach (var cellNode in engine.ActiveLevelData.Grid.Matrix)
         {
-            // Skip empty cells or units that have already been played
             if (cellNode.OccupyingUnit == null || engine.PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId))
                 continue;
 
-            // Skip if we already evaluated a different piece of this same linked cluster
-            if (alreadyEvaluatedClusterIds.Contains(cellNode.OccupyingUnit.UnitId))
+            if (cellNode.OccupyingUnit.IceLayers > 0)
                 continue;
 
-            // 1. GATHER THE CLUSTER (The Fix)
-            // Fetch the full list of IDs tied to this unit's chain
             HashSet<int> clusterIds = engine.GetFullClusterIds(cellNode.OccupyingUnit.UnitId);
 
-            // Mark all units in this cluster as evaluated so we don't process them again in this loop
+            bool clusterContainsIce = false;
             foreach (var id in clusterIds)
             {
                 alreadyEvaluatedClusterIds.Add(id);
+                var clusterUnit = engine.FindUnitById(id);
+                if (clusterUnit.IceLayers > 0)
+                {
+                    clusterContainsIce = true;
+                }
             }
 
-            // 2. CHECK THE CLUSTER
-            // Pass the clusterIds into the pathfinder so it knows it can walk through linked partners
+            if (clusterContainsIce)
+                continue;
+
             if (!engine.IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, clusterIds))
             {
                 activeOptionsPool.Add(cellNode.Position);

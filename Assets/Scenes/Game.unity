@@ -1540,7 +1540,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MicroAgitationVolume
   agitationDelay: 0.5
-  agitationForce: 0.5
+  agitationForce: 1.5
 --- !u!1 &794595532
 GameObject:
   m_ObjectHideFlags: 0
@@ -4552,11 +4552,26 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 246eda7f89689d44e82bfb42652a346a, type: 3}
   - {fileID: 4900000, guid: e3e3a5a1b3769eb45a75e1e72bbf3abe, type: 3}
   - {fileID: 4900000, guid: e1dfed4b728995146afb2070a48ec10d, type: 3}
-  - {fileID: 4900000, guid: d74a8362e5b0bde49b1a4bdf09072f52, type: 3}
-  - {fileID: 4900000, guid: 1462bcebe0ead4743bc356fa142292ad, type: 3}
-  - {fileID: 4900000, guid: f07f64a6442848f43b9b42663bd8d0d4, type: 3}
-  - {fileID: 4900000, guid: cb824287e3d0bd647a729054128e3972, type: 3}
-  - {fileID: 4900000, guid: d26c707113ad57a49a439e0cd5962461, type: 3}
+  - {fileID: 4900000, guid: 8908408f7d2fdc8479c5c3fa7134f6a4, type: 3}
+  - {fileID: 4900000, guid: d1731f016e063894a80a3c6c69403198, type: 3}
+  - {fileID: 4900000, guid: e49f0f109a45ed040ae5801a44493efa, type: 3}
+  - {fileID: 4900000, guid: e4f00ab919701b649a3d53013b4b93cb, type: 3}
+  - {fileID: 4900000, guid: a826ca73a5c9fd742931adbda2a2e11c, type: 3}
+  - {fileID: 4900000, guid: 4964e774e3d113240a24d0d01d0219a8, type: 3}
+  - {fileID: 4900000, guid: bc50ee6b9d0cad2469c063cfe510395c, type: 3}
+  - {fileID: 4900000, guid: 4383ff23f69997c4daee8783303e18ed, type: 3}
+  - {fileID: 4900000, guid: 6718318d0500d4349b5d4b031146db81, type: 3}
+  - {fileID: 4900000, guid: eadab62c5a7f31e41833187ac1a23e73, type: 3}
+  - {fileID: 4900000, guid: 86d7b5ae0e0982f4a8eab0a783adf786, type: 3}
+  - {fileID: 4900000, guid: d921b96895b19154b9decfde954d092b, type: 3}
+  - {fileID: 4900000, guid: 5249f7b0736eb3c48b1a3ce82fc5bce1, type: 3}
+  - {fileID: 4900000, guid: 8e5ff687f0848f1459b3c0c48db4a0be, type: 3}
+  - {fileID: 4900000, guid: ac583afffc45c7f4096652c84bbf27df, type: 3}
+  - {fileID: 4900000, guid: a6dc9e51ef735f044898ea6d39f1929e, type: 3}
+  - {fileID: 4900000, guid: c3a5ebb454bb3814d80c3891d7ca92ce, type: 3}
+  - {fileID: 4900000, guid: 81d880a6f29f41e43a2b40a412b52f68, type: 3}
+  - {fileID: 4900000, guid: dcaa2f8ad2201824892fad07e6ac8571, type: 3}
+  - {fileID: 4900000, guid: d475811438344c7439095e2b43ee4d08, type: 3}
 --- !u!114 &2070676744
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4668,10 +4683,12 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 3a8958d28a9c5a64086d7b36529b9974, type: 3}
   - {fileID: 21300000, guid: 3cc98d3bba4da124687833e09a293f12, type: 3}
   - {fileID: 21300000, guid: 96f561d516b4f4c41819b18d5cf9abe7, type: 3}
+  - {fileID: 21300000, guid: 3a8958d28a9c5a64086d7b36529b9974, type: 3}
   lockSprites:
   - {fileID: 21300000, guid: 675652818ba168a40bbaecb3f245ddf5, type: 3}
   - {fileID: 21300000, guid: e181233341d10194697aa6323fad0876, type: 3}
   - {fileID: 21300000, guid: 2d98e8f860fb19146af21ba5e9a8980d, type: 3}
+  - {fileID: 21300000, guid: 675652818ba168a40bbaecb3f245ddf5, type: 3}
   unitHidden: {fileID: 21300000, guid: 1d8039ee369a2dd41aa5cbb12b3033bf, type: 3}
   unitLidHidden: {fileID: 21300000, guid: 61f7e13b96debac4d9c42b8d56c92303, type: 3}
   containerHidden: {fileID: 21300000, guid: 5903dd014d59f1c438d5f1230551046c, type: 3}

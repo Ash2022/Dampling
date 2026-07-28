@@ -61,6 +61,7 @@ public class GameOverView : MonoBehaviour
 
         endGameButton.interactable = false;
         buttonImage.sprite = levelWon ? continueButton : tryAgainButton;
+        buttonImage.SetNativeSize();
         buttonImage.gameObject.SetActive(false );
 
         bool unlocksFinished = UnlocksFinished();

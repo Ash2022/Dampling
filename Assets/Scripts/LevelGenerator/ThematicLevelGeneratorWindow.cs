@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using Newtonsoft.Json;
 
-public class EndgameLevelGeneratorWindow : EditorWindow
+public class ThematicLevelGeneratorWindow : EditorWindow
 {
     private int levelsToGenerate = 5;
     private float minTargetWinRate = 0.005f;
@@ -18,13 +18,14 @@ public class EndgameLevelGeneratorWindow : EditorWindow
     private int maxGridRows = 6;
     private int maxAttempts = 100;
 
-    private float oddsIce = 0.10f;
-    private float oddsHidden = 0.05f;
-    private float oddsLink = 0.10f;
-    private float oddsLock = 0.05f;
-    private float oddsKey = 0.05f;
+    private Vector2Int pipeQuota = new Vector2Int(1, 4);
+    private Vector2Int iceQuota = new Vector2Int(2, 8);
+    private Vector2Int hiddenUnitQuota = new Vector2Int(2, 8);
+    private Vector2Int linkQuota = new Vector2Int(1, 3);
+    private Vector2Int lockKeyQuota = new Vector2Int(1, 3);
+    private Vector2Int hiddenContainerQuota = new Vector2Int(0, 20);
 
-    private string outputFolderPath = "Assets/Resources/EndgameLevels";
+    private string outputFolderPath = "Assets/Resources/ThematicLevels";
     private bool isProcessing = false;
     private int currentLevelIndex = 1;
     private int currentAttempt = 0;
@@ -34,8 +35,10 @@ public class EndgameLevelGeneratorWindow : EditorWindow
     private System.Random rng;
     private readonly int[] MasterPalette = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
-    [MenuItem("Tools/Endgame Level Generator")]
-    public static void ShowWindow() => GetWindow<EndgameLevelGeneratorWindow>("Endgame Generator");
+    private enum FeatureType { Pipe, Ice, Hidden, Link, LockKey }
+
+    [MenuItem("Tools/Thematic Level Generator")]
+    public static void ShowWindow() => GetWindow<ThematicLevelGeneratorWindow>("Thematic Generator");
 
     private void OnEnable() => EditorApplication.update += OnUpdateTick;
     private void OnDisable() { EditorApplication.update -= OnUpdateTick; isProcessing = false; }
@@ -44,7 +47,7 @@ public class EndgameLevelGeneratorWindow : EditorWindow
     {
         EditorGUI.BeginChangeCheck();
 
-        GUILayout.Label("Endgame Level Parameters", EditorStyles.boldLabel);
+        GUILayout.Label("Thematic Level Parameters", EditorStyles.boldLabel);
 
         levelsToGenerate = EditorGUILayout.IntSlider("Levels to Generate", levelsToGenerate, 5, 500);
         maxAttempts = EditorGUILayout.IntSlider("Max Attempts Per Level", maxAttempts, 1, 1000);
@@ -56,12 +59,13 @@ public class EndgameLevelGeneratorWindow : EditorWindow
         EditorGUILayout.MinMaxSlider(ref minColorsFloat, ref maxColorsFloat, 5f, 8f);
 
         GUILayout.Space(10);
-        GUILayout.Label("Mechanic Odds", EditorStyles.boldLabel);
-        oddsIce = EditorGUILayout.Slider("Ice Odds", oddsIce, 0f, 1f);
-        oddsHidden = EditorGUILayout.Slider("Hidden Odds", oddsHidden, 0f, 1f);
-        oddsLink = EditorGUILayout.Slider("Link Odds", oddsLink, 0f, 1f);
-        oddsLock = EditorGUILayout.Slider("Lock Odds", oddsLock, 0f, 1f);
-        oddsKey = EditorGUILayout.Slider("Key Odds", oddsKey, 0f, 1f);
+        GUILayout.Label("Feature Quotas (Min/Max)", EditorStyles.boldLabel);
+        pipeQuota = EditorGUILayout.Vector2IntField("Pipes", pipeQuota);
+        iceQuota = EditorGUILayout.Vector2IntField("Ice Units", iceQuota);
+        hiddenUnitQuota = EditorGUILayout.Vector2IntField("Hidden Units", hiddenUnitQuota);
+        linkQuota = EditorGUILayout.Vector2IntField("Link Pairs", linkQuota);
+        lockKeyQuota = EditorGUILayout.Vector2IntField("Lock/Key Pairs", lockKeyQuota);
+        hiddenContainerQuota = EditorGUILayout.Vector2IntField("Hidden Containers", hiddenContainerQuota);
         GUILayout.Space(10);
 
         outputFolderPath = EditorGUILayout.TextField("Output Path", outputFolderPath);
@@ -91,7 +95,7 @@ public class EndgameLevelGeneratorWindow : EditorWindow
         if (!isProcessing) return;
 
         float progress = (float)currentLevelIndex / levelsToGenerate;
-        EditorUtility.DisplayProgressBar("Generating Endgame", $"Level {currentLevelIndex} - Attempt {currentAttempt}/{maxAttempts}", progress);
+        EditorUtility.DisplayProgressBar("Generating Thematic", $"Level {currentLevelIndex} - Attempt {currentAttempt}/{maxAttempts}", progress);
 
         currentAttempt++;
         GameLevelSchema candidate = GenerateCandidate();
@@ -99,10 +103,14 @@ public class EndgameLevelGeneratorWindow : EditorWindow
         var report = botAgent.RunBatchSimulation(candidate, 100);
         float actualWinRate = report.WinRatePercentage / 100f;
 
-        if ((actualWinRate >= minTargetWinRate && actualWinRate <= maxTargetWinRate) || currentAttempt >= maxAttempts)
+        if (actualWinRate >= minTargetWinRate && actualWinRate <= maxTargetWinRate)
         {
             SaveLevel(candidate, currentLevelIndex, actualWinRate);
             currentLevelIndex++;
+            currentAttempt = 0;
+        }
+        else if (currentAttempt >= maxAttempts)
+        {
             currentAttempt = 0;
         }
 
@@ -127,25 +135,31 @@ public class EndgameLevelGeneratorWindow : EditorWindow
         GameLevelSchema level = new GameLevelSchema
         {
             LevelId = currentLevelIndex,
-            LevelName = $"Endgame_{currentLevelIndex}",
+            LevelName = $"Thematic_{currentLevelIndex}",
             ConveyorBeltMaxCapacity = 30,
             Grid = new GameLevelSchema.GridTopology { Columns = cols, Rows = rows, Matrix = new List<GameLevelSchema.CellNode>() },
             ResolutionQueues = new List<List<GameLevelSchema.ContainerData>>()
         };
 
         HashSet<Vector2Int> playableCells = GenerateAsymmetricalShape(cols, rows);
-
         int unitIdCounter = 0;
         Dictionary<int, int> colorDistribution = activeColors.ToDictionary(c => c, c => 0);
+
+        List<FeatureType> activeFeatures = DetermineArchetype();
+
+        int targetPipes = activeFeatures.Contains(FeatureType.Pipe) ? rng.Next(pipeQuota.x, pipeQuota.y + 1) : 0;
+        int targetIce = activeFeatures.Contains(FeatureType.Ice) ? rng.Next(iceQuota.x, iceQuota.y + 1) : 0;
+        int targetHidden = activeFeatures.Contains(FeatureType.Hidden) ? rng.Next(hiddenUnitQuota.x, hiddenUnitQuota.y + 1) : 0;
+        int targetLinks = activeFeatures.Contains(FeatureType.Link) ? rng.Next(linkQuota.x, linkQuota.y + 1) : 0;
+        int targetLocks = activeFeatures.Contains(FeatureType.LockKey) ? rng.Next(lockKeyQuota.x, lockKeyQuota.y + 1) : 0;
+
         HashSet<Vector2Int> pipeExits = new HashSet<Vector2Int>();
         List<Vector2Int> pipeLocations = new List<Vector2Int>();
 
-        int pipeCount = rng.Next(1, 3);
-
-        var validPipeCandidates = playableCells.Where(p => p.y < rows - 1).OrderBy(p => rng.Next()).ToList();
+        var validPipeCandidates = playableCells.Where(p => p.y > 0).OrderBy(p => rng.Next()).ToList();
         HashSet<int> usedPipeColumns = new HashSet<int>();
 
-        for (int i = 0; i < pipeCount && validPipeCandidates.Count > 0; i++)
+        for (int i = 0; i < targetPipes && validPipeCandidates.Count > 0; i++)
         {
             var chosenPos = validPipeCandidates.First();
             validPipeCandidates.Remove(chosenPos);
@@ -157,9 +171,7 @@ public class EndgameLevelGeneratorWindow : EditorWindow
             pipeExits.Add(new Vector2Int(chosenPos.x, chosenPos.y - 1));
         }
 
-        List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>> availableUnitsForLinks = new List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>>();
-        List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>> lockKeyCandidates = new List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>>();
-        Dictionary<Vector2Int, int> cellToUnitIdMap = new Dictionary<Vector2Int, int>();
+        List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>> standardUnits = new List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>>();
 
         for (int y = 0; y < rows; y++)
         {
@@ -192,10 +204,9 @@ public class EndgameLevelGeneratorWindow : EditorWindow
                 else
                 {
                     int c = activeColors[rng.Next(activeColors.Count)];
-                    int currentAssignedId = unitIdCounter++;
                     var unit = new GameLevelSchema.GridUnit
                     {
-                        UnitId = currentAssignedId,
+                        UnitId = unitIdCounter++,
                         IsHiddenUntilUnblocked = false,
                         IceLayers = 0,
                         KeyLockPairIndex = -1,
@@ -210,47 +221,29 @@ public class EndgameLevelGeneratorWindow : EditorWindow
                     }
 
                     node.OccupyingUnit = unit;
-                    cellToUnitIdMap[currentPos] = currentAssignedId;
                     colorDistribution[c]++;
 
                     if (!pipeExits.Contains(currentPos))
                     {
-                        int orthogonalNeighborsCount = CountOrthogonalNeighbors(currentPos, playableCells, pipeLocations);
-
-                        if (rng.NextDouble() < oddsIce && orthogonalNeighborsCount >= 1)
-                        {
-                            unit.IceLayers = rng.Next(1, orthogonalNeighborsCount + 1);
-                        }
-                        else if (y < rows - 1 && rng.NextDouble() < oddsHidden)
-                        {
-                            unit.IsHiddenUntilUnblocked = true;
-                        }
-                        else if (rng.NextDouble() < oddsLink)
-                        {
-                            availableUnitsForLinks.Add(new KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>(currentPos, unit));
-                        }
-                        else if (rng.NextDouble() < oddsLock || rng.NextDouble() < oddsKey)
-                        {
-                            lockKeyCandidates.Add(new KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>(currentPos, unit));
-                        }
+                        standardUnits.Add(new KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>(currentPos, unit));
                     }
                 }
                 level.Grid.Matrix.Add(node);
             }
         }
 
-        var unlinked = availableUnitsForLinks.OrderBy(u => rng.Next()).ToList();
-        HashSet<int> processedLinks = new HashSet<int>();
+        standardUnits = standardUnits.OrderBy(u => rng.Next()).ToList();
 
-        for (int i = 0; i < unlinked.Count; i++)
+        int linkPairsCreated = 0;
+        for (int i = 0; i < standardUnits.Count && linkPairsCreated < targetLinks; i++)
         {
-            if (processedLinks.Contains(unlinked[i].Value.UnitId)) continue;
-            var unitA = unlinked[i];
+            var unitA = standardUnits[i];
+            if (unitA.Value.LinkedUnitIds.Count > 0) continue;
 
-            for (int j = i + 1; j < unlinked.Count; j++)
+            for (int j = i + 1; j < standardUnits.Count; j++)
             {
-                if (processedLinks.Contains(unlinked[j].Value.UnitId)) continue;
-                var unitB = unlinked[j];
+                var unitB = standardUnits[j];
+                if (unitB.Value.LinkedUnitIds.Count > 0) continue;
 
                 int dx = Mathf.Abs(unitA.Key.x - unitB.Key.x);
                 int dy = Mathf.Abs(unitA.Key.y - unitB.Key.y);
@@ -259,15 +252,25 @@ public class EndgameLevelGeneratorWindow : EditorWindow
                 {
                     unitA.Value.LinkedUnitIds.Add(unitB.Value.UnitId);
                     unitB.Value.LinkedUnitIds.Add(unitA.Value.UnitId);
-                    processedLinks.Add(unitA.Value.UnitId);
-                    processedLinks.Add(unitB.Value.UnitId);
+                    linkPairsCreated++;
                     break;
                 }
             }
         }
 
+        int locksCreated = 0;
+        List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>> lockKeyCandidates = new List<KeyValuePair<Vector2Int, GameLevelSchema.GridUnit>>();
+
+        for (int i = 0; i < standardUnits.Count; i++)
+        {
+            if (standardUnits[i].Value.KeyLockPairIndex == -1 && standardUnits[i].Value.LinkedUnitIds.Count == 0)
+            {
+                lockKeyCandidates.Add(standardUnits[i]);
+            }
+        }
+
         var pairedCandidates = lockKeyCandidates.OrderBy(c => rng.Next()).ToList();
-        int lockKeyPairs = Mathf.Min(3, pairedCandidates.Count / 2);
+        int lockKeyPairs = Mathf.Min(targetLocks, pairedCandidates.Count / 2);
 
         for (int i = 0; i < lockKeyPairs; i++)
         {
@@ -279,14 +282,49 @@ public class EndgameLevelGeneratorWindow : EditorWindow
             var lockNode = item1.Key.y > item2.Key.y ? item1 : item2;
             var keyNode = item1.Key.y < item2.Key.y ? item1 : item2;
 
-            int pairId = i + 1;
-            lockNode.Value.ExplicitlyBlockedByUnitIds.Add(keyNode.Value.UnitId);
+            int pairId = locksCreated + 1;
+
             lockNode.Value.KeyLockPairIndex = pairId;
+            lockNode.Value.ExplicitlyBlockedByUnitIds.Clear();
+            lockNode.Value.ExplicitlyBlockedByUnitIds.Add(keyNode.Value.UnitId);
+
             keyNode.Value.KeyLockPairIndex = pairId;
+            keyNode.Value.ExplicitlyBlockedByUnitIds.Clear();
+
+            locksCreated++;
+        }
+
+        int hiddenCreated = 0;
+        for (int i = 0; i < standardUnits.Count && hiddenCreated < targetHidden; i++)
+        {
+            var unitKVP = standardUnits[i];
+            if (unitKVP.Key.y > 0 && unitKVP.Value.KeyLockPairIndex == -1 && unitKVP.Value.LinkedUnitIds.Count == 0 && !unitKVP.Value.IsHiddenUntilUnblocked)
+            {
+                unitKVP.Value.IsHiddenUntilUnblocked = true;
+                hiddenCreated++;
+            }
+        }
+
+        int iceCreated = 0;
+        for (int i = 0; i < standardUnits.Count && iceCreated < targetIce; i++)
+        {
+            var unitKVP = standardUnits[i];
+            if (unitKVP.Key.y > 0 && unitKVP.Value.IceLayers == 0 && unitKVP.Value.KeyLockPairIndex == -1 && unitKVP.Value.LinkedUnitIds.Count == 0 && !unitKVP.Value.IsHiddenUntilUnblocked)
+            {
+                int adjacentStandardUnits = CountAdjacentStandardUnits(unitKVP.Key, playableCells, pipeLocations);
+                if (adjacentStandardUnits >= 1)
+                {
+                    unitKVP.Value.IceLayers = rng.Next(1, Mathf.Min(4, adjacentStandardUnits + 1));
+                    iceCreated++;
+                }
+            }
         }
 
         List<GameLevelSchema.ContainerData> flatContainers = new List<GameLevelSchema.ContainerData>();
         int containerIdCounter = 0;
+        int targetHiddenContainers = rng.Next(hiddenContainerQuota.x, hiddenContainerQuota.y + 1);
+        int hiddenContainersCreated = 0;
+
         foreach (var kvp in colorDistribution)
         {
             int remainingDumplings = kvp.Value * DUMPLINGS_PER_UNIT;
@@ -295,13 +333,16 @@ public class EndgameLevelGeneratorWindow : EditorWindow
             while (remainingDumplings > 0 && infiniteLoopGuard-- > 0)
             {
                 int cap = Mathf.Min(remainingDumplings, 3);
+                bool makeHidden = hiddenContainersCreated < targetHiddenContainers;
+                if (makeHidden) hiddenContainersCreated++;
+
                 flatContainers.Add(new GameLevelSchema.ContainerData
                 {
                     Id = containerIdCounter++,
                     ColorIndex = kvp.Key,
                     Capacity = cap,
                     FilledSlotsCount = 0,
-                    startHidden = false
+                    startHidden = makeHidden
                 });
                 remainingDumplings -= cap;
             }
@@ -309,12 +350,34 @@ public class EndgameLevelGeneratorWindow : EditorWindow
 
         flatContainers = flatContainers.OrderBy(x => rng.Next()).ToList();
         for (int i = 0; i < 4; i++) level.ResolutionQueues.Add(new List<GameLevelSchema.ContainerData>());
+
         for (int i = 0; i < flatContainers.Count; i++)
         {
-            level.ResolutionQueues[i % 4].Add(flatContainers[i]);
+            var targetQueue = level.ResolutionQueues[i % 4];
+
+            if (targetQueue.Count == 0)
+            {
+                flatContainers[i].startHidden = false;
+            }
+
+            targetQueue.Add(flatContainers[i]);
         }
 
         return level;
+    }
+
+    private List<FeatureType> DetermineArchetype()
+    {
+        int roll = rng.Next(0, 100);
+        int numFeatures = 1;
+
+        if (roll < 10) numFeatures = 5;
+        else if (roll < 20) numFeatures = 4;
+        else if (roll < 50) numFeatures = 3;
+        else if (roll < 80) numFeatures = 2;
+
+        List<FeatureType> pool = new List<FeatureType> { FeatureType.Pipe, FeatureType.Ice, FeatureType.Hidden, FeatureType.Link, FeatureType.LockKey };
+        return pool.OrderBy(x => rng.Next()).Take(numFeatures).ToList();
     }
 
     private HashSet<Vector2Int> GenerateAsymmetricalShape(int cols, int rows)
@@ -329,13 +392,14 @@ public class EndgameLevelGeneratorWindow : EditorWindow
             }
         }
 
-        int chunksToRemove = rng.Next(1, 4);
-        for (int i = 0; i < chunksToRemove; i++)
+        int cuts = rng.Next(2, 5);
+        for (int i = 0; i < cuts; i++)
         {
-            int cx = rng.Next(1, cols - 1);
-            int cy = rng.Next(0, rows);
-            int w = rng.Next(1, 4);
-            int h = rng.Next(1, 4);
+            int w = rng.Next(1, 3);
+            int h = rng.Next(1, 3);
+
+            int cx = rng.NextDouble() > 0.5f ? 1 : cols - 1 - w;
+            int cy = rng.NextDouble() > 0.5f ? 0 : rows - h;
 
             for (int x = cx; x < cx + w; x++)
             {
@@ -351,23 +415,16 @@ public class EndgameLevelGeneratorWindow : EditorWindow
         return shape;
     }
 
-    private int CountOrthogonalNeighbors(Vector2Int pos, HashSet<Vector2Int> playable, List<Vector2Int> pipes)
+    private int CountAdjacentStandardUnits(Vector2Int pos, HashSet<Vector2Int> playable, List<Vector2Int> pipes)
     {
         int count = 0;
-        Vector2Int[] orthogonalDirections = new Vector2Int[]
+        for (int dx = -1; dx <= 1; dx++)
         {
-            new Vector2Int(0, 1),
-            new Vector2Int(0, -1),
-            new Vector2Int(-1, 0),
-            new Vector2Int(1, 0)
-        };
-
-        foreach (var dir in orthogonalDirections)
-        {
-            Vector2Int neighbor = pos + dir;
-            if (playable.Contains(neighbor) && !pipes.Contains(neighbor))
+            for (int dy = -1; dy <= 1; dy++)
             {
-                count++;
+                if (dx == 0 && dy == 0) continue;
+                Vector2Int neighbor = new Vector2Int(pos.x + dx, pos.y + dy);
+                if (playable.Contains(neighbor) && !pipes.Contains(neighbor)) count++;
             }
         }
         return count;
@@ -376,7 +433,7 @@ public class EndgameLevelGeneratorWindow : EditorWindow
     private void SaveLevel(GameLevelSchema level, int index, float winRate)
     {
         int wrInt = Mathf.RoundToInt(winRate * 100);
-        string file = $"Endgame_{index:000}_WR_{wrInt}.json";
+        string file = $"Thematic_{index:000}_WR_{wrInt}.json";
         string json = JsonConvert.SerializeObject(level, new JsonSerializerSettings { Formatting = Formatting.Indented });
         File.WriteAllText(Path.Combine(outputFolderPath, file), json);
     }

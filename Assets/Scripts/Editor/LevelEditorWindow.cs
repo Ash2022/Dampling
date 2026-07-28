@@ -22,6 +22,8 @@ public class LevelEditorWindow : EditorWindow
     private int swapQ = -1;
     private int swapC = -1;
 
+    private string currentFilePath = "";
+
     private enum CellBehavior { Standard, Blocker, Pipe }
 
     private class EditorCell
@@ -70,6 +72,26 @@ public class LevelEditorWindow : EditorWindow
     {
         GUILayout.Label("Level Layout Configuration", EditorStyles.boldLabel);
 
+        Event e = Event.current;
+        if (e.type == EventType.KeyDown)
+        {
+            if (e.keyCode == KeyCode.UpArrow)
+            {
+                LoadAdjacentLevel(-1);
+                e.Use();
+            }
+            else if (e.keyCode == KeyCode.DownArrow)
+            {
+                LoadAdjacentLevel(1);
+                e.Use();
+            }
+        }
+
+        if (!string.IsNullOrEmpty(currentFilePath))
+        {
+            EditorGUILayout.LabelField($"Active File: {Path.GetFileName(currentFilePath)}", EditorStyles.helpBox);
+        }
+
         // --- DIMENSION CONTROLS TOGGLE ---
         EditorGUI.BeginChangeCheck();
         isOddColumnsWidth = EditorGUILayout.Toggle("Symmetry Mode (7x8 Odd)", isOddColumnsWidth);
@@ -95,7 +117,8 @@ public class LevelEditorWindow : EditorWindow
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
-        if (GUILayout.Button("Save Level JSON")) { SaveLevelJson(); }
+        if (GUILayout.Button("Save")) { SaveCurrentLevel(); }
+        if (GUILayout.Button("Save As...")) { SaveLevelJson(); }
         if (GUILayout.Button("Load Level JSON")) { LoadLevelJson(); }
         GUILayout.EndHorizontal();
 
@@ -619,132 +642,7 @@ public class LevelEditorWindow : EditorWindow
         };
     }
 
-    private void SaveLevelJson()
-    {
-        string path = EditorUtility.SaveFilePanel("Save Dampling Level", "", "NewLevel.json", "json");
-        if (string.IsNullOrEmpty(path)) return;
-
-        GameLevelSchema level = AssembleActiveEditorStateToSchema();
-        level.LevelName = Path.GetFileNameWithoutExtension(path);
-
-        var settings = new Newtonsoft.Json.JsonSerializerSettings
-        {
-            Formatting = Newtonsoft.Json.Formatting.Indented,
-            ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
-        };
-
-        string json = Newtonsoft.Json.JsonConvert.SerializeObject(level, settings);
-        File.WriteAllText(path, json);
-        AssetDatabase.Refresh();
-    }
-
-    private void LoadLevelJson()
-    {
-        string path = EditorUtility.OpenFilePanel("Load Dampling Level", "", "json");
-        if (string.IsNullOrEmpty(path)) return;
-
-        string json = File.ReadAllText(path);
-        var levelData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameLevelSchema>(json);
-        if (levelData == null) return;
-
-        int loadedCols = levelData.Grid.Columns;
-        isOddColumnsWidth = (loadedCols == 7);
-
-        queueCount = levelData.ResolutionQueues.Count;
-
-        BuildCanvas();
-        generatedQueues = levelData.ResolutionQueues;
-        hardLevel = levelData.HardLevel;
-
-        Dictionary<int, Vector2Int> guidToCoordMap = new Dictionary<int, Vector2Int>();
-        foreach (var cellNode in levelData.Grid.Matrix)
-        {
-            if (cellNode.OccupyingUnit != null)
-            {
-                guidToCoordMap[cellNode.OccupyingUnit.UnitId] = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
-            }
-        }
-
-        int keyGroupCounter = 1;
-        int linkGroupCounter = 1;
-
-        foreach (var cellNode in levelData.Grid.Matrix)
-        {
-            Vector2Int key = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
-            if (!editorMatrix.ContainsKey(key)) continue;
-
-            EditorCell cell = editorMatrix[key];
-
-            if (!cellNode.IsPlayablePath)
-            {
-                cell.Behavior = CellBehavior.Blocker;
-                cell.AssignedColorIndex = -1;
-                cell.IceLayers = 0;
-            }
-            else if (cellNode.ContinuousPipe != null)
-            {
-                cell.Behavior = CellBehavior.Pipe;
-                cell.PipeEmissions = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
-                cell.IceLayers = 0;
-                cell.PipeEmittedColorIndexes.Clear();
-
-                if (cellNode.ContinuousPipe.ReservoirQueue != null)
-                {
-                    foreach (var unit in cellNode.ContinuousPipe.ReservoirQueue)
-                    {
-                        int unitColorIndex = unit.InteriorContents.FirstOrDefault()?.ColorIndex ?? 0;
-                        cell.PipeEmittedColorIndexes.Add(unitColorIndex);
-                    }
-                }
-                var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
-                cell.AssignedColorIndex = firstUnit?.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1;
-            }
-            else
-            {
-                cell.Behavior = CellBehavior.Standard;
-                var firstItem = cellNode.OccupyingUnit?.InteriorContents.FirstOrDefault();
-                // This handles loading old JSONs with string ColorId
-                var colorIdString = firstItem?.ColorIndex;
-                cell.AssignedColorIndex = firstItem?.ColorIndex ?? -1;
-                cell.StartHidden = cellNode.OccupyingUnit?.IsHiddenUntilUnblocked ?? false;
-                cell.IceLayers = cellNode.OccupyingUnit?.IceLayers ?? 0;
-
-                if (cellNode.OccupyingUnit != null)
-                {
-                    if (cellNode.OccupyingUnit.LinkedUnitIds.Count > 0 && cell.LinkGroupId == 0)
-                    {
-                        int targetLinkId = linkGroupCounter++;
-                        cell.LinkGroupId = targetLinkId;
-                        foreach (var linkedGuid in cellNode.OccupyingUnit.LinkedUnitIds)
-                        {
-                            if (guidToCoordMap.TryGetValue(linkedGuid, out Vector2Int linkedCoord))
-                            {
-                                editorMatrix[linkedCoord].LinkGroupId = targetLinkId;
-                            }
-                        }
-                    }
-
-                    if (cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count > 0)
-                    {
-                        foreach (var blockerGuid in cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds)
-                        {
-                            if (guidToCoordMap.TryGetValue(blockerGuid, out Vector2Int keyCoord))
-                            {
-                                EditorCell keyCell = editorMatrix[keyCoord];
-                                if (keyCell.KeyGroupId == 0)
-                                {
-                                    keyCell.KeyGroupId = keyGroupCounter++;
-                                }
-                                cell.LockGroupId = keyCell.KeyGroupId;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        Repaint();
-    }
-
+    
     private GameLevelSchema AssembleActiveEditorStateToSchema()
     {
         int nextContainerId = 0;
@@ -1003,5 +901,172 @@ public class LevelEditorWindow : EditorWindow
         int nextIndex = (currentIndex == -1) ? 0 : (currentIndex + 1) % colorCount;
 
         return nextIndex;
+    }
+
+    private void SaveLevelJson()
+    {
+        string startingDir = string.IsNullOrEmpty(currentFilePath) ? "" : Path.GetDirectoryName(currentFilePath);
+        string defaultName = string.IsNullOrEmpty(currentFilePath) ? "NewLevel.json" : Path.GetFileName(currentFilePath);
+        string path = EditorUtility.SaveFilePanel("Save Dampling Level", startingDir, defaultName, "json");
+        if (string.IsNullOrEmpty(path)) return;
+
+        currentFilePath = path;
+        PerformSave(path);
+    }
+
+    private void SaveCurrentLevel()
+    {
+        if (string.IsNullOrEmpty(currentFilePath))
+        {
+            SaveLevelJson();
+        }
+        else
+        {
+            PerformSave(currentFilePath);
+        }
+    }
+
+    private void PerformSave(string targetPath)
+    {
+        GameLevelSchema level = AssembleActiveEditorStateToSchema();
+        level.LevelName = Path.GetFileNameWithoutExtension(targetPath);
+
+        var settings = new Newtonsoft.Json.JsonSerializerSettings
+        {
+            Formatting = Newtonsoft.Json.Formatting.Indented,
+            ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+        };
+
+        string json = Newtonsoft.Json.JsonConvert.SerializeObject(level, settings);
+        File.WriteAllText(targetPath, json);
+        AssetDatabase.Refresh();
+    }
+
+    private void LoadLevelJson()
+    {
+        string path = EditorUtility.OpenFilePanel("Load Dampling Level", "", "json");
+        if (string.IsNullOrEmpty(path)) return;
+        LoadLevelFromFile(path);
+    }
+
+    private void LoadAdjacentLevel(int direction)
+    {
+        if (string.IsNullOrEmpty(currentFilePath)) return;
+
+        string dir = Path.GetDirectoryName(currentFilePath);
+        var files = Directory.GetFiles(dir, "*.json").OrderBy(f => f).ToList();
+
+        string normalizedCurrent = Path.GetFullPath(currentFilePath);
+        int currentIndex = files.FindIndex(f => Path.GetFullPath(f) == normalizedCurrent);
+
+        if (currentIndex == -1) return;
+
+        int nextIndex = currentIndex + direction;
+        if (nextIndex >= 0 && nextIndex < files.Count)
+        {
+            LoadLevelFromFile(files[nextIndex]);
+            GUI.FocusControl(null);
+        }
+    }
+
+    private void LoadLevelFromFile(string targetPath)
+    {
+        currentFilePath = targetPath;
+        string json = File.ReadAllText(targetPath);
+        var levelData = Newtonsoft.Json.JsonConvert.DeserializeObject<GameLevelSchema>(json);
+
+        int loadedCols = levelData.Grid.Columns;
+        isOddColumnsWidth = (loadedCols == 7);
+        queueCount = levelData.ResolutionQueues.Count;
+
+        BuildCanvas();
+        generatedQueues = levelData.ResolutionQueues;
+        hardLevel = levelData.HardLevel;
+
+        Dictionary<int, Vector2Int> guidToCoordMap = new Dictionary<int, Vector2Int>();
+        foreach (var cellNode in levelData.Grid.Matrix)
+        {
+            if (cellNode.OccupyingUnit != null)
+            {
+                guidToCoordMap[cellNode.OccupyingUnit.UnitId] = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
+            }
+        }
+
+        int keyGroupCounter = 1;
+        int linkGroupCounter = 1;
+
+        foreach (var cellNode in levelData.Grid.Matrix)
+        {
+            Vector2Int key = new Vector2Int(cellNode.Position.X, cellNode.Position.Y);
+            if (!editorMatrix.ContainsKey(key)) continue;
+
+            EditorCell cell = editorMatrix[key];
+
+            if (!cellNode.IsPlayablePath)
+            {
+                cell.Behavior = CellBehavior.Blocker;
+                cell.AssignedColorIndex = -1;
+                cell.IceLayers = 0;
+            }
+            else if (cellNode.ContinuousPipe != null)
+            {
+                cell.Behavior = CellBehavior.Pipe;
+                cell.PipeEmissions = cellNode.ContinuousPipe.MaxTotalEmissions ?? 3;
+                cell.IceLayers = 0;
+                cell.PipeEmittedColorIndexes.Clear();
+
+                if (cellNode.ContinuousPipe.ReservoirQueue != null)
+                {
+                    foreach (var unit in cellNode.ContinuousPipe.ReservoirQueue)
+                    {
+                        int unitColorIndex = unit.InteriorContents.FirstOrDefault()?.ColorIndex ?? 0;
+                        cell.PipeEmittedColorIndexes.Add(unitColorIndex);
+                    }
+                }
+                var firstUnit = cellNode.ContinuousPipe.ReservoirQueue.FirstOrDefault();
+                cell.AssignedColorIndex = firstUnit?.InteriorContents.FirstOrDefault()?.ColorIndex ?? -1;
+            }
+            else
+            {
+                cell.Behavior = CellBehavior.Standard;
+                var firstItem = cellNode.OccupyingUnit?.InteriorContents.FirstOrDefault();
+                cell.AssignedColorIndex = firstItem?.ColorIndex ?? -1;
+                cell.StartHidden = cellNode.OccupyingUnit?.IsHiddenUntilUnblocked ?? false;
+                cell.IceLayers = cellNode.OccupyingUnit?.IceLayers ?? 0;
+
+                if (cellNode.OccupyingUnit != null)
+                {
+                    if (cellNode.OccupyingUnit.LinkedUnitIds.Count > 0 && cell.LinkGroupId == 0)
+                    {
+                        int targetLinkId = linkGroupCounter++;
+                        cell.LinkGroupId = targetLinkId;
+                        foreach (var linkedGuid in cellNode.OccupyingUnit.LinkedUnitIds)
+                        {
+                            if (guidToCoordMap.TryGetValue(linkedGuid, out Vector2Int linkedCoord))
+                            {
+                                editorMatrix[linkedCoord].LinkGroupId = targetLinkId;
+                            }
+                        }
+                    }
+
+                    if (cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds.Count > 0)
+                    {
+                        foreach (var blockerGuid in cellNode.OccupyingUnit.ExplicitlyBlockedByUnitIds)
+                        {
+                            if (guidToCoordMap.TryGetValue(blockerGuid, out Vector2Int keyCoord))
+                            {
+                                EditorCell keyCell = editorMatrix[keyCoord];
+                                if (keyCell.KeyGroupId == 0)
+                                {
+                                    keyCell.KeyGroupId = keyGroupCounter++;
+                                }
+                                cell.LockGroupId = keyCell.KeyGroupId;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Repaint();
     }
 }
