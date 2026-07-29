@@ -64,7 +64,7 @@ public class UIManager : MonoBehaviour
     public Vector2 WorldToAnchoredPos(Vector3 worldPos, RectTransform container)
     {
         Vector2 screen = RectTransformUtility.WorldToScreenPoint(Camera.main, worldPos);
-        RectTransformUtility.ScreenPointToLocalPointInRectangle(container, screen, null, out var local);
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(container, screen, Camera.main, out var local);
         return local;
     }
 

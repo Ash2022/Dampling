@@ -304,7 +304,9 @@ public class DamplingGameCore
         {
             if (cellNode.OccupyingUnit == null || cellNode.OccupyingUnit.IceLayers > 0 || PlayedUnitIds.Contains(cellNode.OccupyingUnit.UnitId)) continue;
 
-            if (!IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, new HashSet<int>()))
+            HashSet<int> clusterIds = GetFullClusterIds(cellNode.OccupyingUnit.UnitId);
+
+            if (!IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, clusterIds))
             {
                 transactions.Add(new EngineEvent
                 {

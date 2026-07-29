@@ -1,5 +1,18 @@
 {
   "HardLevel": false,
+  "ColorCount": 3,
+  "MetaData": {
+    "WinRate": 1.0,
+    "GridColumns": 8,
+    "GridRows": 7,
+    "TotalUnits": 6,
+    "HiddenUnitCount": 0,
+    "PipeCount": 0,
+    "KeyLockCount": 0,
+    "LinkCount": 0,
+    "HiddenContainerCount": 0,
+    "IceCount": 0
+  },
   "LevelId": 1,
   "LevelName": "Level2",
   "ConveyorBeltMaxCapacity": 30,
@@ -140,7 +153,7 @@
     ]
   ],
   "Grid": {
-    "Columns": 6,
+    "Columns": 8,
     "Rows": 7,
     "Matrix": [
       {
@@ -263,6 +276,24 @@
       {
         "Position": {
           "X": 5,
+          "Y": 0
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 6,
+          "Y": 0
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 7,
           "Y": 0
         },
         "IsPlayablePath": false,
@@ -397,6 +428,24 @@
       },
       {
         "Position": {
+          "X": 6,
+          "Y": 1
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 7,
+          "Y": 1
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
           "X": 0,
           "Y": 2
         },
@@ -523,6 +572,24 @@
       },
       {
         "Position": {
+          "X": 6,
+          "Y": 2
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 7,
+          "Y": 2
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
           "X": 0,
           "Y": 3
         },
@@ -577,6 +644,24 @@
       },
       {
         "Position": {
+          "X": 6,
+          "Y": 3
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 7,
+          "Y": 3
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
           "X": 0,
           "Y": 4
         },
@@ -631,6 +716,24 @@
       },
       {
         "Position": {
+          "X": 6,
+          "Y": 4
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 7,
+          "Y": 4
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
           "X": 0,
           "Y": 5
         },
@@ -685,6 +788,24 @@
       },
       {
         "Position": {
+          "X": 6,
+          "Y": 5
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 7,
+          "Y": 5
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
           "X": 0,
           "Y": 6
         },
@@ -731,6 +852,24 @@
       {
         "Position": {
           "X": 5,
+          "Y": 6
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 6,
+          "Y": 6
+        },
+        "IsPlayablePath": false,
+        "OccupyingUnit": null,
+        "ContinuousPipe": null
+      },
+      {
+        "Position": {
+          "X": 7,
           "Y": 6
         },
         "IsPlayablePath": false,

@@ -10,7 +10,7 @@ using static UnityEngine.ParticleSystem;
 public class GameOverView : MonoBehaviour
 {
     [SerializeField] CanvasGroup mainCanvasGroup;
-    
+
     [SerializeField] Button endGameButton;
     [SerializeField] Image buttonImage;
 
@@ -18,18 +18,22 @@ public class GameOverView : MonoBehaviour
     [SerializeField] Sprite tryAgainButton;
 
     [SerializeField] GameObject particles;
+    [SerializeField] GameObject addBoosterGroup;
+    [SerializeField] CanvasGroup addBoosterCanvasGroup;
+    [SerializeField] Image boosterImage;
+
 
     [SerializeField] Image endGameBG;
 
     [SerializeField] GameObject goldCoinsGroup;
     [SerializeField] CanvasGroup goldCoinsCanvasGroup;
-    [SerializeField]TMP_Text goldCoinsText;
+    [SerializeField] TMP_Text goldCoinsText;
     [SerializeField] List<GoldCoinView> availableCoinViews;
-  
-    [SerializeField]Image endGameImage;
-    [SerializeField]Sprite loseSprite;
-    [SerializeField]Sprite winSprite;
-    
+
+    [SerializeField] Image endGameImage;
+    [SerializeField] Sprite loseSprite;
+    [SerializeField] Sprite winSprite;
+
 
 
     [SerializeField] EndScreenUnlockView endScreenUnlockView;
@@ -42,7 +46,7 @@ public class GameOverView : MonoBehaviour
     public void InitEndScreen(bool levelWon, int levelIndex, Action endGameResumeClicked)
     {
 
-        endGameImage.sprite = levelWon?winSprite:loseSprite;
+        endGameImage.sprite = levelWon ? winSprite : loseSprite;
 
         endGameImage.SetNativeSize();
 
@@ -56,13 +60,15 @@ public class GameOverView : MonoBehaviour
         gameObject.SetActive(true);
 
         goldCoinsGroup.SetActive(false);
+        addBoosterGroup.SetActive(false);
+        addBoosterCanvasGroup.alpha = 0;
 
         endGameComplete = endGameResumeClicked;
 
         endGameButton.interactable = false;
         buttonImage.sprite = levelWon ? continueButton : tryAgainButton;
         buttonImage.SetNativeSize();
-        buttonImage.gameObject.SetActive(false );
+        buttonImage.gameObject.SetActive(false);
 
         bool unlocksFinished = UnlocksFinished();
 
@@ -82,20 +88,22 @@ public class GameOverView : MonoBehaviour
 
         SoundsManager.Instance.PlayHaptics(SoundsManager.TapticsStrenght.Medium);
 
-        mainCanvasGroup.DOFade(1, 1).SetDelay(levelWon?0.35f:1f).OnComplete(() =>
+        mainCanvasGroup.DOFade(1, 1).SetDelay(levelWon ? 0.35f : 1f).OnComplete(() =>
         {
 
             if (levelWon)
             {
-                particles.SetActive(true); 
+                particles.SetActive(true);
 
                 SoundsManager.Instance.PlayLevelCompelte();
 
                 InitEndScreenUnlockView();
 
+                EvaluateBoosterBonus(levelIndex);
+
                 if (!noMoreUnlocks)
                 {
-                    ProgressUnlockView(()=>
+                    ProgressUnlockView(() =>
                     {
                         goldCoinsRoutine = StartCoroutine(GiveGoldCoinsAndEnableContinue(levelWon));
                     });
@@ -104,10 +112,10 @@ public class GameOverView : MonoBehaviour
                     goldCoinsRoutine = StartCoroutine(GiveGoldCoinsAndEnableContinue(levelWon));
             }
             else
-                {
-                    SoundsManager.Instance.PlayLevelFailed();
-                    EnableContinue();
-                }
+            {
+                SoundsManager.Instance.PlayLevelFailed();
+                EnableContinue();
+            }
         });
     }
 
@@ -115,7 +123,7 @@ public class GameOverView : MonoBehaviour
     {
         //fly gold coins if applicable and enable continue
 
-        if(levelWon)
+        if (levelWon)
         {
             goldCoinsCanvasGroup.DOFade(1, 0.1f);
 
@@ -127,10 +135,10 @@ public class GameOverView : MonoBehaviour
 
                 availableCoinViews[i].gameObject.SetActive(true);
 
-                availableCoinViews[i].FlyToBalance(GameManager.Instance.GetBalanceRect(),()=>
+                availableCoinViews[i].FlyToBalance(GameManager.Instance.GetBalanceRect(), () =>
                 {
                     //fly the money to the balance (model already updtaed)
-                    GameManager.Instance.AddToBalanceVisual(ModelManager.GOLD_PER_WIN/10);
+                    GameManager.Instance.AddToBalanceVisual(ModelManager.GOLD_PER_WIN / 10);
                 });
 
                 yield return new WaitForSeconds(0.1f);
@@ -191,7 +199,7 @@ public class GameOverView : MonoBehaviour
             }
         }
 
-        return endIndex == 0;   
+        return endIndex == 0;
     }
 
 
@@ -211,7 +219,7 @@ public class GameOverView : MonoBehaviour
         int endIndex = 0;
         int presentIndex = 0;
 
-        if(unlocksIndexList != null)
+        if (unlocksIndexList != null)
         {
             for (int i = 0; i < unlocksIndexList.Count; i++)
             {
@@ -247,9 +255,9 @@ public class GameOverView : MonoBehaviour
             Color unlockColor = Color.white;
 
             //endScreenUnlockView.InitDisplay(unlockColor, total, curr);
-            
 
-            endScreenUnlockView.InitDisplay(VisualsManager.Instance.GetUnlockImage(presentIndex), VisualsManager.Instance.GetUnlockImage(presentIndex),total, curr);
+
+            endScreenUnlockView.InitDisplay(VisualsManager.Instance.GetUnlockImage(presentIndex), VisualsManager.Instance.GetUnlockImage(presentIndex), total, curr);
         }
 
 
@@ -259,5 +267,45 @@ public class GameOverView : MonoBehaviour
         //need to see if need to update the model for powerUps 
         //SoundsController.Instance.PlayProgressBar();
         endScreenUnlockView.UpdateProgress(done);
+    }
+
+    public void EvaluateBoosterBonus(int levelIndex)
+    {
+        if (levelIndex % 4 != 0)
+        {
+            addBoosterGroup.SetActive(false);
+            return;
+        }
+
+        bool isShuffleUnlocked = levelIndex >= ModelManager.SHUFFLE_UNLOCKED;
+        bool isMagnetUnlocked = levelIndex >= ModelManager.MAGNET_UNLOCKED;
+
+        if (!isShuffleUnlocked && !isMagnetUnlocked)
+        {
+            addBoosterGroup.SetActive(false);
+            return;
+        }
+
+        int rewardCycle = (levelIndex / 4) % 2;
+        bool giveMagnet = (rewardCycle == 0 && isMagnetUnlocked) || (!isShuffleUnlocked && isMagnetUnlocked);
+
+        if (giveMagnet)
+        {
+            ModelManager.Instance.AdjustMagnetCount(1);
+            boosterImage.sprite = VisualsManager.Instance.GetBoosterSprite(BoosterButtonView.BoosterType.Magnet);
+            addBoosterGroup.SetActive(true);
+            addBoosterCanvasGroup.DOFade(1, 0.5f).SetDelay(0.5f);
+        }
+        else if (isShuffleUnlocked)
+        {
+            ModelManager.Instance.AdjustShuffleCount(1);
+            boosterImage.sprite = VisualsManager.Instance.GetBoosterSprite(BoosterButtonView.BoosterType.Shuffle);
+            addBoosterGroup.SetActive(true);
+            addBoosterCanvasGroup.DOFade(1, 0.5f).SetDelay(0.5f);
+        }
+        else
+        {
+            addBoosterGroup.SetActive(false);
+        }
     }
 }

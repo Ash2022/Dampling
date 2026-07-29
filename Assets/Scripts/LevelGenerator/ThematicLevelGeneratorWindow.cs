@@ -5,13 +5,14 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Newtonsoft.Json;
+using static GameLevelSchema;
 
 public class ThematicLevelGeneratorWindow : EditorWindow
 {
     private int levelsToGenerate = 5;
     private float minTargetWinRate = 0.005f;
     private float maxTargetWinRate = 0.25f;
-    private float minColorsFloat = 5f;
+    private float minColorsFloat = 6f;
     private float maxColorsFloat = 8f;
 
     private int maxGridCols = 7;
@@ -56,7 +57,7 @@ public class ThematicLevelGeneratorWindow : EditorWindow
         EditorGUILayout.MinMaxSlider(ref minTargetWinRate, ref maxTargetWinRate, 0.005f, 0.99f);
 
         EditorGUILayout.LabelField($"Color Count Range ({(int)minColorsFloat} - {(int)maxColorsFloat})");
-        EditorGUILayout.MinMaxSlider(ref minColorsFloat, ref maxColorsFloat, 5f, 8f);
+        EditorGUILayout.MinMaxSlider(ref minColorsFloat, ref maxColorsFloat, 6f, 8f);
 
         GUILayout.Space(10);
         GUILayout.Label("Feature Quotas (Min/Max)", EditorStyles.boldLabel);
@@ -105,6 +106,7 @@ public class ThematicLevelGeneratorWindow : EditorWindow
 
         if (actualWinRate >= minTargetWinRate && actualWinRate <= maxTargetWinRate)
         {
+            AttachMetaData(candidate, actualWinRate);
             SaveLevel(candidate, currentLevelIndex, actualWinRate);
             currentLevelIndex++;
             currentAttempt = 0;
@@ -436,5 +438,53 @@ public class ThematicLevelGeneratorWindow : EditorWindow
         string file = $"Thematic_{index:000}_WR_{wrInt}.json";
         string json = JsonConvert.SerializeObject(level, new JsonSerializerSettings { Formatting = Formatting.Indented });
         File.WriteAllText(Path.Combine(outputFolderPath, file), json);
+    }
+
+    private void AttachMetaData(GameLevelSchema level, float finalWinRate)
+    {
+        int totalUnits = 0, hiddenUnits = 0, iceUnits = 0, pipeCount = 0, totalLinks = 0, hiddenContainers = 0;
+        HashSet<int> countedKeyLocks = new HashSet<int>();
+
+        foreach (var node in level.Grid.Matrix)
+        {
+            if (node.ContinuousPipe != null)
+            {
+                pipeCount++;
+                totalUnits += (int)node.ContinuousPipe.MaxTotalEmissions;
+            }
+            else if (node.OccupyingUnit != null)
+            {
+                totalUnits++;
+                if (node.OccupyingUnit.IsHiddenUntilUnblocked) hiddenUnits++;
+                if (node.OccupyingUnit.IceLayers > 0) iceUnits++;
+
+                totalLinks += node.OccupyingUnit.LinkedUnitIds.Count;
+
+                if (node.OccupyingUnit.KeyLockPairIndex > 0)
+                    countedKeyLocks.Add(node.OccupyingUnit.KeyLockPairIndex);
+            }
+        }
+
+        foreach (var queue in level.ResolutionQueues)
+        {
+            foreach (var container in queue)
+            {
+                if (container.startHidden) hiddenContainers++;
+            }
+        }
+
+        level.MetaData = new LevelMetaData
+        {
+            GridColumns = level.Grid.Columns,
+            GridRows = level.Grid.Rows,
+            TotalUnits = totalUnits,
+            HiddenUnitCount = hiddenUnits,
+            PipeCount = pipeCount,
+            KeyLockCount = countedKeyLocks.Count,
+            LinkCount = totalLinks / 2, // Divided by 2 because links are bidirectional in the schema
+            HiddenContainerCount = hiddenContainers,
+            IceCount = iceUnits,
+            WinRate = finalWinRate
+        };
     }
 }

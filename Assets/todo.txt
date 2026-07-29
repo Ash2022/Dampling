@@ -89,3 +89,7 @@ Level27 - give Hard indication
 Waitig for Nina:
 New lanes for repeat
 menu confirm delete 
+
+
+add some system to give more boosters after X levels -- DONE
+make some animation for the dumplings to fall when the game start and in end screen

@@ -1,5 +1,18 @@
 {
   "HardLevel": false,
+  "ColorCount": 6,
+  "MetaData": {
+    "WinRate": 0.061,
+    "GridColumns": 7,
+    "GridRows": 7,
+    "TotalUnits": 21,
+    "HiddenUnitCount": 4,
+    "PipeCount": 1,
+    "KeyLockCount": 0,
+    "LinkCount": 0,
+    "HiddenContainerCount": 0,
+    "IceCount": 0
+  },
   "LevelId": 1,
   "LevelName": "Level29",
   "ConveyorBeltMaxCapacity": 30,

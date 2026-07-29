@@ -21,6 +21,10 @@ public class GameLevelSchema
 
     public bool HardLevel;
 
+    public int ColorCount;
+
+    public LevelMetaData MetaData;
+
     // =========================================================================
     // INNER CORE TYPES
     // =========================================================================
@@ -104,6 +108,20 @@ public class GameLevelSchema
 
         // Limits how many units this generator can emit over its lifetime (infinite if null)
         public int? MaxTotalEmissions { get; set; }
+    }
+
+    public class LevelMetaData
+    {
+        public float WinRate;
+        public int GridColumns;
+        public int GridRows;
+        public int TotalUnits;
+        public int HiddenUnitCount;
+        public int PipeCount;
+        public int KeyLockCount;
+        public int LinkCount;
+        public int HiddenContainerCount;
+        public int IceCount;
     }
 
     public class BoardVisualReferences

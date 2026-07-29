@@ -14,6 +14,7 @@ public class BoosterManager : MonoBehaviour
     [SerializeField] private RectTransform canvasContainer;
     [SerializeField] private List<BoosterButtonView> boosterButtons;
 
+
     [SerializeField] MicroAgitationVolume microAgitationVolume;
 
     // Persistent Architecture Dependencies
@@ -326,4 +327,20 @@ public class BoosterManager : MonoBehaviour
         }
     }
 
+    public Vector3 GetBoosterCanvasPosition(BoosterButtonView.BoosterType type)
+    {
+        if (type == BoosterButtonView.BoosterType.Magnet)
+        {
+            return boosterButtons[0].Rect.anchoredPosition;
+        }
+        else if (type == BoosterButtonView.BoosterType.Shuffle)
+        {
+            return boosterButtons[1].Rect.anchoredPosition;
+        }
+
+        return Vector3.zero;
+    }
 }
+
+
+

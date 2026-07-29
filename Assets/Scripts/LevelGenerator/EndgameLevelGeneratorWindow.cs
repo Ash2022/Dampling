@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Newtonsoft.Json;
+using static GameLevelSchema;
 
 public class EndgameLevelGeneratorWindow : EditorWindow
 {
@@ -99,8 +100,10 @@ public class EndgameLevelGeneratorWindow : EditorWindow
         var report = botAgent.RunBatchSimulation(candidate, 100);
         float actualWinRate = report.WinRatePercentage / 100f;
 
+
         if ((actualWinRate >= minTargetWinRate && actualWinRate <= maxTargetWinRate) || currentAttempt >= maxAttempts)
         {
+            AttachMetaData(candidate, actualWinRate);
             SaveLevel(candidate, currentLevelIndex, actualWinRate);
             currentLevelIndex++;
             currentAttempt = 0;
@@ -306,14 +309,14 @@ public class EndgameLevelGeneratorWindow : EditorWindow
 
         flatContainers = flatContainers.OrderBy(x => rng.Next()).ToList();
         for (int i = 0; i < 4; i++) level.ResolutionQueues.Add(new List<GameLevelSchema.ContainerData>());
-        
+
         for (int i = 0; i < flatContainers.Count; i++)
         {
             var targetQueue = level.ResolutionQueues[i % 4];
 
             if (targetQueue.Count == 0)
                 flatContainers[i].startHidden = false;
-            
+
             targetQueue.Add(flatContainers[i]);
         }
 
@@ -376,5 +379,53 @@ public class EndgameLevelGeneratorWindow : EditorWindow
         string file = $"Endgame_{index:000}_WR_{wrInt}.json";
         string json = JsonConvert.SerializeObject(level, new JsonSerializerSettings { Formatting = Formatting.Indented });
         File.WriteAllText(Path.Combine(outputFolderPath, file), json);
+    }
+
+    private void AttachMetaData(GameLevelSchema level, float finalWinRate)
+    {
+        int totalUnits = 0, hiddenUnits = 0, iceUnits = 0, pipeCount = 0, totalLinks = 0, hiddenContainers = 0;
+        HashSet<int> countedKeyLocks = new HashSet<int>();
+
+        foreach (var node in level.Grid.Matrix)
+        {
+            if (node.ContinuousPipe != null)
+            {
+                pipeCount++;
+                totalUnits += (int)node.ContinuousPipe.MaxTotalEmissions;
+            }
+            else if (node.OccupyingUnit != null)
+            {
+                totalUnits++;
+                if (node.OccupyingUnit.IsHiddenUntilUnblocked) hiddenUnits++;
+                if (node.OccupyingUnit.IceLayers > 0) iceUnits++;
+
+                totalLinks += node.OccupyingUnit.LinkedUnitIds.Count;
+
+                if (node.OccupyingUnit.KeyLockPairIndex > 0)
+                    countedKeyLocks.Add(node.OccupyingUnit.KeyLockPairIndex);
+            }
+        }
+
+        foreach (var queue in level.ResolutionQueues)
+        {
+            foreach (var container in queue)
+            {
+                if (container.startHidden) hiddenContainers++;
+            }
+        }
+
+        level.MetaData = new LevelMetaData
+        {
+            GridColumns = level.Grid.Columns,
+            GridRows = level.Grid.Rows,
+            TotalUnits = totalUnits,
+            HiddenUnitCount = hiddenUnits,
+            PipeCount = pipeCount,
+            KeyLockCount = countedKeyLocks.Count,
+            LinkCount = totalLinks / 2, // Divided by 2 because links are bidirectional in the schema
+            HiddenContainerCount = hiddenContainers,
+            IceCount = iceUnits,
+            WinRate = finalWinRate
+        };
     }
 }

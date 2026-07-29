@@ -7,7 +7,7 @@ using System;
 
 public class UnitView : MonoBehaviour, IPointerClickHandler
 {
-    const float UNIT_FINAL_SIZE =0.48f;
+    const float UNIT_FINAL_SIZE = 0.48f;
     const float UNIT_LOCKED_SIZE = 0.41f;
 
     [SerializeField] private SpriteRenderer spriteRenderer;
@@ -26,7 +26,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     [Header("Ice Overlay Features")]
     [SerializeField] private GameObject iceOverlayRenderer; // Assign in Inspector
-    [SerializeField] private SpriteRenderer iceOverlayCounter; 
+    [SerializeField] private SpriteRenderer iceOverlayCounter;
 
     [SerializeField] private Transform clickIndication;
 
@@ -58,7 +58,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         CleanUpActiveSequence();
         preAllocatedBallViews.Clear();
         ResetToStart();
-        
+
 
         // 1. Process Static Pipe Generation Matrix Cells
         if (cellNode.ContinuousPipe != null)
@@ -159,9 +159,18 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         bool diagonal = model.Position.X != partnerView.model.Position.X && model.Position.Y != partnerView.model.Position.Y;
 
-        linkSpriteRenderer.size = new Vector2(diagonal ? 1.6f:1.2f,1.2f);
+        linkSpriteRenderer.size = new Vector2(diagonal ? 1.6f : 1.2f, 1.2f);
 
         linkSpriteRenderer.gameObject.SetActive(true);
+
+        if (model.Position.X == partnerView.model.Position.X)
+        {
+            if (model.Position.Y <= 0 || partnerView.model.Position.Y <= 0)
+            {
+                RemoveLidCover();
+                partnerView.RemoveLidCover();
+            }
+        }
     }
 
     private void ResetToStart()
@@ -181,7 +190,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         keyIndicatorRenderer.transform.localPosition = Vector3.zero;
         keyIndicatorRenderer.transform.localEulerAngles = Vector3.zero;
-        keyIndicatorRenderer.transform.localScale = Vector3.one;  
+        keyIndicatorRenderer.transform.localScale = Vector3.one;
 
         spriteRenderer.color = Color.white;
         lidRenderer.color = Color.white;
@@ -191,7 +200,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         lidRenderer.transform.localPosition = new Vector3(0f, 0.05f, 0f);
         lidRenderer.transform.localEulerAngles = Vector3.zero;
 
-      
+
     }
 
     private void SetupNestedInteriorBalls(List<GameLevelSchema.DumplingItem> contents)
@@ -244,7 +253,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         if (GameManager.Instance.IsMagnet())
         {
-            if(isMagnetBlocked)
+            if (isMagnetBlocked)
                 return;
 
             GameManager.Instance.UseMagnetBooster(this);
@@ -294,7 +303,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
     public void LinkedUnitPlayed()
     {
-        if(IsLidOn())
+        if (IsLidOn())
             RemoveLidCover();
 
         ExecuteReleaseUnitContents();
@@ -312,7 +321,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         linkSeq.OnComplete(() =>
         {
             linkOwner.linkSpriteRenderer.gameObject.SetActive(false);
-            
+
             GameManager.Instance.OnUnitElementClicked(gridCoordinate);
             ExecuteReleaseUnitContents();
 
@@ -355,7 +364,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
     private void ExecuteReleaseUnitContents()
     {
         isMagnetBlocked = true;
-        
+
         if (releaseSequence != null && releaseSequence.IsActive())
             releaseSequence.Kill();
 
@@ -425,7 +434,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         releaseSequence.Play();
     }
 
-    
+
 
     private void CleanUpActiveSequence()
     {
@@ -458,11 +467,11 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         SpriteRenderer overlaySpriteRenderer = iceOverlayRenderer.GetComponent<SpriteRenderer>();
 
         shatterSeq.Append(iceOverlayRenderer.transform.DOShakePosition(.65f, strength: 0.15f, vibrato: 20));
-        
+
         shatterSeq.OnComplete(() =>
         {
             iceOverlayCounter.sprite = VisualsManager.Instance.GetPipeCounterSprite(remainingLayers);
-                
+
         });
         // Optional: Fade the frosty blue tint slightly as ice gets thinner
         // spriteRenderer.color = Color.Lerp(originalUnitColor, new Color(0.5f, 0.8f, 1f), remainingLayers * 0.2f);
@@ -586,9 +595,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             ball.SR.sortingOrder = 36;
         });
 
-        flySeq.Append(ball.transform.DOScale(Vector3.one, animTime / 2f).SetEase(Ease.OutQuad).OnStart(()=>
+        flySeq.Append(ball.transform.DOScale(Vector3.one, animTime / 2f).SetEase(Ease.OutQuad).OnStart(() =>
         {
-            SoundsManager.Instance.BallJumpToContainer(); 
+            SoundsManager.Instance.BallJumpToContainer();
         }));
         flySeq.Join(ball.transform.DOMove(targetPosition, animTime).SetEase(Ease.InSine));
 
@@ -639,8 +648,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         keyIndicatorRenderer.transform.localPosition = Vector3.zero;
         keyIndicatorRenderer.transform.localEulerAngles = Vector3.zero;
-        keyIndicatorRenderer.transform.localScale = Vector3.one;    
-       
+        keyIndicatorRenderer.transform.localScale = Vector3.one;
+
 
         spriteRenderer.color = Color.white;
         lidRenderer.color = Color.white;

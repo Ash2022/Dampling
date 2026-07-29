@@ -26,6 +26,8 @@ public class VisualsManager : MonoBehaviour
 
     [SerializeField] Sprite Pipe;
     
+    [SerializeField]Sprite boosterMagnetSprite;
+    [SerializeField]Sprite boosterShuffleSprite;
 
     private void Awake()
     {
@@ -90,5 +92,10 @@ public class VisualsManager : MonoBehaviour
     public Sprite GetLockSprite(int index)
     {
         return lockSprites[index];
+    }
+
+    public Sprite GetBoosterSprite(BoosterButtonView.BoosterType type)
+    {
+        return type == BoosterButtonView.BoosterType.Magnet ? boosterMagnetSprite : boosterShuffleSprite;
     }
 }

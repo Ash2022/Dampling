@@ -1,5 +1,18 @@
 {
   "HardLevel": false,
+  "ColorCount": 6,
+  "MetaData": {
+    "WinRate": 0.027,
+    "GridColumns": 7,
+    "GridRows": 7,
+    "TotalUnits": 19,
+    "HiddenUnitCount": 3,
+    "PipeCount": 0,
+    "KeyLockCount": 2,
+    "LinkCount": 0,
+    "HiddenContainerCount": 0,
+    "IceCount": 0
+  },
   "LevelId": 1,
   "LevelName": "Level33",
   "ConveyorBeltMaxCapacity": 30,
@@ -639,7 +652,7 @@
           ],
           "LinkedUnitIds": [],
           "IceLayers": 0,
-          "KeyLockPairIndex": 2
+          "KeyLockPairIndex": 1
         },
         "ContinuousPipe": null
       },
@@ -821,7 +834,7 @@
           ],
           "LinkedUnitIds": [],
           "IceLayers": 0,
-          "KeyLockPairIndex": 1
+          "KeyLockPairIndex": 2
         },
         "ContinuousPipe": null
       },
@@ -1307,7 +1320,7 @@
           "ExplicitlyBlockedByUnitIds": [],
           "LinkedUnitIds": [],
           "IceLayers": 0,
-          "KeyLockPairIndex": 2
+          "KeyLockPairIndex": 1
         },
         "ContinuousPipe": null
       },
@@ -1397,7 +1410,7 @@
           "ExplicitlyBlockedByUnitIds": [],
           "LinkedUnitIds": [],
           "IceLayers": 0,
-          "KeyLockPairIndex": 1
+          "KeyLockPairIndex": 2
         },
         "ContinuousPipe": null
       },

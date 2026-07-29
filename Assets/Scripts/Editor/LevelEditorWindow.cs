@@ -5,6 +5,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Newtonsoft.Json;
+using static GameLevelSchema;
 
 public class LevelEditorWindow : EditorWindow
 {
@@ -23,6 +24,7 @@ public class LevelEditorWindow : EditorWindow
     private int swapC = -1;
 
     private string currentFilePath = "";
+    private LevelMetaData currentMetaData;
 
     private enum CellBehavior { Standard, Blocker, Pipe }
 
@@ -87,9 +89,19 @@ public class LevelEditorWindow : EditorWindow
             }
         }
 
-        if (!string.IsNullOrEmpty(currentFilePath))
+        if (currentFilePath != "")
         {
             EditorGUILayout.LabelField($"Active File: {Path.GetFileName(currentFilePath)}", EditorStyles.helpBox);
+
+            // Displays meta only if it has been generated or loaded
+            if (currentMetaData != null && currentMetaData.GridColumns > 0)
+            {
+                EditorGUILayout.HelpBox(
+                    $"Grid: {currentMetaData.GridColumns}x{currentMetaData.GridRows} | Total Units: {currentMetaData.TotalUnits} | Win Rate: {currentMetaData.WinRate:P1}\n" +
+                    $"Pipes: {currentMetaData.PipeCount} | Ice: {currentMetaData.IceCount} | Hidden Units: {currentMetaData.HiddenUnitCount} | Hidden Containers: {currentMetaData.HiddenContainerCount}\n" +
+                    $"Locks/Keys: {currentMetaData.KeyLockCount} | Linked Groups: {currentMetaData.LinkCount}",
+                    MessageType.Info);
+            }
         }
 
         // --- DIMENSION CONTROLS TOGGLE ---
@@ -120,6 +132,10 @@ public class LevelEditorWindow : EditorWindow
         if (GUILayout.Button("Save")) { SaveCurrentLevel(); }
         if (GUILayout.Button("Save As...")) { SaveLevelJson(); }
         if (GUILayout.Button("Load Level JSON")) { LoadLevelJson(); }
+        if (GUILayout.Button("Generate Meta", GUILayout.Height(30)))
+        {
+            GenerateMetaData();
+        }
         GUILayout.EndHorizontal();
 
         GUILayout.BeginHorizontal();
@@ -642,7 +658,7 @@ public class LevelEditorWindow : EditorWindow
         };
     }
 
-    
+
     private GameLevelSchema AssembleActiveEditorStateToSchema()
     {
         int nextContainerId = 0;
@@ -675,6 +691,9 @@ public class LevelEditorWindow : EditorWindow
         level.Grid.Rows = gridRows;
         level.Grid.Matrix = new List<GameLevelSchema.CellNode>();
         level.HardLevel = hardLevel;
+        level.ColorCount = colorCount;
+        level.MetaData = currentMetaData;
+
 
         Dictionary<Vector2Int, int> positionToIdMap = new Dictionary<Vector2Int, int>();
         int nextUnitId = 0;
@@ -797,6 +816,13 @@ public class LevelEditorWindow : EditorWindow
 
         if (botAgent == null) botAgent = new DamplingSimulationAgent();
         var report = botAgent.RunBatchSimulation(level, 1000);
+        float actualWinRate = report.WinRatePercentage / 100f;
+        
+        if(currentMetaData == null) 
+            currentMetaData = new LevelMetaData();
+        
+        currentMetaData.WinRate = actualWinRate;
+        
         botAgent.GenerateTextSummary(report);
         string reportSummary = string.Join("\n", report.SummaryLog);
         EditorUtility.DisplayDialog($"Simulation Results: Level {level.LevelId}", reportSummary, "Close");
@@ -983,6 +1009,39 @@ public class LevelEditorWindow : EditorWindow
         generatedQueues = levelData.ResolutionQueues;
         hardLevel = levelData.HardLevel;
 
+        currentMetaData = levelData.MetaData;
+        if (currentMetaData == null || currentMetaData.GridColumns == 0)
+        {
+            currentMetaData = new LevelMetaData(); // Ensures struct defaults if old JSON lacks meta
+        }
+
+        if (levelData.ColorCount > 0)
+        {
+            colorCount = levelData.ColorCount;
+        }
+        else
+        {
+            HashSet<int> countedColors = new HashSet<int>();
+            foreach (var node in levelData.Grid.Matrix)
+            {
+                if (node.OccupyingUnit?.InteriorContents != null)
+                {
+                    foreach (var item in node.OccupyingUnit.InteriorContents)
+                        countedColors.Add(item.ColorIndex);
+                }
+                if (node.ContinuousPipe?.ReservoirQueue != null)
+                {
+                    foreach (var u in node.ContinuousPipe.ReservoirQueue)
+                    {
+                        foreach (var item in u.InteriorContents)
+                            countedColors.Add(item.ColorIndex);
+                    }
+                }
+            }
+            colorCount = Mathf.Max(1, countedColors.Count);
+        }
+
+
         Dictionary<int, Vector2Int> guidToCoordMap = new Dictionary<int, Vector2Int>();
         foreach (var cellNode in levelData.Grid.Matrix)
         {
@@ -1068,5 +1127,52 @@ public class LevelEditorWindow : EditorWindow
             }
         }
         Repaint();
+    }
+
+    private void GenerateMetaData()
+    {
+        float preservedWinRate = 0;
+        
+        if(currentMetaData != null)
+            preservedWinRate = currentMetaData.WinRate;
+
+        currentMetaData = new LevelMetaData
+        {
+            GridColumns = gridColumns,
+            GridRows = gridRows,
+            WinRate = preservedWinRate
+        };
+
+        HashSet<int> countedLinks = new HashSet<int>();
+        HashSet<int> countedKeys = new HashSet<int>();
+
+        foreach (var cell in editorMatrix.Values)
+        {
+            if (cell.Behavior == CellBehavior.Standard)
+            {
+                currentMetaData.TotalUnits++;
+                if (cell.StartHidden) currentMetaData.HiddenUnitCount++;
+                if (cell.IceLayers > 0) currentMetaData.IceCount++;
+
+                if (cell.LinkGroupId > 0) countedLinks.Add(cell.LinkGroupId);
+                if (cell.KeyGroupId > 0) countedKeys.Add(cell.KeyGroupId);
+            }
+            else if (cell.Behavior == CellBehavior.Pipe)
+            {
+                currentMetaData.PipeCount++;
+                currentMetaData.TotalUnits += cell.PipeEmissions;
+            }
+        }
+
+        currentMetaData.LinkCount = countedLinks.Count;
+        currentMetaData.KeyLockCount = countedKeys.Count;
+
+        foreach (var queue in generatedQueues)
+        {
+            foreach (var container in queue)
+            {
+                if (container.startHidden) currentMetaData.HiddenContainerCount++;
+            }
+        }
     }
 }
