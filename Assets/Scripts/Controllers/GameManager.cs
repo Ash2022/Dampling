@@ -245,7 +245,7 @@ public class GameManager : MonoBehaviour
 
 
         // Step 3: Wipe past scene instances and render the fresh board layout array mapping setup
-        activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData,CurrentLevelIndex);
+        activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData, CurrentLevelIndex);
 
         // Step 2: Spin up a fresh simulation core instance to clear past game states completely
         gameCore = new DamplingGameCore();
@@ -268,7 +268,7 @@ public class GameManager : MonoBehaviour
         SoundsManager.Instance.PlayRandomBackgroundMusic();
     }
 
-    
+
 
     internal void TutorialClicked()
     {
@@ -328,6 +328,21 @@ public class GameManager : MonoBehaviour
                         unitView.UnitBecameUnBlocked(updatedNode);
                     }
                     break;
+
+                case DamplingGameCore.EngineEventType.CoverMapCounterChanged:
+                    {
+                        int currentCounter = ev.TargetId;
+                        activeBoardReferences.mapView.UpdateCounter(currentCounter);
+                        break;
+                    }
+                case DamplingGameCore.EngineEventType.CoverMapDestroyed:
+                    {
+                        activeBoardReferences.mapView.PlayDestroyAnimation(()=>
+                        {
+                            //destruction done visually
+                        });
+                        break;
+                    }
 
                 case DamplingGameCore.EngineEventType.PipeEmittedUnit:
                     // 1. Unpack composite coordinates
@@ -420,9 +435,9 @@ public class GameManager : MonoBehaviour
                 ModelManager.Instance.SetLastPlayedLevel(CurrentLevelIndex);
                 CurrentLevelIndex++;
             }
-         
+
             StartLevel(CurrentLevelIndex);
-            
+
         });
     }
 
@@ -439,7 +454,7 @@ public class GameManager : MonoBehaviour
             ResumeGameOver(true);
             return;
         }
-       
+
     }
 
     /// <summary>

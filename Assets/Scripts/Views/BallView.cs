@@ -96,7 +96,7 @@ public class BallView : MonoBehaviour
 
     internal void MoveHigher()
     {
-        spriteRenderer.sortingOrder = 36;
+        spriteRenderer.sortingOrder = 46;
     }
 
     internal void ExecuteWinkVisual()

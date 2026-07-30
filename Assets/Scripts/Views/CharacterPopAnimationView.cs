@@ -12,14 +12,14 @@ public class CharacterPopAnimationView : MonoBehaviour
 
     private Dictionary<RectTransform, Vector2> originalPositions = new Dictionary<RectTransform, Vector2>();
     private Vector3 originalLogoScale;
-   
+
 
     public void ResetState()
     {
-        if(originalLogoScale == Vector3.zero)
+        if (originalLogoScale == Vector3.zero)
             originalLogoScale = logo.localScale;
 
-        if(originalPositions.Count == 0)
+        if (originalPositions.Count == 0)
         {
             foreach (var character in characters)
                 originalPositions[character] = character.anchoredPosition;
@@ -73,14 +73,14 @@ public class CharacterPopAnimationView : MonoBehaviour
             RectTransform char4 = characters[3];
 
             foreach (var character in characters)
-            {  
+            {
                 character.gameObject.SetActive(true);
             }
 
             SoundsManager.Instance.PlayLevelCompleteBG();
 
             Vector2 pos4 = originalPositions[char4];
-            sequence.Append(char4.DOAnchorPosY(pos4.y, 0.3f).SetEase(Ease.OutBack).OnStart(()=>
+            sequence.Append(char4.DOAnchorPosY(pos4.y, 0.3f).SetEase(Ease.OutBack).OnStart(() =>
             {
                 SoundsManager.Instance.PlayLevelCompleteChars();
             }));
@@ -89,7 +89,7 @@ public class CharacterPopAnimationView : MonoBehaviour
             Vector2 pos2 = originalPositions[char2];
             Vector2 pos3 = originalPositions[char3];
 
-            sequence.Append(char2.DOAnchorPosY(pos2.y, 0.3f).SetEase(Ease.OutBack).OnStart(()=>
+            sequence.Append(char2.DOAnchorPosY(pos2.y, 0.3f).SetEase(Ease.OutBack).OnStart(() =>
             {
                 SoundsManager.Instance.PlayLevelCompleteChars();
             }));
@@ -97,7 +97,7 @@ public class CharacterPopAnimationView : MonoBehaviour
 
 
 
-            sequence.Join(char3.DOAnchorPosY(pos3.y, 0.3f).SetEase(Ease.OutBack).OnStart(()=>
+            sequence.Join(char3.DOAnchorPosY(pos3.y, 0.3f).SetEase(Ease.OutBack).OnStart(() =>
             {
                 SoundsManager.Instance.PlayLevelCompleteChars();
             }).SetDelay(0.1f));
@@ -106,13 +106,27 @@ public class CharacterPopAnimationView : MonoBehaviour
 
 
             Vector2 pos1 = originalPositions[char1];
-            sequence.Append(char1.DOAnchorPosY(pos1.y, 0.3f).SetEase(Ease.OutBack).OnStart(()=>
+            sequence.Append(char1.DOAnchorPosY(pos1.y, 0.3f).SetEase(Ease.OutBack).OnStart(() =>
             {
                 SoundsManager.Instance.PlayLevelCompleteChars();
             }));
             sequence.Join(char1.DOScaleY(1f, 0.3f).SetEase(Ease.OutBack));
         }
 
+        sequence.OnComplete(() =>
+        {
+            foreach (var character in characters)
+            {
+                float randomDelay = UnityEngine.Random.Range(0f, 0.5f);
+                float randomOffset = UnityEngine.Random.Range(-12f, 12f);
+                float originalY = originalPositions[character].y;
+                
+                character.DOAnchorPosY(originalY + randomOffset, 1.5f)
+                    .SetEase(Ease.InOutSine)
+                    .SetLoops(-1, LoopType.Yoyo)
+                    .SetDelay(randomDelay);
+            }
+        });
         sequence.Play();
     }
 }

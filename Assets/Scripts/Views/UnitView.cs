@@ -151,6 +151,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         Vector3 myPos = transform.position;
         Vector3 partnerPos = partnerView.transform.position;
 
+        isMagnetBlocked = true;
+        partnerView.isMagnetBlocked = true;
+
         linkSpriteRenderer.transform.position = (myPos + partnerPos) / 2f;
 
         Vector3 direction = partnerPos - myPos;
@@ -159,7 +162,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
 
         bool diagonal = model.Position.X != partnerView.model.Position.X && model.Position.Y != partnerView.model.Position.Y;
 
-        linkSpriteRenderer.size = new Vector2(diagonal ? 1.6f : 1.2f, 1.2f);
+        linkSpriteRenderer.size = new Vector2(diagonal ? 1.5f : 1.2f, 1.2f);
 
         linkSpriteRenderer.gameObject.SetActive(true);
 
@@ -660,5 +663,15 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         lidRenderer.transform.localEulerAngles = Vector3.zero;
         lidRenderer.gameObject.SetActive(true);
 
+    }
+
+    internal void PartOfMap()
+    {
+        disableButton = true;
+    }
+
+    public void MapRemoved()
+    {
+        disableButton = false;
     }
 }

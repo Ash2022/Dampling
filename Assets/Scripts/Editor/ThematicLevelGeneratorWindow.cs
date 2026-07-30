@@ -25,6 +25,7 @@ public class ThematicLevelGeneratorWindow : EditorWindow
     private Vector2Int linkQuota = new Vector2Int(1, 3);
     private Vector2Int lockKeyQuota = new Vector2Int(1, 3);
     private Vector2Int hiddenContainerQuota = new Vector2Int(0, 20);
+    private Vector2Int coverMapQuota = new Vector2Int(1, 1);
 
     private string outputFolderPath = "Assets/Resources/ThematicLevels";
     private bool isProcessing = false;
@@ -36,7 +37,7 @@ public class ThematicLevelGeneratorWindow : EditorWindow
     private System.Random rng;
     private readonly int[] MasterPalette = { 0, 1, 2, 3, 4, 5, 6, 7 };
 
-    private enum FeatureType { Pipe, Ice, Hidden, Link, LockKey }
+    private enum FeatureType { Pipe, Ice, Hidden, Link, LockKey, CoverMap }
 
     [MenuItem("Tools/Thematic Level Generator")]
     public static void ShowWindow() => GetWindow<ThematicLevelGeneratorWindow>("Thematic Generator");
@@ -143,7 +144,7 @@ public class ThematicLevelGeneratorWindow : EditorWindow
             ResolutionQueues = new List<List<GameLevelSchema.ContainerData>>()
         };
 
-        HashSet<Vector2Int> playableCells = GenerateAsymmetricalShape(cols, rows);
+        HashSet<Vector2Int> playableCells = rng.NextDouble() >= 0.5f ? GenerateSymmetricalShape(cols, rows) : GenerateAsymmetricalShape(cols, rows);
         int unitIdCounter = 0;
         Dictionary<int, int> colorDistribution = activeColors.ToDictionary(c => c, c => 0);
 
@@ -281,8 +282,8 @@ public class ThematicLevelGeneratorWindow : EditorWindow
 
             if (item1.Key.y == item2.Key.y) continue;
 
-            var lockNode = item1.Key.y > item2.Key.y ? item1 : item2;
-            var keyNode = item1.Key.y < item2.Key.y ? item1 : item2;
+            var lockNode = item1.Key.y < item2.Key.y ? item1 : item2;
+            var keyNode = item1.Key.y > item2.Key.y ? item1 : item2;
 
             int pairId = locksCreated + 1;
 
@@ -320,6 +321,77 @@ public class ThematicLevelGeneratorWindow : EditorWindow
                     iceCreated++;
                 }
             }
+        }
+
+        int[] validSizes = new int[] { 1, 2, 4 };
+        int targetCoverMapUnits = validSizes[rng.Next(validSizes.Length)];
+
+        List<Vector2Int> availableMapCandidates = standardUnits
+            .Where(u => u.Key.y > 0 && u.Value.IceLayers == 0 && u.Value.KeyLockPairIndex == -1 && u.Value.LinkedUnitIds.Count == 0 && !u.Value.IsHiddenUntilUnblocked)
+            .Select(u => u.Key)
+            .OrderBy(c => rng.Next())
+            .ToList();
+
+        List<Vector2Int> selectedMapCoords = new List<Vector2Int>();
+
+        foreach (var startCoord in availableMapCandidates)
+        {
+            if (targetCoverMapUnits == 1)
+            {
+                selectedMapCoords.Add(startCoord);
+                break;
+            }
+
+            if (targetCoverMapUnits == 2)
+            {
+                Vector2Int[] potentialNeighbors = {
+            new Vector2Int(startCoord.x + 1, startCoord.y),
+            new Vector2Int(startCoord.x - 1, startCoord.y),
+            new Vector2Int(startCoord.x, startCoord.y + 1),
+            new Vector2Int(startCoord.x, startCoord.y - 1)
+        };
+
+                var validNeighbor = potentialNeighbors.FirstOrDefault(n => availableMapCandidates.Contains(n));
+                if (validNeighbor != default)
+                {
+                    selectedMapCoords.Add(startCoord);
+                    selectedMapCoords.Add(validNeighbor);
+                    break;
+                }
+            }
+
+            if (targetCoverMapUnits == 4)
+            {
+                Vector2Int right = new Vector2Int(startCoord.x + 1, startCoord.y);
+                Vector2Int up = new Vector2Int(startCoord.x, startCoord.y + 1);
+                Vector2Int diag = new Vector2Int(startCoord.x + 1, startCoord.y + 1);
+
+                if (availableMapCandidates.Contains(right) && availableMapCandidates.Contains(up) && availableMapCandidates.Contains(diag))
+                {
+                    selectedMapCoords.Add(startCoord);
+                    selectedMapCoords.Add(right);
+                    selectedMapCoords.Add(up);
+                    selectedMapCoords.Add(diag);
+                    break;
+                }
+            }
+        }
+
+        int totalUnitsCount = level.Grid.Matrix.Count(n => n.IsPlayablePath);
+        int counterValue = rng.Next(Mathf.Max(1, Mathf.RoundToInt(totalUnitsCount * 0.1f)), Mathf.RoundToInt(totalUnitsCount * 0.5f) + 1);
+
+        if (selectedMapCoords.Count > 0)
+        {
+            level.CoverMap = new GameLevelSchema.CoverMapData
+            {
+                Counter = counterValue,
+
+                CoveredUnitIds = selectedMapCoords.Select(c =>
+               {
+                   var matchingUnit = level.Grid.Matrix.First(m => m.Position.X == c.x && m.Position.Y == c.y);
+                   return matchingUnit.OccupyingUnit.UnitId;
+               }).ToList()
+            };
         }
 
         List<GameLevelSchema.ContainerData> flatContainers = new List<GameLevelSchema.ContainerData>();
@@ -378,7 +450,7 @@ public class ThematicLevelGeneratorWindow : EditorWindow
         else if (roll < 50) numFeatures = 3;
         else if (roll < 80) numFeatures = 2;
 
-        List<FeatureType> pool = new List<FeatureType> { FeatureType.Pipe, FeatureType.Ice, FeatureType.Hidden, FeatureType.Link, FeatureType.LockKey };
+        List<FeatureType> pool = new List<FeatureType> { FeatureType.Pipe, FeatureType.Ice, FeatureType.Hidden, FeatureType.Link, FeatureType.LockKey, FeatureType.CoverMap };
         return pool.OrderBy(x => rng.Next()).Take(numFeatures).ToList();
     }
 
@@ -413,6 +485,54 @@ public class ThematicLevelGeneratorWindow : EditorWindow
         }
 
         if (shape.Count < 12) return GenerateAsymmetricalShape(cols, rows);
+
+        return shape;
+    }
+
+    private HashSet<Vector2Int> GenerateSymmetricalShape(int cols, int rows)
+    {
+        HashSet<Vector2Int> shape = new HashSet<Vector2Int>();
+
+        for (int x = 1; x < cols - 1; x++)
+        {
+            for (int y = 0; y < rows; y++)
+            {
+                shape.Add(new Vector2Int(x, y));
+            }
+        }
+
+        int midX = cols / 2;
+        int cuts = rng.Next(1, 4);
+
+        for (int i = 0; i < cuts; i++)
+        {
+            int cx = rng.Next(1, midX);
+            int w = rng.Next(1, midX - cx + 1);
+            int h = rng.Next(1, 3);
+            int cy = rng.NextDouble() > 0.5f ? 0 : rows - h;
+
+            for (int x = cx; x < cx + w; x++)
+            {
+                for (int y = cy; y < cy + h; y++)
+                {
+                    shape.Remove(new Vector2Int(x, y));
+                    shape.Remove(new Vector2Int(cols - 1 - x, y));
+                }
+            }
+        }
+
+        if (cols % 2 != 0 && rng.NextDouble() >= 0.5f)
+        {
+            int h = rng.Next(1, 3);
+            int cy = rng.NextDouble() > 0.5f ? 0 : rows - h;
+
+            for (int y = cy; y < cy + h; y++)
+            {
+                shape.Remove(new Vector2Int(midX, y));
+            }
+        }
+
+        if (shape.Count < 12) return GenerateSymmetricalShape(cols, rows);
 
         return shape;
     }
@@ -484,6 +604,7 @@ public class ThematicLevelGeneratorWindow : EditorWindow
             LinkCount = totalLinks / 2, // Divided by 2 because links are bidirectional in the schema
             HiddenContainerCount = hiddenContainers,
             IceCount = iceUnits,
+            MapCount = level.CoverMap != null ? level.CoverMap.CoveredUnitIds.Count : 0,
             WinRate = finalWinRate
         };
     }

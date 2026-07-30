@@ -22,6 +22,7 @@ public class LevelEditorWindow : EditorWindow
     // Add these to your class scope
     private int swapQ = -1;
     private int swapC = -1;
+    private int levelMapCounterValue = 3;
 
     private string currentFilePath = "";
     private LevelMetaData currentMetaData;
@@ -43,6 +44,7 @@ public class LevelEditorWindow : EditorWindow
         public int LinkGroupId = 0;
 
         public int IceLayers = 0;
+        public bool IsInCoverMap = false;
     }
 
     private Dictionary<Vector2Int, EditorCell> editorMatrix = new Dictionary<Vector2Int, EditorCell>();
@@ -99,7 +101,7 @@ public class LevelEditorWindow : EditorWindow
                 EditorGUILayout.HelpBox(
                     $"Grid: {currentMetaData.GridColumns}x{currentMetaData.GridRows} | Total Units: {currentMetaData.TotalUnits} | Win Rate: {currentMetaData.WinRate:P1}\n" +
                     $"Pipes: {currentMetaData.PipeCount} | Ice: {currentMetaData.IceCount} | Hidden Units: {currentMetaData.HiddenUnitCount} | Hidden Containers: {currentMetaData.HiddenContainerCount}\n" +
-                    $"Locks/Keys: {currentMetaData.KeyLockCount} | Linked Groups: {currentMetaData.LinkCount}",
+                    $"Locks/Keys: {currentMetaData.KeyLockCount} | Linked Groups: {currentMetaData.LinkCount}| Map Units: {currentMetaData.MapCount}",
                     MessageType.Info);
             }
         }
@@ -116,6 +118,7 @@ public class LevelEditorWindow : EditorWindow
 
         queueCount = EditorGUILayout.IntSlider("Container Queues", queueCount, 1, 8);
         colorCount = EditorGUILayout.IntSlider("Number of Colors", colorCount, 2, 8);
+        levelMapCounterValue = EditorGUILayout.IntSlider("Cover Map Counter", levelMapCounterValue, 1, 5);
 
         EditorGUILayout.Space();
 
@@ -372,6 +375,11 @@ public class LevelEditorWindow : EditorWindow
                         EditorGUI.DrawRect(hiddenIndicatorRect, new Color(0f, 0f, 0f, 0.6f));
                         GUI.Label(hiddenIndicatorRect, "HIDDEN STATE", EditorStyles.whiteMiniLabel);
                     }
+                    if (cell.IsInCoverMap)
+                    {
+                        Rect mapLabelRect = new Rect(cellRect.x + 2, cellRect.y + cellRect.height - 18, cellRect.width - 4, 16);
+                        GUI.Label(mapLabelRect, "MAP", EditorStyles.whiteBoldLabel);
+                    }
                 }
                 else if (cell.Behavior == CellBehavior.Blocker)
                 {
@@ -508,6 +516,26 @@ public class LevelEditorWindow : EditorWindow
                             menu.AddSeparator("");
                             menu.AddItem(new GUIContent("Convert Cell/To Blocker (Hole)"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Blocker; cell.AssignedColorIndex = -1; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
                             menu.AddItem(new GUIContent("Convert Cell/To Pipe Generator"), false, () => { ResetRelations(cell); cell.Behavior = CellBehavior.Pipe; cell.AssignedColorIndex = -1; cell.StartHidden = false; cell.IceLayers = 0; Repaint(); });
+
+                            menu.AddSeparator("Cover Map/");
+
+                            if (cell.IsInCoverMap)
+                            {
+                                menu.AddItem(new GUIContent("Cover Map/Remove from Map"), false, () =>
+                                {
+                                    cell.IsInCoverMap = false;
+                                    Repaint();
+                                });
+                            }
+                            else
+                            {
+                                menu.AddItem(new GUIContent("Cover Map/Add to Map"), false, () =>
+                                {
+                                    cell.IsInCoverMap = true;
+                                    Repaint();
+                                });
+                            }
+
                         }
                     }
                     else
@@ -611,6 +639,7 @@ public class LevelEditorWindow : EditorWindow
                 //EditorGUI.LabelField(containerRect, $"COLOR_{colorIndex}", labelOverride);
                 EditorGUI.LabelField(containerRect, $"COLOR_{colorIndex}", new GUIStyle(EditorStyles.label)
                 { normal = { textColor = generatedQueues[q][c].startHidden ? Color.black : Color.white } });
+
             }
         }
         GUILayout.EndVertical();
@@ -679,6 +708,7 @@ public class LevelEditorWindow : EditorWindow
             }
         }
 
+
         GameLevelSchema level = new GameLevelSchema
         {
             LevelId = 1,
@@ -687,6 +717,7 @@ public class LevelEditorWindow : EditorWindow
             ResolutionQueues = generatedQueues
         };
 
+        GameLevelSchema.CoverMapData mapData = new GameLevelSchema.CoverMapData { Counter = levelMapCounterValue };
         level.Grid.Columns = gridColumns;
         level.Grid.Rows = gridRows;
         level.Grid.Matrix = new List<GameLevelSchema.CellNode>();
@@ -776,6 +807,9 @@ public class LevelEditorWindow : EditorWindow
                     };
                     node.OccupyingUnit.IsHiddenUntilUnblocked = kvp.Value.StartHidden;
 
+                    if (kvp.Value.IsInCoverMap)
+                        mapData.CoveredUnitIds.Add(positionToIdMap[kvp.Key]);
+
                     for (int d = 0; d < 9; d++)
                     {
                         node.OccupyingUnit.InteriorContents.Add(new GameLevelSchema.DumplingItem { ColorIndex = kvp.Value.AssignedColorIndex });
@@ -806,6 +840,11 @@ public class LevelEditorWindow : EditorWindow
             }
             level.Grid.Matrix.Add(node);
         }
+
+        if (mapData.CoveredUnitIds.Count > 0)
+            level.CoverMap = mapData;
+
+
         return level;
     }
 
@@ -817,12 +856,12 @@ public class LevelEditorWindow : EditorWindow
         if (botAgent == null) botAgent = new DamplingSimulationAgent();
         var report = botAgent.RunBatchSimulation(level, 1000);
         float actualWinRate = report.WinRatePercentage / 100f;
-        
-        if(currentMetaData == null) 
+
+        if (currentMetaData == null)
             currentMetaData = new LevelMetaData();
-        
+
         currentMetaData.WinRate = actualWinRate;
-        
+
         botAgent.GenerateTextSummary(report);
         string reportSummary = string.Join("\n", report.SummaryLog);
         EditorUtility.DisplayDialog($"Simulation Results: Level {level.LevelId}", reportSummary, "Close");
@@ -1061,6 +1100,8 @@ public class LevelEditorWindow : EditorWindow
 
             EditorCell cell = editorMatrix[key];
 
+            cell.IsInCoverMap = false;
+
             if (!cellNode.IsPlayablePath)
             {
                 cell.Behavior = CellBehavior.Blocker;
@@ -1126,14 +1167,35 @@ public class LevelEditorWindow : EditorWindow
                 }
             }
         }
+
+        if (levelData.CoverMap != null)
+        {
+            levelMapCounterValue = levelData.CoverMap.Counter;
+
+            foreach (var unitId in levelData.CoverMap.CoveredUnitIds)
+            {
+                if (guidToCoordMap.TryGetValue(unitId, out Vector2Int mapCoord))
+                {
+                    if (editorMatrix.ContainsKey(mapCoord))
+                    {
+                        editorMatrix[mapCoord].IsInCoverMap = true;
+                    }
+                }
+            }
+        }
+        else
+        {
+            levelMapCounterValue = 3; // Reset to default if loading an older level without a map
+        }
+
         Repaint();
     }
 
     private void GenerateMetaData()
     {
         float preservedWinRate = 0;
-        
-        if(currentMetaData != null)
+
+        if (currentMetaData != null)
             preservedWinRate = currentMetaData.WinRate;
 
         currentMetaData = new LevelMetaData
@@ -1146,6 +1208,8 @@ public class LevelEditorWindow : EditorWindow
         HashSet<int> countedLinks = new HashSet<int>();
         HashSet<int> countedKeys = new HashSet<int>();
 
+        int numberCellsInMap =0;
+
         foreach (var cell in editorMatrix.Values)
         {
             if (cell.Behavior == CellBehavior.Standard)
@@ -1156,6 +1220,10 @@ public class LevelEditorWindow : EditorWindow
 
                 if (cell.LinkGroupId > 0) countedLinks.Add(cell.LinkGroupId);
                 if (cell.KeyGroupId > 0) countedKeys.Add(cell.KeyGroupId);
+
+                if(cell.IsInCoverMap)
+                    numberCellsInMap++;
+            
             }
             else if (cell.Behavior == CellBehavior.Pipe)
             {
@@ -1166,6 +1234,8 @@ public class LevelEditorWindow : EditorWindow
 
         currentMetaData.LinkCount = countedLinks.Count;
         currentMetaData.KeyLockCount = countedKeys.Count;
+
+        currentMetaData.MapCount = numberCellsInMap;
 
         foreach (var queue in generatedQueues)
         {

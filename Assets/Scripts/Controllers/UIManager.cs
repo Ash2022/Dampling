@@ -63,8 +63,6 @@ public class UIManager : MonoBehaviour
     }
 
 
-
-
     public Vector2 WorldToAnchoredPos(Vector3 worldPos, RectTransform container)
     {
         Vector2 screen = RectTransformUtility.WorldToScreenPoint(Camera.main, worldPos);
@@ -199,6 +197,8 @@ public class UIManager : MonoBehaviour
                 return "Magnet Booster Unlocked";
             case ModelManager.UnlockTypes.SHUFFLE:
                 return "Shuffle Booster Unlocked";
+            case ModelManager.UnlockTypes.COVER_MAP:
+                return "Map Unlocked";
             default:
                 return "";
         }
@@ -224,6 +224,8 @@ public class UIManager : MonoBehaviour
                 return "Pick any unit to <color=blue>Magnet</color> its contents";
             case ModelManager.UnlockTypes.SHUFFLE:
                 return "<color=blue>Shuffle</color> the first 2 rows of containers";
+            case ModelManager.UnlockTypes.COVER_MAP:
+                return "Play units to remove the <color=blue>Map";
             default:
                 return "";
         }

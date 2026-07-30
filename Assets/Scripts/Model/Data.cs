@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO.MemoryMappedFiles;
 using UnityEngine;
 
 // =========================================================================
@@ -18,6 +19,8 @@ public class GameLevelSchema
 
     // --- Supply Side (The Grid Board Topology) ---
     public GridTopology Grid { get; set; } = new GridTopology();
+
+    public CoverMapData CoverMap = new CoverMapData();
 
     public bool HardLevel;
 
@@ -67,6 +70,13 @@ public class GameLevelSchema
         public PipeGenerator ContinuousPipe { get; set; }
 
 
+    }
+
+    public class CoverMapData
+    {
+        public int MapId;
+        public int Counter;
+        public List<int> CoveredUnitIds = new List<int>();
     }
 
     public class GridUnit
@@ -122,10 +132,12 @@ public class GameLevelSchema
         public int LinkCount;
         public int HiddenContainerCount;
         public int IceCount;
+        public int MapCount;
     }
 
     public class BoardVisualReferences
     {
+        public MapView mapView;
         public Dictionary<Vector2Int, UnitView> UnitViews { get; set; } = new Dictionary<Vector2Int, UnitView>();
         public Dictionary<int, ContainerView> ContainerViews { get; set; } = new Dictionary<int, ContainerView>();
         public List<List<ContainerView>> ContainerQueues { get; set; } = new List<List<ContainerView>>();

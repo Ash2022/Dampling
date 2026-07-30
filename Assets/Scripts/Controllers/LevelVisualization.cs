@@ -4,6 +4,7 @@ using UnityEngine;
 using DG.Tweening;
 using static GameLevelSchema;
 using System.Linq;
+using UnityEngine.InputSystem;
 
 public class LevelVisualization : MonoBehaviour
 {
@@ -12,6 +13,8 @@ public class LevelVisualization : MonoBehaviour
     public GameObject FramePrefab;
     public GameObject ContainerPrefab;
 
+    public GameObject MapPrefab;
+
     [Header("Manual Y-Axis Baselines")]
     public float QueueBottomY = 3.0f;
     public float GridTopY = -1.0f;
@@ -19,24 +22,24 @@ public class LevelVisualization : MonoBehaviour
 
     private float ScaleFactor = 1.1f;
 
-
+    GameObject mapInstance;
     private List<UnitView> activeUnits = new List<UnitView>();
     private List<FrameView> activeFrames = new List<FrameView>();
     private List<ContainerView> activeContainers = new List<ContainerView>();
 
     BoardVisualReferences references;
 
-    public BoardVisualReferences RenderInitialBoard(GameLevelSchema levelData,int levelIndex)
+    public BoardVisualReferences RenderInitialBoard(GameLevelSchema levelData, int levelIndex)
     {
         ClearCurrentVisualization();
 
         references = new BoardVisualReferences();
         references.ContainerQueues = new List<List<ContainerView>>();
 
-        if(levelIndex>10)
-            levelData = ApplyDynamicColorMapping(levelData,12);
+        if (levelIndex > 10)
+            levelData = ApplyDynamicColorMapping(levelData, 12);
 
-        if(levelIndex>50 && levelData.MetaData!=null && levelData.MetaData.WinRate<1f)
+        if (levelIndex > 50 && levelData.MetaData != null && levelData.MetaData.WinRate < 1f)
             levelData.HardLevel = true;
         Vector2 unitSize = GetPrefabSize(UnitPrefab) * ScaleFactor;
         Vector2 containerSize = GetPrefabSize(ContainerPrefab);
@@ -136,6 +139,49 @@ public class LevelVisualization : MonoBehaviour
             }
         }
 
+        if (levelData.CoverMap != null && levelData.CoverMap.CoveredUnitIds.Count > 0)
+        {
+            Vector3 centerPosition = Vector3.zero;
+            List<Vector2Int> coveredCoords = new List<Vector2Int>();
+            List<UnitView> mappedUnits = new List<UnitView>();
+            foreach (var unitId in levelData.CoverMap.CoveredUnitIds)
+            {
+                foreach (var kvp in references.UnitViews)
+                {
+                    if (kvp.Value.UnitId == unitId)
+                    {
+                        centerPosition += kvp.Value.transform.position;
+                        coveredCoords.Add(kvp.Key);
+                        mappedUnits.Add(kvp.Value);
+                        break;
+                    }
+                }
+            }
+
+            foreach(UnitView unitView in mappedUnits)
+                unitView.PartOfMap();
+
+            int count = coveredCoords.Count;
+            if (count > 0)
+            {
+                centerPosition /= count;
+                bool isHorizontal = false;
+
+                if (count == 2)
+                {
+                    isHorizontal = coveredCoords[0].y == coveredCoords[1].y;
+                }
+
+                mapInstance = Instantiate(MapPrefab, centerPosition, Quaternion.identity, transform);
+                MapView mapView = mapInstance.GetComponent<MapView>();
+                mapView.Initialize(levelData.CoverMap.Counter, count, isHorizontal,mappedUnits);
+                references.mapView = mapView;
+            }
+
+            
+
+        }
+
         GenerateFramePass(levelData, unitSize);
 
         return references;
@@ -143,6 +189,9 @@ public class LevelVisualization : MonoBehaviour
 
     public void ClearCurrentVisualization()
     {
+        if (mapInstance != null)
+            Destroy(mapInstance);
+
         foreach (var unit in activeUnits)
         {
             DamplingObjectPool.Instance.ReturnUnit(unit.gameObject);

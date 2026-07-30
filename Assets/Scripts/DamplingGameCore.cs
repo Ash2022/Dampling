@@ -20,7 +20,8 @@ public class DamplingGameCore
 
     // --- Optional View Notification Callbacks ---
     private Action<int, int> OnUnitIceChanged;             // Params: UnitId, RemainingIceLayers
-          // Params: LockedUnitId, CollectedKeyUnitId
+                                                           // Params: LockedUnitId, CollectedKeyUnitId
+    private GameLevelSchema.CoverMapData activeCoverMap;
 
     // --- Structural Feedback Transaction Packets ---
     public enum EngineEventType
@@ -34,7 +35,9 @@ public class DamplingGameCore
         CrateDamaged,
         CrateDestroyed,
         IceDamaged,
-        IceShattered
+        IceShattered,
+        CoverMapCounterChanged,
+        CoverMapDestroyed
     }
 
     public class EngineEvent
@@ -61,13 +64,20 @@ public class DamplingGameCore
 
         // Assign optional callbacks
         OnUnitIceChanged = onUnitIceChanged;
-        
+
 
         gridMatrix = new Dictionary<GameLevelSchema.Coordinate, GameLevelSchema.CellNode>();
         foreach (var node in ActiveLevelData.Grid.Matrix)
         {
             gridMatrix[node.Position] = node;
         }
+
+        if(ActiveLevelData.CoverMap.CoveredUnitIds.Count > 0)
+            activeCoverMap = ActiveLevelData.CoverMap;
+        else
+            activeCoverMap = null;
+
+
 
         DynamicQueues = new List<List<GameLevelSchema.ContainerData>>();
         foreach (var originalQueue in levelData.ResolutionQueues)
@@ -152,10 +162,32 @@ public class DamplingGameCore
                 node.OccupyingUnit = null;
             }
 
-            
+
             foreach (var dumpling in currentUnit.InteriorContents)
             {
                 VirtualBelt.Add(dumpling);
+            }
+        }
+
+        // --- NEW COVER MAP LOGIC START ---
+        if(activeCoverMap != null)
+        {
+            activeCoverMap.Counter -= linkedCluster.Count;
+
+            outputTransactionHistory.Add(new EngineEvent
+            {
+                EventType = EngineEventType.CoverMapCounterChanged,
+                TargetId = activeCoverMap.Counter
+            });
+
+            if (activeCoverMap.Counter <= 0)
+            {
+                outputTransactionHistory.Add(new EngineEvent
+                {
+                    EventType = EngineEventType.CoverMapDestroyed
+                });
+
+                activeCoverMap = null;
             }
         }
 
@@ -220,7 +252,7 @@ public class DamplingGameCore
         }
     }
 
-    
+
 
     // --- Automated Processing Logic Loops ---
     private void ProcessBeltResolutionPipeline(List<EngineEvent> transactions)
@@ -359,6 +391,10 @@ public class DamplingGameCore
     public bool IsUnitClusterBlocked(GameLevelSchema.Coordinate coord, GameLevelSchema.GridUnit unit, HashSet<int> currentClusterIds)
     {
         if (unit.IceLayers > 0) return true;
+
+        // INSERT AT VERY TOP
+        if (activeCoverMap != null && activeCoverMap.CoveredUnitIds.Contains(unit.UnitId))
+            return true;
 
         foreach (var dependencyId in unit.ExplicitlyBlockedByUnitIds)
         {

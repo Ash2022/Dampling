@@ -14,7 +14,8 @@ public class ModelManager : MonoBehaviour
         MAGNET,
         LOCK_KEY,
         LINK,
-        HIDDEN_CONTAINER
+        HIDDEN_CONTAINER,
+        COVER_MAP
     }
 
     const int HIDDEN_UNIT_UNLOCKED = 4;
@@ -25,7 +26,7 @@ public class ModelManager : MonoBehaviour
     const int LOCK_KEY_UNLOCKED = 29;
     const int LINK_UNLOCKED = 37;
     const int HIDDEN_CONTAINER = 46;
-    //const int COVER_UNLOCKED = 75;
+    const int COVERMAP_UNLOCKED = 65;
 
     
     public const int LOOP_SIZE = 195;
@@ -66,6 +67,7 @@ public class ModelManager : MonoBehaviour
         UnlocksIndexList.Add(LOCK_KEY_UNLOCKED);
         UnlocksIndexList.Add(LINK_UNLOCKED);
         UnlocksIndexList.Add(HIDDEN_CONTAINER);
+        UnlocksIndexList.Add(COVERMAP_UNLOCKED);
 
 
 
