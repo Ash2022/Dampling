@@ -21,6 +21,8 @@ public class UIManager : MonoBehaviour
 
     [SerializeField] RectTransform inGameUIHolder;
 
+    [SerializeField]SpriteRenderer FrameBG; 
+
     [SerializeField] Sprite hardLevelImage;
 
     [SerializeField] TutorialImageView tutorialImageView;
@@ -41,6 +43,8 @@ public class UIManager : MonoBehaviour
         currDisplayBalance = balance;
         AddToBalanceVisual(0);
         levelText.text = "LEVEL " + (levelIndex + 1).ToString();
+
+        FrameBG.sprite = VisualsManager.Instance.GetBgSprite((levelIndex/10)%5);
 
 
         if (levelIndex == 0)

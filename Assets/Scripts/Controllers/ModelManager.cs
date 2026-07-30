@@ -28,7 +28,7 @@ public class ModelManager : MonoBehaviour
     //const int COVER_UNLOCKED = 75;
 
     
-    public const int LOOP_SIZE = 2;
+    public const int LOOP_SIZE = 195;
 
     private const string PLAYER_DATA_KEY = "PlayerDataSaveState";
     public const int GOLD_PER_WIN = 50;

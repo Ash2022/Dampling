@@ -18,6 +18,8 @@ public class VisualsManager : MonoBehaviour
     [SerializeField] List<Sprite> keySprites;
     [SerializeField] List<Sprite> lockSprites;
 
+    [SerializeField]List<Sprite> bgSprites;
+
     
     [SerializeField] Sprite unitHidden;
     [SerializeField] Sprite unitLidHidden;
@@ -97,5 +99,10 @@ public class VisualsManager : MonoBehaviour
     public Sprite GetBoosterSprite(BoosterButtonView.BoosterType type)
     {
         return type == BoosterButtonView.BoosterType.Magnet ? boosterMagnetSprite : boosterShuffleSprite;
+    }
+
+    public Sprite GetBgSprite(int index)
+    {
+        return bgSprites[index];
     }
 }

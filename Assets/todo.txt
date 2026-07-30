@@ -93,3 +93,9 @@ menu confirm delete
 
 add some system to give more boosters after X levels -- DONE
 make some animation for the dumplings to fall when the game start and in end screen
+
+
+
+Pipe inst bug - DONE
+Logo - top higher --- DONE
+

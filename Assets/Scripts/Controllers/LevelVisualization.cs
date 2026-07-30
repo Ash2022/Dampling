@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using static GameLevelSchema;
+using System.Linq;
 
 public class LevelVisualization : MonoBehaviour
 {
@@ -18,19 +19,25 @@ public class LevelVisualization : MonoBehaviour
 
     private float ScaleFactor = 1.1f;
 
+
     private List<UnitView> activeUnits = new List<UnitView>();
     private List<FrameView> activeFrames = new List<FrameView>();
     private List<ContainerView> activeContainers = new List<ContainerView>();
 
     BoardVisualReferences references;
 
-    public BoardVisualReferences RenderInitialBoard(GameLevelSchema levelData)
+    public BoardVisualReferences RenderInitialBoard(GameLevelSchema levelData,int levelIndex)
     {
         ClearCurrentVisualization();
 
         references = new BoardVisualReferences();
         references.ContainerQueues = new List<List<ContainerView>>();
 
+        if(levelIndex>10)
+            levelData = ApplyDynamicColorMapping(levelData,12);
+
+        if(levelIndex>50 && levelData.MetaData!=null && levelData.MetaData.WinRate<1f)
+            levelData.HardLevel = true;
         Vector2 unitSize = GetPrefabSize(UnitPrefab) * ScaleFactor;
         Vector2 containerSize = GetPrefabSize(ContainerPrefab);
         float containerSpacingX = 0.1f;
@@ -265,7 +272,7 @@ public class LevelVisualization : MonoBehaviour
 
     public Vector3 GetUnitWorldPosition(int gridX, int gridY, GameLevelSchema levelData)
     {
-        
+
         Vector2 unitSize = GetPrefabSize(UnitPrefab) * ScaleFactor;
 
         int minX = int.MaxValue;
@@ -291,5 +298,70 @@ public class LevelVisualization : MonoBehaviour
 
 
         return new Vector3(worldX, worldY, 0f);
+    }
+
+
+    public GameLevelSchema ApplyDynamicColorMapping(GameLevelSchema runtimeLevelCopy, int totalAvailableColors = 12)
+    {
+        System.Random seededRng = new System.Random(runtimeLevelCopy.LevelName.GetHashCode());
+
+        HashSet<int> existingColors = new HashSet<int>();
+
+        foreach (var node in runtimeLevelCopy.Grid.Matrix)
+        {
+            if (node.ContinuousPipe != null)
+            {
+                foreach (var unit in node.ContinuousPipe.ReservoirQueue)
+                    foreach (var dumpling in unit.InteriorContents)
+                        existingColors.Add(dumpling.ColorIndex);
+            }
+            else if (node.OccupyingUnit != null)
+            {
+                foreach (var dumpling in node.OccupyingUnit.InteriorContents)
+                    existingColors.Add(dumpling.ColorIndex);
+            }
+        }
+
+        foreach (var queue in runtimeLevelCopy.ResolutionQueues)
+        {
+            foreach (var container in queue)
+            {
+                existingColors.Add(container.ColorIndex);
+            }
+        }
+
+        List<int> globalPalette = Enumerable.Range(0, totalAvailableColors).OrderBy(x => seededRng.Next()).ToList();
+        Dictionary<int, int> colorMap = new Dictionary<int, int>();
+        int mapIndex = 0;
+
+        foreach (int oldColor in existingColors)
+        {
+            colorMap[oldColor] = globalPalette[mapIndex++];
+        }
+
+        foreach (var node in runtimeLevelCopy.Grid.Matrix)
+        {
+            if (node.ContinuousPipe != null)
+            {
+                foreach (var unit in node.ContinuousPipe.ReservoirQueue)
+                    foreach (var dumpling in unit.InteriorContents)
+                        dumpling.ColorIndex = colorMap[dumpling.ColorIndex];
+            }
+            else if (node.OccupyingUnit != null)
+            {
+                foreach (var dumpling in node.OccupyingUnit.InteriorContents)
+                    dumpling.ColorIndex = colorMap[dumpling.ColorIndex];
+            }
+        }
+
+        foreach (var queue in runtimeLevelCopy.ResolutionQueues)
+        {
+            foreach (var container in queue)
+            {
+                container.ColorIndex = colorMap[container.ColorIndex];
+            }
+        }
+
+        return runtimeLevelCopy;
     }
 }

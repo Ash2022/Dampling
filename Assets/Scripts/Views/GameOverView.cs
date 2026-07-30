@@ -31,10 +31,8 @@ public class GameOverView : MonoBehaviour
     [SerializeField] List<GoldCoinView> availableCoinViews;
 
     [SerializeField] Image endGameImage;
-    [SerializeField] Sprite loseSprite;
-    [SerializeField] Sprite winSprite;
 
-
+    [SerializeField]CharacterPopAnimationView characterPopAnimationView;
 
     [SerializeField] EndScreenUnlockView endScreenUnlockView;
     int currLevelIndex;
@@ -45,10 +43,19 @@ public class GameOverView : MonoBehaviour
 
     public void InitEndScreen(bool levelWon, int levelIndex, Action endGameResumeClicked)
     {
+        
+        if(levelWon)
+        {
+            endGameImage.gameObject.SetActive(false);
+            characterPopAnimationView.ResetState();
+            characterPopAnimationView.PlayAppearAnimation();
+        }
+        else
+        {
+            characterPopAnimationView.ResetState();
+            endGameImage.gameObject.SetActive(true);
+        }
 
-        endGameImage.sprite = levelWon ? winSprite : loseSprite;
-
-        endGameImage.SetNativeSize();
 
         currLevelIndex = levelIndex;
         endScreenUnlockView.BackParticles.SetActive(false);

@@ -1,6 +1,7 @@
 
 using System;
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 public class SoundsManager : MonoBehaviour
@@ -31,11 +32,16 @@ public class SoundsManager : MonoBehaviour
     [SerializeField] AudioClip _lidPopped;
 
     [SerializeField] AudioClip _ballJumpToContainer;
-    
+
     [SerializeField] AudioClip _boosterButtonClicked;
     [SerializeField] AudioClip _boosterButtonOff;
 
+    [SerializeField] AudioClip _levelCompleteBG;
+    [SerializeField] AudioClip _levelCompleteChars;
+    
 
+
+    [SerializeField] List<AudioClip> bgMusics = new List<AudioClip>();
 
 
     [SerializeField] AudioSource _SFX_Source1 = null;
@@ -48,7 +54,7 @@ public class SoundsManager : MonoBehaviour
     [SerializeField] AudioSource _SFX_Source8 = null;
     [SerializeField] AudioSource _SFX_Source9 = null;
     [SerializeField] AudioSource _SFX_Source10 = null;
-    [SerializeField] AudioSource _SFX_Source11 = null;
+    [SerializeField] AudioSource _BGMusic = null;
 
     static SoundsManager _instance;
 
@@ -146,35 +152,61 @@ public class SoundsManager : MonoBehaviour
     internal void SomethingUnlocked()
     {
         PlayHaptics(TapticsStrenght.Medium);
-        PlayClip(_unitUnlocked);       
+        PlayClip(_unitUnlocked);
     }
 
     public void BallJumpedToSlot()
     {
         PlayHaptics(TapticsStrenght.Light);
-        PlayClip(_ballJumpToSlot); 
+        PlayClip(_ballJumpToSlot);
     }
 
     public void LidPopped()
     {
         PlayHaptics(TapticsStrenght.Light);
-        PlayClip(_lidPopped); 
+        PlayClip(_lidPopped);
     }
 
     public void BoosterClicked(bool isOn)
     {
         PlayHaptics(TapticsStrenght.Medium);
-        PlayClip(isOn?_boosterButtonClicked:_boosterButtonOff); 
+        PlayClip(isOn ? _boosterButtonClicked : _boosterButtonOff);
+    }
+
+    public void PlayLevelCompleteBG()
+    {
+        PlayClip(_levelCompleteBG);
+    }
+
+    public void PlayLevelCompleteChars()
+    {
+        PlayClip(_levelCompleteChars);
     }
 
 
-    public void DisableEnableMixer(bool disable)
+    public void PlayRandomBackgroundMusic(float fadeDuration = 1f)
     {
-        if (disable)
-            AudioListener.volume = 0;
-        else
-            AudioListener.volume = 1f;
+        if (bgMusics.Count == 0) return;
 
+        if (_BGMusic.isPlaying)
+            _BGMusic.Stop();
+
+        AudioClip randomClip = bgMusics[UnityEngine.Random.Range(0, bgMusics.Count)];
+        _BGMusic.clip = randomClip;
+        _BGMusic.loop = true;
+        _BGMusic.time = randomClip.length * 0.5f;
+        _BGMusic.volume = 0f;
+        _BGMusic.Play();
+
+        _BGMusic.DOFade(.5f, fadeDuration);
+    }
+
+    public void StopBackgroundMusic(float fadeDuration = 1f)
+    {
+        _BGMusic.DOFade(0f, fadeDuration).OnComplete(() =>
+        {
+            _BGMusic.Stop();
+        });
     }
 
     public void MuteAll(bool mute)
@@ -189,7 +221,7 @@ public class SoundsManager : MonoBehaviour
         _SFX_Source8.mute = mute;
         _SFX_Source9.mute = mute;
         _SFX_Source10.mute = mute;
-        _SFX_Source11.mute = mute;
+        _BGMusic.mute = mute;
 
     }
 
@@ -243,8 +275,7 @@ public class SoundsManager : MonoBehaviour
         if (!_SFX_Source10.isPlaying)
             return _SFX_Source10;
 
-        if (!_SFX_Source11.isPlaying)
-            return _SFX_Source11;
+
 
 
         return null;

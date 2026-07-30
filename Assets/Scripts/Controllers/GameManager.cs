@@ -245,7 +245,7 @@ public class GameManager : MonoBehaviour
 
 
         // Step 3: Wipe past scene instances and render the fresh board layout array mapping setup
-        activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData);
+        activeBoardReferences = levelVisualization.RenderInitialBoard(currentLevelData,CurrentLevelIndex);
 
         // Step 2: Spin up a fresh simulation core instance to clear past game states completely
         gameCore = new DamplingGameCore();
@@ -265,8 +265,7 @@ public class GameManager : MonoBehaviour
         else
             currentState = GameState.ReadyToPlay;
 
-        levelVisualization.GetUnitWorldPosition(3, -1, currentLevelData);
-        levelVisualization.GetUnitWorldPosition(4, -1, currentLevelData);
+        SoundsManager.Instance.PlayRandomBackgroundMusic();
     }
 
     
@@ -412,6 +411,8 @@ public class GameManager : MonoBehaviour
         if (isWin)
             ModelManager.Instance.AddToBalanceAndSave(ModelManager.GOLD_PER_WIN);
 
+        SoundsManager.Instance.StopBackgroundMusic();
+
         gameOverView.InitEndScreen(isWin, CurrentLevelIndex, () =>
         {
             if (isWin)
@@ -419,16 +420,9 @@ public class GameManager : MonoBehaviour
                 ModelManager.Instance.SetLastPlayedLevel(CurrentLevelIndex);
                 CurrentLevelIndex++;
             }
-
-            /*
-                        int unlockIndex = ModelManager.Instance.GetUnlock(CurrentLevelIndex);
-
-                        if (unlockIndex != -1)
-                            uiManager.ShowTutorialImage(true, unlockIndex + 1);
-                        else
-                        {*/
+         
             StartLevel(CurrentLevelIndex);
-            //}
+            
         });
     }
 
@@ -445,62 +439,7 @@ public class GameManager : MonoBehaviour
             ResumeGameOver(true);
             return;
         }
-
-        //)
-        /*
-
-        // Check for game over win
-        if (gameStateEvaluator.CheckForVisualWin())
-        {
-            Debug.Log("VISUAL WIN! All containers resolved. Loading next level...");
-            ResumeGameOver(true);
-            return;
-        }
-
-        float containerSpacingY = 0.57f;
-
-        // 1. Ensure the resolved container's position is tracked before we use it
-        if (!activeBoardReferences.logicalContainerPositions.ContainsKey(resolvedView))
-        {
-            activeBoardReferences.logicalContainerPositions[resolvedView] = resolvedView.transform.position;
-        }
-
-        // Get the mathematical Y position this container was sitting at
-        float resolvedLogicalY = activeBoardReferences.logicalContainerPositions[resolvedView].y;
-
-        // 2. Find ALL active containers in this queue, regardless of where they physically are right now
-        var containersInQueue = activeBoardReferences.ContainerViews.Values
-            .Where(v => v != null && v.QueueIndex == queueIndex && v != resolvedView && v.gameObject.activeInHierarchy)
-            .ToList();
-
-        foreach (var container in containersInQueue)
-        {
-            // 3. Register any container that hasn't moved yet
-            if (!activeBoardReferences.logicalContainerPositions.ContainsKey(container))
-            {
-                activeBoardReferences.logicalContainerPositions[container] = container.transform.position;
-            }
-
-            // 4. Compare their LOGICAL positions to see if they are sitting behind the resolved container
-            if (activeBoardReferences.logicalContainerPositions[container].y > resolvedLogicalY + 0.1f)
-            {
-                // Calculate the absolute new position they need to end up at
-                Vector3 newTargetPos = activeBoardReferences.logicalContainerPositions[container] - new Vector3(0f, containerSpacingY, 0f);
-
-                // Save this new intended target so subsequent Magnet loops in the same frame know about it
-                activeBoardReferences.logicalContainerPositions[container] = newTargetPos;
-
-                // Safely kill the old tween and smoothly glide to the new target
-                container.transform.DOKill();
-                container.transform.DOMove(newTargetPos, 0.3f).SetEase(Ease.OutBack);
-
-                if (Mathf.Abs(newTargetPos.y - levelVisualization.QueueBottomY) < 0.05f || newTargetPos.y <= levelVisualization.QueueBottomY)
-                {
-                    container.RevealContainerColor();
-                }
-
-            }
-        }*/
+       
     }
 
     /// <summary>
