@@ -118,6 +118,14 @@ public class ContainerView : MonoBehaviour
         clearSeq.OnComplete(() =>
         {
             DamplingObjectPool.Instance.ReturnContainerResolveEffect(containerResolveEffect);
+
+/*
+            foreach (var ballView in absorbedBallViews)
+            {
+                DamplingObjectPool.Instance.ReturnBall(ballView.gameObject);
+            }
+            absorbedBallViews.Clear();
+*/
             GameManager.Instance.AdvanceContainerQueue(QueueIndex, this);
         });
     }

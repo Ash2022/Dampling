@@ -477,7 +477,7 @@ public class GameManager : MonoBehaviour
         // Check for game over win
         if (gameStateEvaluator.CheckForVisualWin())
         {
-            Debug.Log("VISUAL WIN! All containers resolved. Loading next level...");
+            //Debug.Log("VISUAL WIN! All containers resolved. Loading next level...");
             ResumeGameOver(true);
             return;
         }

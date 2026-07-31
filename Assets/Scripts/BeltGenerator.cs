@@ -257,12 +257,12 @@ public class BeltGenerator : MonoBehaviour
         if (topSpeed)
         {
             speed = MAX_SPEED;
-            Debug.Log("Belt Speed Increased to Max");
+            //Debug.Log("Belt Speed Increased to Max");
         }
         else if (speed < FAST_SPEED)
         {
             speed = FAST_SPEED;
-            Debug.Log("Belt Speed Increased to Fast");
+            //Debug.Log("Belt Speed Increased to Fast");
         }
     }
 }

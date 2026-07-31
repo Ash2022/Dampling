@@ -141,7 +141,7 @@ public class UIManager : MonoBehaviour
 
     internal void GameOver()
     {
-        Debug.Log("UIManage GameOver");
+        //Debug.Log("UIManage GameOver");
     }
 
 

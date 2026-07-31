@@ -83,6 +83,9 @@ public class DamplingObjectPool : MonoBehaviour
 
     public GameObject GetUnit(Vector3 position, Quaternion rotation, Transform parent)
     {
+        if(unitPool.Count<=0)
+            Debug.Log("Maybe Bug - missing Unit");
+
         GameObject obj = unitPool.Count > 0 ? unitPool.Dequeue() : Instantiate(unitPrefab);
 
         obj.transform.SetPositionAndRotation(position, rotation);
@@ -92,6 +95,9 @@ public class DamplingObjectPool : MonoBehaviour
 
     public GameObject GetFrame(Vector3 position, Quaternion rotation, Transform parent)
     {
+        if(framePool.Count<=0)
+            Debug.Log("Maybe Bug - missing Frame");
+
         GameObject obj = framePool.Count > 0 ? framePool.Dequeue() : Instantiate(framePrefab);
 
         obj.transform.SetPositionAndRotation(position, rotation);
@@ -101,6 +107,9 @@ public class DamplingObjectPool : MonoBehaviour
 
     public GameObject GetContainer(Vector3 position, Quaternion rotation, Transform parent)
     {
+        if(containerPool.Count<=0)
+            Debug.Log("Maybe Bug - missing Containers");
+
         GameObject obj = containerPool.Count > 0 ? containerPool.Dequeue() : Instantiate(containerPrefab);
 
         obj.transform.SetPositionAndRotation(position, rotation);
@@ -110,6 +119,9 @@ public class DamplingObjectPool : MonoBehaviour
 
     public GameObject GetBall(Vector3 position, Quaternion rotation)
     {
+        if(ballPool.Count<=0)
+            Debug.Log("Maybe Bug - missing Balls");
+
         GameObject obj = ballPool.Count > 0 ? ballPool.Dequeue() : Instantiate(ballPrefab);
         obj.transform.SetParent(stageRoot);
         obj.transform.SetPositionAndRotation(position, rotation);
@@ -119,6 +131,9 @@ public class DamplingObjectPool : MonoBehaviour
 
     public GameObject GetContainerResolveEffect(Vector3 position, Quaternion rotation)
     {
+        if(effectPool.Count<=0)
+            Debug.Log("Maybe Bug - missing Effect ");
+
         GameObject obj = effectPool.Count > 0 ? effectPool.Dequeue() : Instantiate(containerResolveEffectPrefab);
 
         obj.transform.SetPositionAndRotation(position, rotation);

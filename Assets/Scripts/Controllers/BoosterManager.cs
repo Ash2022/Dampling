@@ -194,7 +194,7 @@ public class BoosterManager : MonoBehaviour
             activeBoardReferences.UnitViews[spawnCoords[i]] = newUnitView;
         }
 
-        Debug.Log("Revive Executed! New units spawned at Row -1.");
+        //Debug.Log("Revive Executed! New units spawned at Row -1.");
 
         beltGenerator.ResumeBelt();
     }

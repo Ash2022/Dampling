@@ -257,7 +257,7 @@ public class GameOverView : MonoBehaviour
             int total = endIndex - startIndex;
             int curr = currLevelIndex - startIndex;
 
-            Debug.Log("presentIndex " + presentIndex);
+            //Debug.Log("presentIndex " + presentIndex);
 
             Color unlockColor = Color.white;
 

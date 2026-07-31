@@ -49,7 +49,7 @@ public class GameStateEvaluator
 
         if (!matchPossible)
         {
-            Debug.Log("Visual Deadlock! The belt is full and no items match the active containers.");
+            //Debug.Log("Visual Deadlock! The belt is full and no items match the active containers.");
             return true;
         }
 

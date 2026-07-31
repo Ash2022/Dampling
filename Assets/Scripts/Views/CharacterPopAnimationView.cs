@@ -112,7 +112,7 @@ public class CharacterPopAnimationView : MonoBehaviour
             }));
             sequence.Join(char1.DOScaleY(1f, 0.3f).SetEase(Ease.OutBack));
         }
-
+/*
         sequence.OnComplete(() =>
         {
             foreach (var character in characters)
@@ -126,7 +126,7 @@ public class CharacterPopAnimationView : MonoBehaviour
                     .SetLoops(-1, LoopType.Yoyo)
                     .SetDelay(randomDelay);
             }
-        });
+        });*/
         sequence.Play();
     }
 }
