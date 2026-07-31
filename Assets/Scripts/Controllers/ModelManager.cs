@@ -26,7 +26,7 @@ public class ModelManager : MonoBehaviour
     const int LOCK_KEY_UNLOCKED = 29;
     const int LINK_UNLOCKED = 37;
     const int HIDDEN_CONTAINER = 46;
-    const int COVERMAP_UNLOCKED = 65;
+    const int COVERMAP_UNLOCKED = 66;
 
     
     public const int LOOP_SIZE = 195;

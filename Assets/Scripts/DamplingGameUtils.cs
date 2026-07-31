@@ -27,6 +27,11 @@ public static class DamplingGameUtils
         copy.Grid.Columns = source.Grid.Columns;
         copy.Grid.Rows = source.Grid.Rows;
 
+        copy.CoverMap.Counter = source.CoverMap.Counter;
+        copy.CoverMap.CoveredUnitIds = source.CoverMap.CoveredUnitIds.ToList();
+        copy.CoverMap.MapId = source.CoverMap.MapId;
+
+
         foreach (var sourceNode in source.Grid.Matrix)
         {
             var copyNode = new GameLevelSchema.CellNode

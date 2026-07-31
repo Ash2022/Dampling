@@ -26,8 +26,8 @@ public class GameManager : MonoBehaviour
 
     [SerializeField] private UIManager uiManager;          // assign in scene
     [SerializeField] private GameOverView gameOverView;    // assign in scene
-    [SerializeField] private GameObject splashScreen;
-    [SerializeField] private TMP_Text splashText;
+    [SerializeField] private SplashView splashScreen;
+    //[SerializeField] private TMP_Text splashText;
     [SerializeField] private ReviveView reviveView;
     [SerializeField] PausePanelView _pausePanel;
 
@@ -75,9 +75,12 @@ public class GameManager : MonoBehaviour
             Camera.main.orthographicSize = adjustedOrthoSize;
         }
 
-        splashScreen.SetActive(true);
+        splashScreen.gameObject.SetActive(true);
+        splashScreen.SetText("LOADING...");
+        splashScreen.UpdateProgress(10);
 
         await InitializeGame();
+        splashScreen.UpdateProgress(100);
 
         if (CurrentLevelIndex == -1)
         {
@@ -86,13 +89,16 @@ public class GameManager : MonoBehaviour
         }
         if (CurrentLevelIndex == 0)
         {
-            splashScreen.SetActive(false);
+            splashScreen.gameObject.SetActive(false);
             StartLevel(CurrentLevelIndex);
         }
         else
         {
-            splashText.text = "CLICK TO CONTINUE";
+            splashScreen.SetText("CLICK TO CONTINUE");
+            splashScreen.EnableClickButton();
         }
+
+        
     }
 
     public async Task InitializeGame()
@@ -100,22 +106,28 @@ public class GameManager : MonoBehaviour
         currentState = GameState.Initializing;
         beltGenerator.InitializeBelt(BELT_CAPACITY);
 
+        splashScreen.UpdateProgress(20);
+
         boosterManager.Initialize(this, beltGenerator, uiManager);
         // Step 1: Await the multi-frame async memory instantiation allocation loop
-        await DamplingObjectPool.Instance.InitializePoolsAsync();
+        await DamplingObjectPool.Instance.InitializePoolsAsync((progress)=>
+        {
+            splashScreen.UpdateProgress(progress);
+        });
         // Step 2: Proceed with standard model loading and data processing now that objects are ready
         ModelManager.Instance.Initialize();
 
-
+        splashScreen.UpdateProgress(90);
     }
 
     public void ClearActiveBoard()
     {
 
-
         foreach (var ball in ballViews)
+        {
+            ball.ClearSlotReference();
             DamplingObjectPool.Instance.ReturnBall(ball.gameObject);
-
+        }
 
 
         ballViews.Clear();
@@ -129,7 +141,7 @@ public class GameManager : MonoBehaviour
 
     public void SplashClicked()
     {
-        splashScreen.SetActive(false);
+        splashScreen.gameObject.SetActive(false);
         StartLevel(CurrentLevelIndex);
     }
 
@@ -146,16 +158,12 @@ public class GameManager : MonoBehaviour
 
         if (Keyboard.current.upArrowKey.wasPressedThisFrame)
         {
-            int nextLevelIndex = CurrentLevelIndex + 1;
-            if (nextLevelIndex < ModelManager.Instance.LevelCount)
-                StartLevel(nextLevelIndex);
+            CheatLevelUpDown(true);
         }
 
         if (Keyboard.current.downArrowKey.wasPressedThisFrame)
         {
-            int prevLevelIndex = CurrentLevelIndex - 1;
-            if (prevLevelIndex >= 0)
-                StartLevel(prevLevelIndex);
+           CheatLevelUpDown(false);
         }
 
         if (Keyboard.current.mKey.wasPressedThisFrame)
@@ -216,6 +224,25 @@ public class GameManager : MonoBehaviour
             }
             checkTimer = 0f;
         }
+    }
+
+    public void CheatLevelUpDown(bool isUp)
+    {
+        int nextLevelIndex = CurrentLevelIndex;
+
+        if (isUp)
+            nextLevelIndex++;
+        else
+            nextLevelIndex--;
+
+        if (nextLevelIndex<0)
+            nextLevelIndex = 0;
+        
+        if(nextLevelIndex>=ModelManager.Instance.LevelCount)
+            nextLevelIndex = ModelManager.Instance.LevelCount-1;
+
+            if (nextLevelIndex < ModelManager.Instance.LevelCount)
+                StartLevel(nextLevelIndex);
     }
 
     public void MagnetClicked()

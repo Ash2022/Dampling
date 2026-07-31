@@ -72,7 +72,7 @@ public class DamplingGameCore
             gridMatrix[node.Position] = node;
         }
 
-        if(ActiveLevelData.CoverMap.CoveredUnitIds.Count > 0)
+        if (ActiveLevelData.CoverMap.CoveredUnitIds.Count > 0)
             activeCoverMap = ActiveLevelData.CoverMap;
         else
             activeCoverMap = null;
@@ -170,7 +170,7 @@ public class DamplingGameCore
         }
 
         // --- NEW COVER MAP LOGIC START ---
-        if(activeCoverMap != null)
+        if (activeCoverMap != null)
         {
             activeCoverMap.Counter -= linkedCluster.Count;
 
@@ -526,5 +526,11 @@ public class DamplingGameCore
         gridMatrix[coord] = newNode;
 
         return newNode;
+    }
+
+    public bool IsUnitCoveredByActiveMap(int unitId)
+    {
+        if (activeCoverMap == null) return false;
+        return activeCoverMap.CoveredUnitIds.Contains(unitId);
     }
 }

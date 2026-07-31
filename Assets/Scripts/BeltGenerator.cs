@@ -6,9 +6,9 @@ using UnityEngine;
 public class BeltGenerator : MonoBehaviour
 {
 
-    const float FAST_SPEED = 2.5f;
-    const float MAX_SPEED = 3.5f;
-    const float BELT_SPEED = 1.75f;
+    const float FAST_SPEED = 3.0f;
+    const float MAX_SPEED = 3.75f;
+    const float BELT_SPEED = 2.25f;
 
     [Header("Visual Configurations")]
     [SerializeField] Color lightBrown;

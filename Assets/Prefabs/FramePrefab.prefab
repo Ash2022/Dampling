@@ -393,10 +393,10 @@ MonoBehaviour:
   TR_Aux: {fileID: 925701650927463759}
   BL_Aux: {fileID: 5378538971061783303}
   BR_Aux: {fileID: 5833215626268970398}
-  straight: {fileID: 21300000, guid: 36af842111933514f81d1ca788ea7593, type: 3}
-  corner: {fileID: 21300000, guid: 2bd3738b3977fcf41a5dce69bac70522, type: 3}
-  innerCorner: {fileID: 21300000, guid: 4e3f4776019eae74f8b5c18bf674491d, type: 3}
-  solidCover: {fileID: 21300000, guid: c17f5d58d7701d54f9d3873e15d685ad, type: 3}
+  straight: {fileID: 21300000, guid: 3b9f9b4d06a3e1e47a301e0fa6901cb5, type: 3}
+  corner: {fileID: 21300000, guid: d61096b7c66974d4a9a10f56ffb9ae95, type: 3}
+  innerCorner: {fileID: 21300000, guid: 2ada34bfa2858f44a9d1bf1b9600bd95, type: 3}
+  solidCover: {fileID: 21300000, guid: e1034d12a212ed24286ae284d19f7ee5, type: 3}
 --- !u!1 &4544469079619744109
 GameObject:
   m_ObjectHideFlags: 0

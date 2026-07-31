@@ -68,6 +68,7 @@ public class ThematicLevelGeneratorWindow : EditorWindow
         linkQuota = EditorGUILayout.Vector2IntField("Link Pairs", linkQuota);
         lockKeyQuota = EditorGUILayout.Vector2IntField("Lock/Key Pairs", lockKeyQuota);
         hiddenContainerQuota = EditorGUILayout.Vector2IntField("Hidden Containers", hiddenContainerQuota);
+        coverMapQuota = EditorGUILayout.Vector2IntField("MAP", coverMapQuota);
         GUILayout.Space(10);
 
         outputFolderPath = EditorGUILayout.TextField("Output Path", outputFolderPath);

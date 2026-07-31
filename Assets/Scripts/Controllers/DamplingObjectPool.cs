@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System;
 
 public class DamplingObjectPool : MonoBehaviour
 {
@@ -33,7 +34,7 @@ public class DamplingObjectPool : MonoBehaviour
         Instance = this;
     }
 
-    public async Task InitializePoolsAsync()
+    public async Task InitializePoolsAsync(Action<int> progress)
     {
         unitRoot = new GameObject("UnitPool_Root").transform;
         unitRoot.SetParent(transform);
@@ -54,10 +55,15 @@ public class DamplingObjectPool : MonoBehaviour
         effectRoot.SetParent(transform);
 
         await PrewarmPoolAsync(unitPrefab, 50, unitPool, unitRoot, 25);
-        await PrewarmPoolAsync(framePrefab, 100, framePool, frameRoot, 25);
+        progress?.Invoke(30);
+        await PrewarmPoolAsync(framePrefab, 150, framePool, frameRoot, 25);
+        progress?.Invoke(40);
         await PrewarmPoolAsync(containerPrefab, 150, containerPool, containerRoot, 50);
+        progress?.Invoke(50);
         await PrewarmPoolAsync(ballPrefab, 500, ballPool, ballRoot, 100);
-        await PrewarmPoolAsync(containerResolveEffectPrefab, 10, effectPool, effectRoot, 25);
+        progress?.Invoke(60);
+        await PrewarmPoolAsync(containerResolveEffectPrefab, 25, effectPool, effectRoot, 25);
+        progress?.Invoke(70);
     }
 
     private async Task PrewarmPoolAsync(GameObject prefab, int count, Queue<GameObject> pool, Transform root, int objectsPerFrame)

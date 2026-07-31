@@ -39,8 +39,13 @@ public class LevelVisualization : MonoBehaviour
         if (levelIndex > 10)
             levelData = ApplyDynamicColorMapping(levelData, 12);
 
-        if (levelIndex > 50 && levelData.MetaData != null && levelData.MetaData.WinRate < 1f)
+        if (levelIndex > 70 && levelData.MetaData != null && levelData.MetaData.WinRate < 1f)
             levelData.HardLevel = true;
+
+
+        if(levelData.CoverMap!=null && levelData.CoverMap.Counter>7)
+            levelData.CoverMap.Counter=7;
+
         Vector2 unitSize = GetPrefabSize(UnitPrefab) * ScaleFactor;
         Vector2 containerSize = GetPrefabSize(ContainerPrefab);
         float containerSpacingX = 0.1f;

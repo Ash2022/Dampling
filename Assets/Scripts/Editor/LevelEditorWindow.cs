@@ -118,7 +118,7 @@ public class LevelEditorWindow : EditorWindow
 
         queueCount = EditorGUILayout.IntSlider("Container Queues", queueCount, 1, 8);
         colorCount = EditorGUILayout.IntSlider("Number of Colors", colorCount, 2, 8);
-        levelMapCounterValue = EditorGUILayout.IntSlider("Cover Map Counter", levelMapCounterValue, 1, 5);
+        levelMapCounterValue = EditorGUILayout.IntSlider("Cover Map Counter", levelMapCounterValue, 1, 25);
 
         EditorGUILayout.Space();
 

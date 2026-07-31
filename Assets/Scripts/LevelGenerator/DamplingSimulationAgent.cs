@@ -141,20 +141,26 @@ public class DamplingSimulationAgent
             if (cellNode.OccupyingUnit.IceLayers > 0)
                 continue;
 
+            if (engine.IsUnitCoveredByActiveMap(cellNode.OccupyingUnit.UnitId))
+                continue;
+
             HashSet<int> clusterIds = engine.GetFullClusterIds(cellNode.OccupyingUnit.UnitId);
 
-            bool clusterContainsIce = false;
+            bool clusterIsInvalid = false;
             foreach (var id in clusterIds)
             {
                 alreadyEvaluatedClusterIds.Add(id);
                 var clusterUnit = engine.FindUnitById(id);
-                if (clusterUnit.IceLayers > 0)
+
+                //check ice and lock
+                if (clusterUnit.IceLayers > 0 || clusterUnit.ExplicitlyBlockedByUnitIds.Any(blockerId => !engine.PlayedUnitIds.Contains(blockerId)))
                 {
-                    clusterContainsIce = true;
+                    clusterIsInvalid = true;
+                    break;
                 }
             }
 
-            if (clusterContainsIce)
+            if (clusterIsInvalid)
                 continue;
 
             if (!engine.IsUnitClusterBlocked(cellNode.Position, cellNode.OccupyingUnit, clusterIds))
@@ -165,6 +171,8 @@ public class DamplingSimulationAgent
 
         return activeOptionsPool;
     }
+
+
 
     public void GenerateTextSummary(LevelAnalysisReport report)
     {

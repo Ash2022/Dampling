@@ -20,7 +20,7 @@ public class VisualsManager : MonoBehaviour
 
     [SerializeField]List<Sprite> bgSprites;
 
-    
+    [SerializeField]List<Sprite> iceSprites;
     [SerializeField] Sprite unitHidden;
     [SerializeField] Sprite unitLidHidden;
 
@@ -30,6 +30,8 @@ public class VisualsManager : MonoBehaviour
     
     [SerializeField]Sprite boosterMagnetSprite;
     [SerializeField]Sprite boosterShuffleSprite;
+
+    
 
     private void Awake()
     {
@@ -104,5 +106,13 @@ public class VisualsManager : MonoBehaviour
     public Sprite GetBgSprite(int index)
     {
         return bgSprites[index];
+    }
+
+    public Sprite GetIceSprite(int index)
+    {
+        if(index>3)
+            index =3;
+
+        return iceSprites[index];
     }
 }

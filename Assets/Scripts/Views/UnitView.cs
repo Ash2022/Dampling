@@ -129,6 +129,9 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
             if (iceLayers > 0)
             {
                 iceOverlayCounter.sprite = VisualsManager.Instance.GetPipeCounterSprite(iceLayers);
+
+                iceOverlayRenderer.GetComponent<SpriteRenderer>().sprite = VisualsManager.Instance.GetIceSprite(iceLayers);
+                
                 iceOverlayRenderer.gameObject.SetActive(true);
                 isMagnetBlocked = true;
             }
@@ -474,6 +477,8 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         shatterSeq.OnComplete(() =>
         {
             iceOverlayCounter.sprite = VisualsManager.Instance.GetPipeCounterSprite(remainingLayers);
+            iceOverlayRenderer.GetComponent<SpriteRenderer>().sprite = VisualsManager.Instance.GetIceSprite(remainingLayers);
+                
 
         });
         // Optional: Fade the frosty blue tint slightly as ice gets thinner
