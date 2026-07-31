@@ -76,7 +76,7 @@ public class GameManager : MonoBehaviour
         }
 
         splashScreen.gameObject.SetActive(true);
-        splashScreen.SetText("LOADING...");
+        splashScreen.SetText("LOADING FUN...");
         splashScreen.UpdateProgress(10);
 
         await InitializeGame();
@@ -107,7 +107,7 @@ public class GameManager : MonoBehaviour
         beltGenerator.InitializeBelt(BELT_CAPACITY);
 
         splashScreen.UpdateProgress(20);
-
+        splashScreen.SetText("BUILDING POOL...");
         boosterManager.Initialize(this, beltGenerator, uiManager);
         // Step 1: Await the multi-frame async memory instantiation allocation loop
         await DamplingObjectPool.Instance.InitializePoolsAsync((progress)=>
@@ -116,7 +116,7 @@ public class GameManager : MonoBehaviour
         });
         // Step 2: Proceed with standard model loading and data processing now that objects are ready
         ModelManager.Instance.Initialize();
-
+        splashScreen.SetText("GETTING READY...");
         splashScreen.UpdateProgress(90);
     }
 

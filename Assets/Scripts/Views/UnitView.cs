@@ -270,7 +270,7 @@ public class UnitView : MonoBehaviour, IPointerClickHandler
         if (GameManager.Instance.IsUnitLockedAt(gridCoordinate))
         {
             SoundsManager.Instance.IllegalMove();
-            Debug.Log("unit blocked");
+            //Debug.Log("unit blocked");
             return;
         }
 

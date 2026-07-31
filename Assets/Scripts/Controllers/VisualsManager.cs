@@ -85,6 +85,9 @@ public class VisualsManager : MonoBehaviour
 
     internal Sprite GetPipeCounterSprite(int v)
     {
+        if(v>=pipeCounterSprites.Count)
+            v=pipeCounterSprites.Count-1;
+
         return pipeCounterSprites[v];
     }
 

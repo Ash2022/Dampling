@@ -20,11 +20,11 @@ public class ThematicLevelGeneratorWindow : EditorWindow
     private int maxAttempts = 100;
 
     private Vector2Int pipeQuota = new Vector2Int(1, 4);
-    private Vector2Int iceQuota = new Vector2Int(2, 8);
-    private Vector2Int hiddenUnitQuota = new Vector2Int(2, 8);
-    private Vector2Int linkQuota = new Vector2Int(1, 3);
+    private Vector2Int iceQuota = new Vector2Int(2, 9);
+    private Vector2Int hiddenUnitQuota = new Vector2Int(2, 12);
+    private Vector2Int linkQuota = new Vector2Int(1, 4);
     private Vector2Int lockKeyQuota = new Vector2Int(1, 3);
-    private Vector2Int hiddenContainerQuota = new Vector2Int(0, 20);
+    private Vector2Int hiddenContainerQuota = new Vector2Int(4, 25);
     private Vector2Int coverMapQuota = new Vector2Int(1, 1);
 
     private string outputFolderPath = "Assets/Resources/ThematicLevels";
@@ -51,7 +51,7 @@ public class ThematicLevelGeneratorWindow : EditorWindow
 
         GUILayout.Label("Thematic Level Parameters", EditorStyles.boldLabel);
 
-        levelsToGenerate = EditorGUILayout.IntSlider("Levels to Generate", levelsToGenerate, 5, 500);
+        levelsToGenerate = EditorGUILayout.IntSlider("Levels to Generate", levelsToGenerate, 10, 1000);
         maxAttempts = EditorGUILayout.IntSlider("Max Attempts Per Level", maxAttempts, 1, 1000);
 
         EditorGUILayout.LabelField($"Win Rate Range ({minTargetWinRate:P1} - {maxTargetWinRate:P1})");
@@ -324,77 +324,85 @@ public class ThematicLevelGeneratorWindow : EditorWindow
             }
         }
 
-        int[] validSizes = new int[] { 1, 2, 4 };
-        int targetCoverMapUnits = validSizes[rng.Next(validSizes.Length)];
-
-        List<Vector2Int> availableMapCandidates = standardUnits
-            .Where(u => u.Key.y > 0 && u.Value.IceLayers == 0 && u.Value.KeyLockPairIndex == -1 && u.Value.LinkedUnitIds.Count == 0 && !u.Value.IsHiddenUntilUnblocked)
-            .Select(u => u.Key)
-            .OrderBy(c => rng.Next())
-            .ToList();
-
-        List<Vector2Int> selectedMapCoords = new List<Vector2Int>();
-
-        foreach (var startCoord in availableMapCandidates)
+        if (activeFeatures.Contains(FeatureType.CoverMap))
         {
-            if (targetCoverMapUnits == 1)
-            {
-                selectedMapCoords.Add(startCoord);
-                break;
-            }
+            int[] validSizes = new int[] { 1, 2, 4 };
+            int targetCoverMapUnits = validSizes[rng.Next(validSizes.Length)];
 
-            if (targetCoverMapUnits == 2)
-            {
-                Vector2Int[] potentialNeighbors = {
-            new Vector2Int(startCoord.x + 1, startCoord.y),
-            new Vector2Int(startCoord.x - 1, startCoord.y),
-            new Vector2Int(startCoord.x, startCoord.y + 1),
-            new Vector2Int(startCoord.x, startCoord.y - 1)
-        };
+            List<Vector2Int> availableMapCandidates = standardUnits
+                .Where(u => u.Key.y > 0 && u.Value.IceLayers == 0 && u.Value.KeyLockPairIndex == -1 && u.Value.LinkedUnitIds.Count == 0 && !u.Value.IsHiddenUntilUnblocked)
+                .Select(u => u.Key)
+                .OrderBy(c => rng.Next())
+                .ToList();
 
-                var validNeighbor = potentialNeighbors.FirstOrDefault(n => availableMapCandidates.Contains(n));
-                if (validNeighbor != default)
+            List<Vector2Int> selectedMapCoords = new List<Vector2Int>();
+
+            foreach (var startCoord in availableMapCandidates)
+            {
+                if (targetCoverMapUnits == 1)
                 {
                     selectedMapCoords.Add(startCoord);
-                    selectedMapCoords.Add(validNeighbor);
                     break;
                 }
-            }
 
-            if (targetCoverMapUnits == 4)
-            {
-                Vector2Int right = new Vector2Int(startCoord.x + 1, startCoord.y);
-                Vector2Int up = new Vector2Int(startCoord.x, startCoord.y + 1);
-                Vector2Int diag = new Vector2Int(startCoord.x + 1, startCoord.y + 1);
-
-                if (availableMapCandidates.Contains(right) && availableMapCandidates.Contains(up) && availableMapCandidates.Contains(diag))
+                if (targetCoverMapUnits == 2)
                 {
-                    selectedMapCoords.Add(startCoord);
-                    selectedMapCoords.Add(right);
-                    selectedMapCoords.Add(up);
-                    selectedMapCoords.Add(diag);
-                    break;
-                }
-            }
-        }
-
-        int totalUnitsCount = level.Grid.Matrix.Count(n => n.IsPlayablePath);
-        int counterValue = rng.Next(Mathf.Max(1, Mathf.RoundToInt(totalUnitsCount * 0.1f)), Mathf.RoundToInt(totalUnitsCount * 0.5f) + 1);
-
-        if (selectedMapCoords.Count > 0)
-        {
-            level.CoverMap = new GameLevelSchema.CoverMapData
-            {
-                Counter = counterValue,
-
-                CoveredUnitIds = selectedMapCoords.Select(c =>
-               {
-                   var matchingUnit = level.Grid.Matrix.First(m => m.Position.X == c.x && m.Position.Y == c.y);
-                   return matchingUnit.OccupyingUnit.UnitId;
-               }).ToList()
+                    Vector2Int[] potentialNeighbors = {
+                new Vector2Int(startCoord.x + 1, startCoord.y),
+                new Vector2Int(startCoord.x - 1, startCoord.y),
+                new Vector2Int(startCoord.x, startCoord.y + 1),
+                new Vector2Int(startCoord.x, startCoord.y - 1)
             };
-        }
 
+                    var validNeighbor = potentialNeighbors.FirstOrDefault(n => availableMapCandidates.Contains(n));
+                    if (validNeighbor != default)
+                    {
+                        selectedMapCoords.Add(startCoord);
+                        selectedMapCoords.Add(validNeighbor);
+                        break;
+                    }
+                }
+
+                if (targetCoverMapUnits == 4)
+                {
+                    Vector2Int right = new Vector2Int(startCoord.x + 1, startCoord.y);
+                    Vector2Int up = new Vector2Int(startCoord.x, startCoord.y + 1);
+                    Vector2Int diag = new Vector2Int(startCoord.x + 1, startCoord.y + 1);
+
+                    if (availableMapCandidates.Contains(right) && availableMapCandidates.Contains(up) && availableMapCandidates.Contains(diag))
+                    {
+                        selectedMapCoords.Add(startCoord);
+                        selectedMapCoords.Add(right);
+                        selectedMapCoords.Add(up);
+                        selectedMapCoords.Add(diag);
+                        break;
+                    }
+                }
+            }
+
+            int totalUnitsCount = level.Grid.Matrix.Count(n => n.IsPlayablePath);
+            int maxDepthY = selectedMapCoords.Max(c => c.y);
+
+            int minCounter = Mathf.Max(1, maxDepthY - 1);
+            int maxCounter = Mathf.Min(20, Mathf.RoundToInt(totalUnitsCount * 0.5f));
+
+            if (minCounter > maxCounter) minCounter = maxCounter;
+            int counterValue = rng.Next(minCounter, maxCounter + 1);
+
+            if (selectedMapCoords.Count > 0)
+            {
+                level.CoverMap = new GameLevelSchema.CoverMapData
+                {
+                    Counter = counterValue,
+
+                    CoveredUnitIds = selectedMapCoords.Select(c =>
+                {
+                    var matchingUnit = level.Grid.Matrix.First(m => m.Position.X == c.x && m.Position.Y == c.y);
+                    return matchingUnit.OccupyingUnit.UnitId;
+                }).ToList()
+                };
+            }
+        }
         List<GameLevelSchema.ContainerData> flatContainers = new List<GameLevelSchema.ContainerData>();
         int containerIdCounter = 0;
         int targetHiddenContainers = rng.Next(hiddenContainerQuota.x, hiddenContainerQuota.y + 1);

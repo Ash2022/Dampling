@@ -29,7 +29,7 @@ public class ModelManager : MonoBehaviour
     const int COVERMAP_UNLOCKED = 66;
 
     
-    public const int LOOP_SIZE = 195;
+    public const int LOOP_SIZE = 800;
 
     private const string PLAYER_DATA_KEY = "PlayerDataSaveState";
     public const int GOLD_PER_WIN = 50;
@@ -126,8 +126,7 @@ public class ModelManager : MonoBehaviour
             string json = PlayerPrefs.GetString(PLAYER_DATA_KEY);
             Data = JsonConvert.DeserializeObject<PlayerData>(json);
 
-            Data.MagnetBoosterCount =5;
-            Data.ShuffleBoosterCount =5;
+            //Data.CoinsAmount = 100000;
             
         }
         else
