@@ -1,5 +1,5 @@
 {
-  "HardLevel": false,
+  "HardLevel": true,
   "LevelId": 1,
   "LevelName": "Level16",
   "ConveyorBeltMaxCapacity": 30,
